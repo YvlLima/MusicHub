@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Hub</title>
+
+    <link rel="icon" type="image/png" href="imagens/favicon.png" />
+    <link rel="stylesheet" href="css/index.css" />
+
+    <!-- SDK EmailJS -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
+    ></script>
+    <script type="text/javascript">
+      (function () {
+        emailjs.init("qILWc7fZNcdCMEaqj");
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- Proteção de Acesso ao Hub -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token_jwt");
+        const userStr = localStorage.getItem("utilizador_ativo");
+
+        if (
+          !token ||
+          token === "undefined" ||
+          token === "null" ||
+          !userStr ||
+          userStr === "undefined" ||
+          userStr === "null"
+        ) {
+          localStorage.removeItem("token_jwt");
+          localStorage.removeItem("utilizador_ativo");
+          window.location.replace("login.html");
+        }
+      });
+    </script>
+
+    <!-- Barra de Progresso de Scroll -->
+    <div id="barra-progresso"></div>
+
+    <!-- CONTEÚDO DO HUB -->
+    <div id="hub-principal">
+      <header>
+        <div class="server-status-container">
+          <span id="ponto-servidor" class="ponto-status offline"></span>
+          <span id="texto-servidor" class="texto-status">OFFLINE</span>
+        </div>
+
+        <div class="logo-container">
+          <svg
+            class="logo-header"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 200 200"
+            width="160"
+            height="160"
+          >
+            <defs>
+              <filter
+                id="glow-red"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="140%"
+              >
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            <path
+              d="M100 10 L115 85 L190 100 L115 115 L100 190 L85 115 L10 100 L85 85 Z"
+              fill="#050505"
+              stroke="#ff0033"
+              stroke-width="3"
+              filter="url(#glow-red)"
+            />
+            <path
+              d="M100 50 L106 94 L150 100 L106 106 L100 150 L94 106 L50 100 L94 94 Z"
+              fill="#ff0033"
+            />
+            <circle cx="100" cy="100" r="12" fill="#ffffff" />
+            <circle cx="100" cy="100" r="5" fill="#000000" />
+          </svg>
+        </div>
+
+        <h1 data-text="HUB PESSOAL">MUSIC HUB</h1>
+
+        <div id="relogio-hud">00:00:00</div>
+
+        <nav>
+          <a href="#musica">Música</a>
+          <a href="comunidade.html">Comunidade</a>
+          <a href="#albuns">Álbuns</a>
+        </nav>
+
+        <div class="painel-controlo">
+          <button class="btn-hud" onclick="vibeAleatoria()">RANDOM VIBE</button>
+          <button class="btn-hud" onclick="abrirPerfil()">PERFIL</button>
+          <button class="btn-hud" onclick="terminarSessao()">LOGOUT</button>
+        </div>
+      </header>
+
+      <main>
+        <!-- SECÇÃO: HUD STAT BOX -->
+        <section class="seccao-stats">
+          <div class="hud-stats-box">
+            <div class="stat-item">
+              <span class="stat-rotulo">ARTISTAS</span>
+              <span id="stat-artistas" class="stat-valor">0</span>
+            </div>
+            <div class="stat-divisor"></div>
+            <div class="stat-item">
+              <span class="stat-rotulo">ÁLBUNS</span>
+              <span id="stat-albuns" class="stat-valor">0</span>
+            </div>
+            <div class="stat-divisor"></div>
+            <div class="stat-item">
+              <span class="stat-rotulo">TOP ARTISTA</span>
+              <span id="stat-top-artista" class="stat-valor">—</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- FILTROS POR CATEGORIA -->
+        <div class="filtros-categoria">
+          <button
+            type="button"
+            class="btn-filtro ativo"
+            onclick="filtrarCategoria('tudo', this)"
+          >
+            VER TUDO
+          </button>
+          <button
+            type="button"
+            class="btn-filtro"
+            onclick="filtrarCategoria('musica', this)"
+          >
+            ARTISTAS
+          </button>
+          <button
+            type="button"
+            class="btn-filtro"
+            onclick="filtrarCategoria('albuns', this)"
+          >
+            ÁLBUNS
+          </button>
+        </div>
+
+        <!-- SECÇÃO: PERFIL DE UTILIZADOR -->
+        <section id="seccao-perfil" class="seccao" style="display: none">
+          <h2>DEFINIÇÕES DE PERFIL</h2>
+
+          <div class="caixa-perfil">
+            <div class="perfil-topo">
+              <div class="container-pfp">
+                <img
+                  id="pfp-preview"
+                  src="imagens/pfp.png"
+                  alt="Foto de Perfil"
+                />
+                <input
+                  type="file"
+                  id="input-pfp"
+                  accept="image/*"
+                  onchange="carregarPFP(event)"
+                  style="display: none"
+                />
+                <button
+                  type="button"
+                  class="btn-quote"
+                  onclick="document.getElementById('input-pfp').click()"
+                >
+                  MUDAR FOTO
+                </button>
+              </div>
+
+              <div class="stats-sociais-perfil">
+                <div class="stat-item">
+                  <span id="total-seguidores" class="num-stat">0</span>
+                  <span class="label-stat">SEGUIDORES</span>
+                </div>
+                <div class="stat-divisor"></div>
+                <div class="stat-item">
+                  <span id="total-seguindo" class="num-stat">0</span>
+                  <span class="label-stat">A SEGUIR</span>
+                </div>
+              </div>
+            </div>
+
+            <form id="form-perfil" onsubmit="guardarPerfil(event)">
+              <div class="campo-perfil">
+                <label>NOME DE UTILIZADOR</label>
+                <input type="text" id="perfil-username" />
+              </div>
+
+              <div class="campo-perfil">
+                <label>EMAIL</label>
+                <input
+                  type="email"
+                  id="perfil-email"
+                  placeholder="exemplo@email.com"
+                />
+              </div>
+
+              <div class="campo-perfil">
+                <label>NOVA PALAVRA-PASSE (OPCIONAL)</label>
+                <div class="campo-pass">
+                  <input
+                    type="password"
+                    id="perfil-password"
+                    placeholder="Deixar em branco para manter"
+                  />
+                  <span
+                    class="toggle-pass"
+                    onclick="toggleVisibilidadePass('perfil-password', this)"
+                    >👁</span
+                  >
+                </div>
+              </div>
+
+              <div class="seccao-favoritos-perfil">
+                <h3>ARTISTAS FAVORITOS</h3>
+                <div
+                  id="lista-favoritos-artistas"
+                  class="grelha-favoritos"
+                ></div>
+
+                <h3>ÁLBUNS FAVORITOS</h3>
+                <div id="lista-favoritos-albuns" class="grelha-favoritos"></div>
+              </div>
+
+              <div class="acoes-perfil">
+                <button type="submit" class="btn-hud btn-principal">
+                  GUARDAR ALTERAÇÕES
+                </button>
+                <button
+                  type="button"
+                  class="btn-hud btn-perigo"
+                  onclick="eliminarPropriaConta()"
+                >
+                  ELIMINAR MINHA CONTA
+                </button>
+                <button type="button" class="btn-hud" onclick="fecharPerfil()">
+                  VOLTAR
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- SECÇÃO: PESQUISA & QUOTES -->
+        <section class="seccao-topo-main">
+          <div class="caixa-pesquisa">
+            <input
+              type="text"
+              id="campo-pesquisa"
+              placeholder="Pesquisar artista ou álbum..."
+              onkeyup="filtrarCartoes()"
+            />
+          </div>
+
+          <div class="caixa-quote">
+            <p id="texto-quote">
+              "Should've known this shit was not real when it started"
+            </p>
+            <span id="autor-quote">— PLAYBOI CARTI - OVER</span>
+            <button class="btn-quote" onclick="gerarQuote()">
+              GERAR QUOTE
+            </button>
+          </div>
+        </section>
+
+        <!-- SECÇÃO: MÚSICA -->
+        <section id="musica" class="seccao">
+          <h2>Artistas Favoritos</h2>
+          <div class="grelha">
+            <!-- Lon3r Johny -->
+            <div class="cartao" data-artista="lon3r">
+              <div class="top-cartao">
+                <div class="status-indicator">
+                  <span class="ponto-pisca"></span> REC 4K
+                </div>
+                <div class="acoes-cartao">
+                  <button
+                    id="btn-like-lon3r"
+                    class="btn-like"
+                    onclick="darLike(this, 'lon3r')"
+                  >
+                    ♥ <span id="count-like-lon3r" class="contador">0</span>
+                  </button>
+                  <button
+                    class="btn-share"
+                    onclick="
+                      copiarLink(
+                        'https://open.spotify.com/artist/1fV7Au7ymGP3uhDV1TfjSd',
+                      )
+                    "
+                  >
+                    SHARE
+                  </button>
+                </div>
+              </div>
+              <img
+                class="imagem-cartao"
+                src="imagens/lon3r.png"
+                alt="Lon3r Johny"
+              />
+              <h3>Lon3r Johny</h3>
+              <p>Data de Nascimento: 22 de Março de 1994</p>
+              <div class="tags-container"></div>
+              <iframe
+                src="https://open.spotify.com/embed/artist/1fV7Au7ymGP3uhDV1TfjSd?utm_source=generator"
+                width="100%"
+                height="352"
+                frameborder="0"
+                allowfullscreen=""
+                allow="
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  fullscreen;
+                  picture-in-picture;
+                "
+                loading="lazy"
+              ></iframe>
+              <div class="rating-box" data-item="lon3r">
+                <div class="estrelas-container">
+                  <span class="estrela" onclick="submeterRating('lon3r', 1)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('lon3r', 2)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('lon3r', 3)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('lon3r', 4)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('lon3r', 5)"
+                    >★</span
+                  >
+                </div>
+                <span class="rating-info" id="info-rating-lon3r"
+                  >0.0 ★ (0)</span
+                >
+              </div>
+            </div>
+
+            <!-- Playboi Carti -->
+            <div class="cartao" data-artista="carti">
+              <div class="top-cartao">
+                <div class="status-indicator">
+                  <span class="ponto-pisca"></span> REC 4K
+                </div>
+                <div class="acoes-cartao">
+                  <button
+                    id="btn-like-carti"
+                    class="btn-like"
+                    onclick="darLike(this, 'carti')"
+                  >
+                    ♥ <span id="count-like-carti" class="contador">0</span>
+                  </button>
+                  <button
+                    class="btn-share"
+                    onclick="
+                      copiarLink(
+                        'https://open.spotify.com/artist/699OTQXzgjhIYAHMy9RyPD',
+                      )
+                    "
+                  >
+                    SHARE
+                  </button>
+                </div>
+              </div>
+              <img
+                class="imagem-cartao"
+                src="imagens/carti.png"
+                alt="Playboi Carti"
+              />
+              <h3>Playboi Carti</h3>
+              <p>Data de Nascimento: 13 de setembro de 1995</p>
+              <div class="tags-container"></div>
+              <iframe
+                src="https://open.spotify.com/embed/artist/699OTQXzgjhIYAHMy9RyPD?utm_source=generator"
+                width="100%"
+                height="352"
+                frameborder="0"
+                allowfullscreen=""
+                allow="
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  fullscreen;
+                  picture-in-picture;
+                "
+                loading="lazy"
+              ></iframe>
+              <div class="rating-box" data-item="carti">
+                <div class="estrelas-container">
+                  <span class="estrela" onclick="submeterRating('carti', 1)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('carti', 2)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('carti', 3)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('carti', 4)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('carti', 5)"
+                    >★</span
+                  >
+                </div>
+                <span class="rating-info" id="info-rating-carti"
+                  >0.0 ★ (0)</span
+                >
+              </div>
+            </div>
+
+            <!-- Ken Carson -->
+            <div class="cartao" data-artista="ken">
+              <div class="top-cartao">
+                <div class="status-indicator">
+                  <span class="ponto-pisca"></span> REC 4K
+                </div>
+                <div class="acoes-cartao">
+                  <button
+                    id="btn-like-ken"
+                    class="btn-like"
+                    onclick="darLike(this, 'ken')"
+                  >
+                    ♥ <span id="count-like-ken" class="contador">0</span>
+                  </button>
+                  <button
+                    class="btn-share"
+                    onclick="
+                      copiarLink(
+                        'https://open.spotify.com/artist/3gBZUcNeVumkeeJ19CY2sX',
+                      )
+                    "
+                  >
+                    SHARE
+                  </button>
+                </div>
+              </div>
+              <img
+                class="imagem-cartao"
+                src="imagens/ken.png"
+                alt="Ken Carson"
+              />
+              <h3>Ken Carson</h3>
+              <p>Data de Nascimento: 11 de Abril de 2000</p>
+              <div class="tags-container"></div>
+              <iframe
+                src="https://open.spotify.com/embed/artist/3gBZUcNeVumkeeJ19CY2sX?utm_source=generator"
+                width="100%"
+                height="352"
+                frameborder="0"
+                allowfullscreen=""
+                allow="
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  fullscreen;
+                  picture-in-picture;
+                "
+                loading="lazy"
+              ></iframe>
+              <div class="rating-box" data-item="ken">
+                <div class="estrelas-container">
+                  <span class="estrela" onclick="submeterRating('ken', 1)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('ken', 2)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('ken', 3)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('ken', 4)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('ken', 5)"
+                    >★</span
+                  >
+                </div>
+                <span class="rating-info" id="info-rating-ken">0.0 ★ (0)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECÇÃO: ÁLBUNS FAVORITOS -->
+        <section id="albuns" class="seccao">
+          <h2>Álbuns Favoritos</h2>
+          <div class="grelha">
+            <!-- 94 -->
+            <div class="cartao">
+              <div class="top-cartao">
+                <div class="status-indicator">
+                  <span class="ponto-pisca"></span> REC 4K
+                </div>
+                <div class="acoes-cartao">
+                  <button
+                    id="btn-like-album_94"
+                    class="btn-like"
+                    onclick="darLike(this, 'album_94')"
+                  >
+                    ♥ <span id="count-like-album_94" class="contador">0</span>
+                  </button>
+                  <button
+                    class="btn-share"
+                    onclick="
+                      copiarLink(
+                        'https://open.spotify.com/album/0NqDtwq1iiuEqNrL0mkePy',
+                      )
+                    "
+                  >
+                    SHARE
+                  </button>
+                </div>
+              </div>
+              <img class="imagem-cartao" src="imagens/94.png" alt="94" />
+              <h3>94</h3>
+              <p>Lon3r Johny (2026)</p>
+              <iframe
+                src="https://open.spotify.com/embed/album/0NqDtwq1iiuEqNrL0mkePy?utm_source=generator"
+                width="100%"
+                height="152"
+                frameborder="0"
+                allowfullscreen=""
+                allow="
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  fullscreen;
+                  picture-in-picture;
+                "
+                loading="lazy"
+              ></iframe>
+              <div class="rating-box" data-item="album_94">
+                <div class="estrelas-container">
+                  <span class="estrela" onclick="submeterRating('album_94', 1)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_94', 2)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_94', 3)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_94', 4)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_94', 5)"
+                    >★</span
+                  >
+                </div>
+                <span class="rating-info" id="info-rating-album_94"
+                  >0.0 ★ (0)</span
+                >
+              </div>
+            </div>
+
+            <!-- Whole Lotta Red -->
+            <div class="cartao">
+              <div class="top-cartao">
+                <div class="status-indicator">
+                  <span class="ponto-pisca"></span> REC 4K
+                </div>
+                <div class="acoes-cartao">
+                  <button
+                    id="btn-like-album_wlr"
+                    class="btn-like"
+                    onclick="darLike(this, 'album_wlr')"
+                  >
+                    ♥ <span id="count-like-album_wlr" class="contador">0</span>
+                  </button>
+                  <button
+                    class="btn-share"
+                    onclick="
+                      copiarLink(
+                        'https://open.spotify.com/album/2QRedhP5RmKJiJ1i8VgDGR',
+                      )
+                    "
+                  >
+                    SHARE
+                  </button>
+                </div>
+              </div>
+              <img
+                class="imagem-cartao"
+                src="imagens/wlr.png"
+                alt="Whole Lotta Red"
+              />
+              <h3>Whole Lotta Red</h3>
+              <p>Playboi Carti (2020)</p>
+              <iframe
+                src="https://open.spotify.com/embed/album/2QRedhP5RmKJiJ1i8VgDGR?utm_source=generator"
+                width="100%"
+                height="152"
+                frameborder="0"
+                allowfullscreen=""
+                allow="
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  fullscreen;
+                  picture-in-picture;
+                "
+                loading="lazy"
+              ></iframe>
+              <div class="rating-box" data-item="album_wlr">
+                <div class="estrelas-container">
+                  <span class="estrela" onclick="submeterRating('album_wlr', 1)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_wlr', 2)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_wlr', 3)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_wlr', 4)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_wlr', 5)"
+                    >★</span
+                  >
+                </div>
+                <span class="rating-info" id="info-rating-album_wlr"
+                  >0.0 ★ (0)</span
+                >
+              </div>
+            </div>
+
+            <!-- A Great Chaos -->
+            <div class="cartao">
+              <div class="top-cartao">
+                <div class="status-indicator">
+                  <span class="ponto-pisca"></span> REC 4K
+                </div>
+                <div class="acoes-cartao">
+                  <button
+                    id="btn-like-album_agc"
+                    class="btn-like"
+                    onclick="darLike(this, 'album_agc')"
+                  >
+                    ♥ <span id="count-like-album_agc" class="contador">0</span>
+                  </button>
+                  <button
+                    class="btn-share"
+                    onclick="
+                      copiarLink(
+                        'https://open.spotify.com/album/58iEeJbYd6OBGRM0TiwltL',
+                      )
+                    "
+                  >
+                    SHARE
+                  </button>
+                </div>
+              </div>
+              <img
+                class="imagem-cartao"
+                src="imagens/agc.png"
+                alt="A Great Chaos"
+              />
+              <h3>A Great Chaos (Deluxe)</h3>
+              <p>Ken Carson (2024)</p>
+              <iframe
+                src="https://open.spotify.com/embed/album/58iEeJbYd6OBGRM0TiwltL?utm_source=generator"
+                width="100%"
+                height="152"
+                frameborder="0"
+                allowfullscreen=""
+                allow="
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  fullscreen;
+                  picture-in-picture;
+                "
+                loading="lazy"
+              ></iframe>
+              <div class="rating-box" data-item="album_agc">
+                <div class="estrelas-container">
+                  <span class="estrela" onclick="submeterRating('album_agc', 1)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_agc', 2)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_agc', 3)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_agc', 4)"
+                    >★</span
+                  >
+                  <span class="estrela" onclick="submeterRating('album_agc', 5)"
+                    >★</span
+                  >
+                </div>
+                <span class="rating-info" id="info-rating-album_agc"
+                  >0.0 ★ (0)</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- SECÇÃO: PAINEL DE ADMINISTRAÇÃO -->
+      <div id="seccao-admin" style="display: none">
+        <h2>PAINEL DE ADMINISTRAÇÃO</h2>
+
+        <div class="stats-admin-container">
+          <div class="card-stat">
+            <span class="stat-num" id="stat-total-users">0</span>
+            <span class="stat-label">UTILIZADORES</span>
+          </div>
+          <div class="card-stat">
+            <span class="stat-num" id="stat-total-mods">0</span>
+            <span class="stat-label">MODERADORES</span>
+          </div>
+          <div class="card-stat">
+            <span class="stat-num" id="stat-total-likes">0</span>
+            <span class="stat-label">TOTAL DE LIKES</span>
+          </div>
+        </div>
+
+        <div class="controles-admin">
+          <input
+            type="text"
+            id="pesquisa-admin"
+            placeholder="🔍 Pesquisar por username, e-mail ou cargo..."
+            onkeyup="filtrarUtilizadores()"
+          />
+          <button
+            type="button"
+            class="btn-hud"
+            onclick="carregarUtilizadoresAdmin()"
+          >
+            🔄 ATUALIZAR
+          </button>
+          <button
+            type="button"
+            class="btn-hud"
+            onclick="exportarDadosAdmin('csv')"
+          >
+            📥 EXPORTAR CSV
+          </button>
+          <button
+            type="button"
+            class="btn-hud"
+            onclick="exportarDadosAdmin('json')"
+          >
+            📥 EXPORTAR JSON
+          </button>
+        </div>
+
+        <table class="tabela-admin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>USERNAME</th>
+              <th>E-MAIL</th>
+              <th>CARGO</th>
+              <th>MODERAÇÃO</th>
+              <th>AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="lista-utilizadores-body"></tbody>
+        </table>
+
+        <h3>LOG DE ATIVIDADES</h3>
+        <table class="tabela-admin">
+          <thead>
+            <tr>
+              <th>DATA</th>
+              <th>AUTOR</th>
+              <th>AÇÃO</th>
+              <th>ALVO</th>
+            </tr>
+          </thead>
+          <tbody id="lista-logs-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Modal de Confirmação Personalizado -->
+      <div id="modal-confirmacao" class="modal-overlay">
+        <div class="caixa-modal-confirm">
+          <h3 id="modal-confirm-titulo">CONFIRMAÇÃO</h3>
+          <p id="modal-confirm-texto">Tens a certeza que queres prosseguir?</p>
+
+          <div class="acoes-modal-confirm">
+            <button type="button" id="btn-modal-cancelar" class="btn-hud-modal">
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              id="btn-modal-confirmar"
+              class="btn-hud-modal btn-perigo"
+            >
+              CONFIRMAR
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>© 2026 - HUB PESSOAL</p>
+        <div class="redes-sociais">
+          <a
+            href="https://guns.lol/yvllima36"
+            target="_blank"
+            class="botao-redes"
+          >
+            About Me
+          </a>
+        </div>
+      </footer>
+
+      <button id="btn-topo" onclick="voltarAoTopo()">↑</button>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+      <span class="ponto-pisca"></span>
+      <span id="toast-mensagem">LINK COPIADO COM SUCESSO</span>
+    </div>
+
+    <!-- Scripts JS -->
+    <script src="js/index.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/comunidade.js"></script>
+  </body>
+</html>

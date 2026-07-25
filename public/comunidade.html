@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comunidade - Music Hub</title>
+    <link rel="stylesheet" href="css/comunidade.css" />
+  </head>
+  <body>
+    <header style="text-align: center; padding: 20px">
+      <h1 style="color: #ff0033; letter-spacing: 2px">MUSIC HUB</h1>
+      <nav style="margin-top: 15px">
+        <a href="index.html" class="btn-hud">VOLTAR À HOME</a>
+      </nav>
+    </header>
+
+    <main class="seccao">
+      <h2>MEMBROS DA COMUNIDADE</h2>
+      <div
+        class="caixa-perfil"
+        style="max-width: 900px; margin: 0 auto; width: 92%"
+      >
+        <div id="lista-comunidade" class="grelha-comunidade-lista">
+          <!-- Utilizadores injetados via JS -->
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL PERFIL COMPLETO -->
+    <div
+      id="modal-ver-perfil"
+      class="modal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      "
+    >
+      <div
+        class="caixa-perfil"
+        style="max-width: 500px; width: 90%; position: relative"
+      >
+        <button
+          type="button"
+          class="btn-fechar-modal"
+          onclick="fecharModalPerfil()"
+          title="Fechar"
+        >
+          ✕
+        </button>
+
+        <div class="perfil-topo">
+          <img
+            id="out-pfp"
+            src="imagens/pfp.png"
+            style="
+              width: 80px;
+              height: 80px;
+              border-radius: 50%;
+              border: 2px solid #ff0033;
+              object-fit: cover;
+            "
+          />
+          <h3 id="out-username" style="color: #fff; margin-top: 10px">---</h3>
+
+          <div class="stats-sociais-perfil" style="margin-top: 15px">
+            <div class="stat-item">
+              <span id="out-seguidores" class="num-stat">0</span>
+              <span class="label-stat">SEGUIDORES</span>
+            </div>
+            <div class="stat-divisor"></div>
+            <div class="stat-item">
+              <span id="out-seguindo" class="num-stat">0</span>
+              <span class="label-stat">A SEGUIR</span>
+            </div>
+          </div>
+
+          <button
+            id="out-btn-seguir"
+            class="btn-hud btn-principal"
+            style="margin-top: 15px"
+          >
+            SEGUIR
+          </button>
+        </div>
+
+        <div class="seccao-favoritos-perfil">
+          <h3>ARTISTAS FAVORITOS</h3>
+          <div id="out-favoritos-artistas" class="grelha-favoritos"></div>
+
+          <h3 style="margin-top: 15px">ÁLBUNS FAVORITOS</h3>
+          <div id="out-favoritos-albuns" class="grelha-favoritos"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/index.js"></script>
+    <script src="js/login.js"></script>
+    <script src="js/comunidade.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        if (typeof carregarPaginaComunidade === "function") {
+          carregarPaginaComunidade();
+        }
+      });
+    </script>
+  </body>
+</html>

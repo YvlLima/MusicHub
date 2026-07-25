@@ -1,0 +1,163 @@
+/* ==========================================
+   ESTILOS EXCLUSIVOS DA PÁGINA DE LOGIN/REGISTO
+   ========================================== */
+
+#seccao-auth {
+  min-height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.caixa-auth {
+  background-color: #0d0d0d;
+  border: 1px solid #1a1a1a;
+  border-top: 3px solid #ff0033;
+  padding: 40px 30px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 0 30px rgba(255, 0, 51, 0.15);
+  backdrop-filter: blur(5px);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.caixa-auth:hover {
+  box-shadow: 0 0 35px rgba(255, 0, 51, 0.25);
+  transform: translateY(-2px);
+}
+
+#titulo-auth {
+  color: #ffffff;
+  font-size: 1.4rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 0, 51, 0.5);
+}
+
+#form-auth {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#form-auth input {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #050505;
+  border: 1px solid #222222;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  outline: none;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+#form-auth input:focus {
+  border-color: #ff0033;
+  box-shadow: 0 0 12px rgba(255, 0, 51, 0.4);
+  background-color: #080808;
+}
+
+#form-auth input::placeholder {
+  color: #666666;
+}
+
+.campo-pass {
+  position: relative;
+  width: 100%;
+}
+
+.campo-pass input {
+  padding-right: 42px !important;
+}
+
+.toggle-pass {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  color: #ff0033;
+  font-size: 1.1rem;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.toggle-pass:hover {
+  transform: translateY(-50%) scale(1.15);
+}
+
+.btn-auth {
+  background-color: #ff0033;
+  color: #000000;
+  border: none;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: all 0.3s ease;
+}
+
+.btn-auth:hover {
+  background-color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.troca-auth {
+  font-size: 0.75rem;
+  color: #888888;
+  letter-spacing: 1px;
+}
+
+.troca-auth a {
+  color: #ff0033;
+  text-decoration: none;
+  font-weight: bold;
+  margin-left: 6px;
+  transition: text-shadow 0.2s ease;
+}
+
+.troca-auth a:hover {
+  text-shadow: 0 0 8px #ff0033;
+}
+
+/* Registo - Foto de Perfil */
+.registo-pfp-box {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.registo-pfp-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #ff0033;
+  object-fit: cover;
+  margin-bottom: 10px;
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.4);
+}
+
+@media (max-width: 480px) {
+  .caixa-auth {
+    padding: 30px 20px;
+  }
+}

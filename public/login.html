@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Hub - Login</title>
+    <link rel="icon" type="image/png" href="imagens/favicon.png" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/login.css" />
+
+    <!-- EmailJS -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
+    ></script>
+    <script type="text/javascript">
+      (function () {
+        emailjs.init("qILWc7fZNcdCMEaqj");
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- PÁGINA DE AUTENTICAÇÃO (LOGIN / REGISTO) -->
+    <section id="seccao-auth">
+      <div class="caixa-auth">
+        <div class="logo-container">
+          <svg
+            class="logo-header"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 200 200"
+            width="120"
+            height="120"
+          >
+            <path
+              d="M100 10 L115 85 L190 100 L115 115 L100 190 L85 115 L10 100 L85 85 Z"
+              fill="#050505"
+              stroke="#ff0033"
+              stroke-width="3"
+            />
+            <path
+              d="M100 50 L106 94 L150 100 L106 106 L100 150 L94 106 L50 100 L94 94 Z"
+              fill="#ff0033"
+            />
+            <circle cx="100" cy="100" r="12" fill="#ffffff" />
+            <circle cx="100" cy="100" r="5" fill="#000000" />
+          </svg>
+        </div>
+
+        <h2 id="titulo-auth">ENTRAR NO HUB</h2>
+
+        <form id="form-auth" onsubmit="processarAuth(event)">
+          <!-- Foto de Perfil no Registo -->
+          <div
+            id="campo-registo-pfp"
+            class="registo-pfp-box"
+            style="display: none"
+          >
+            <img
+              id="preview-registo-pfp"
+              class="registo-pfp-preview"
+              src="imagens/pfp.png"
+              alt="PFP"
+            /><br />
+            <input
+              type="file"
+              id="input-registo-pfp"
+              accept="image/*"
+              onchange="carregarPFPRegisto(event)"
+              style="display: none"
+            />
+            <button
+              type="button"
+              class="btn-quote"
+              onclick="document.getElementById('input-registo-pfp').click()"
+            >
+              MUDAR FOTO
+            </button>
+          </div>
+
+          <!-- Nome de Utilizador -->
+          <input
+            type="text"
+            id="auth-username"
+            placeholder="NOME DE UTILIZADOR"
+            required
+          />
+
+          <!-- Email (Registo) -->
+          <input
+            type="email"
+            id="auth-email"
+            placeholder="E-MAIL"
+            style="display: none"
+          />
+
+          <!-- Palavra-Passe -->
+          <div class="campo-pass">
+            <input
+              type="password"
+              id="auth-password"
+              placeholder="PALAVRA-PASSE"
+              required
+            />
+            <span
+              class="toggle-pass"
+              onclick="toggleVisibilidadePass('auth-password', this)"
+              >👁</span
+            >
+          </div>
+
+          <!-- Confirmar Palavra-Passe (Registo) -->
+          <div
+            class="campo-pass"
+            id="container-confirm-pass"
+            style="display: none"
+          >
+            <input
+              type="password"
+              id="auth-confirm-password"
+              placeholder="CONFIRMAR PALAVRA-PASSE"
+            />
+            <span
+              class="toggle-pass"
+              onclick="toggleVisibilidadePass('auth-confirm-password', this)"
+              >👁</span
+            >
+          </div>
+
+          <button type="submit" class="btn-auth" id="btn-submit-auth">
+            ENTRAR
+          </button>
+        </form>
+
+        <p class="troca-auth">
+          <span id="texto-troca-auth">Ainda não tens conta?</span>
+          <a href="#" onclick="alternarModoAuth(event)" id="link-troca-auth"
+            >Registar</a
+          >
+        </p>
+      </div>
+    </section>
+
+    <!-- Toast Notification Global -->
+    <div id="toast" class="toast">
+      <span class="ponto-pisca"></span>
+      <span id="toast-mensagem">NOTIFICAÇÃO</span>
+    </div>
+
+    <!-- Scripts JS -->
+    <script src="js/index.js"></script>
+    <script src="js/login.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token_jwt");
+        const user = localStorage.getItem("utilizador_ativo");
+
+        // Só redireciona se AMBOS existirem e forem válidos
+        if (token && token !== "undefined" && user && user !== "undefined") {
+          window.location.replace("index.html");
+        }
+      });
+    </script>
+  </body>
+</html>
