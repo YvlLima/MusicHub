@@ -919,9 +919,14 @@ app.post("/api/candidaturas/submit", autenticarToken, async (req, res) => {
 
   try {
     if (tipo === "artista") {
-      if (!artist_name || !artist_photo || !artist_profile) {
+      if (
+        !artist_name ||
+        !artist_birthdate ||
+        !artist_photo ||
+        !artist_profile
+      ) {
         return res.status(400).json({
-          erro: "Nome do artista, foto e perfil são obrigatórios.",
+          erro: "Nome do artista, data de nascimento, foto e perfil são obrigatórios.",
         });
       }
 

@@ -816,6 +816,7 @@ async function submeterCandidatura(e) {
 
   let payload = {};
 
+  // Dentro da função submeterCandidatura(e) em index.js:
   if (tipoCandidaturaSelecionado === "artista") {
     const artist_name = document
       .getElementById("candidatura-artist-name")
@@ -833,15 +834,17 @@ async function submeterCandidatura(e) {
       null;
 
     if (!artist_name) return mostrarToast("PREENCHE O NOME DO ARTISTA!");
+    if (!artist_birthdate)
+      return mostrarToast("PREENCHE A DATA DE NASCIMENTO!");
     if (!artist_photo) return mostrarToast("CARREGA UMA FOTO DO ARTISTA!");
     if (!artist_profile) return mostrarToast("PREENCHE O PERFIL DO ARTISTA!");
 
     payload = {
       tipo: "artista",
       artist_name,
+      artist_birthdate,
       artist_photo,
       artist_profile,
-      artist_birthdate,
       genre,
       description,
     };
