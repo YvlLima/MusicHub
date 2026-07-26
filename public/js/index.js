@@ -893,6 +893,8 @@ async function submeterCandidatura(e) {
     };
   }
 
+  console.log("Payload da candidatura a enviar:", payload);
+
   try {
     const resposta = await fetch(`${API_URL}/candidaturas/submit`, {
       method: "POST",
@@ -903,14 +905,25 @@ async function submeterCandidatura(e) {
       body: JSON.stringify(payload),
     });
 
-    const dados = await resposta.json();
+    let dados;
+    try {
+      dados = await resposta.json();
+    } catch (parseErr) {
+      console.error("Erro ao interpretar resposta do servidor:", parseErr);
+      mostrarToast("RESPOSTA INVÁLIDA DO SERVIDOR! Vê a consola (F12).");
+      return;
+    }
 
-    if (!resposta.ok) return mostrarToast(dados.erro || "ERRO!");
+    if (!resposta.ok) {
+      console.error("Erro ao submeter candidatura:", dados);
+      return mostrarToast(dados.erro || `ERRO! (status ${resposta.status})`);
+    }
 
     mostrarToast("✓ CANDIDATURA SUBMETIDA COM SUCESSO!");
     fecharModalCandidatura();
   } catch (err) {
-    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+    console.error("Erro ao submeter candidatura:", err);
+    mostrarToast(`ERRO DE LIGAÇÃO: ${err.message || err}`);
   }
 }
 
