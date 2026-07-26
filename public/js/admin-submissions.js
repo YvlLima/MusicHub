@@ -80,12 +80,7 @@ function renderizarCandidaturas(candidaturas) {
 }
 
 function criarCartaoCandidatura(cand) {
-  const statusEmoji = {
-    pendente: "⏳",
-    aprovado: "✓",
-    rejeitado: "✗",
-  };
-
+  const statusEmoji = { pendente: "⏳", aprovado: "✓", rejeitado: "✗" };
   const statusColor = {
     pendente: "#ff9900",
     aprovado: "#00ff00",
@@ -94,33 +89,19 @@ function criarCartaoCandidatura(cand) {
 
   const emoji = statusEmoji[cand.status] || "❓";
   const cor = statusColor[cand.status] || "#888888";
-
   const dataSubmissao = new Date(cand.submitted_date).toLocaleDateString(
     "pt-PT",
   );
-  const dataRevisao = cand.reviewed_date
-    ? new Date(cand.reviewed_date).toLocaleDateString("pt-PT")
-    : "—";
 
   let botoesAcao = "";
   if (cand.status === "pendente") {
     botoesAcao = `
-      <button class="btn-aprovar" onclick="aprovarCandidatura(${cand.id})">
-        ✓ APROVAR
-      </button>
-      <button class="btn-rejeitar" onclick="abrirModalRejeicao(${cand.id})">
-        ✗ REJEITAR
-      </button>
+      <button class="btn-aprovar" onclick="aprovarCandidatura(${cand.id})">✓ APROVAR</button>
+      <button class="btn-rejeitar" onclick="abrirModalRejeicao(${cand.id})">✗ REJEITAR</button>
     `;
   }
+  botoesAcao += `<button class="btn-historico" onclick="carregarHistoricoCandidatura(${cand.id})">📜 HISTÓRICO</button>`;
 
-  botoesAcao += `
-    <button class="btn-historico" onclick="carregarHistoricoCandidatura(${cand.id})">
-      📜 HISTÓRICO
-    </button>
-  `;
-
-  // Determinar imagem a mostrar
   const imagem =
     cand.tipo === "artista" && cand.artist_photo
       ? cand.artist_photo
@@ -128,69 +109,47 @@ function criarCartaoCandidatura(cand) {
   const imagemMostra =
     imagem && imagem.startsWith("data:image")
       ? `<img src="${imagem}" alt="Capa" class="capa-album-admin" />`
-      : '<div class="capa-album-placeholder">SEM CAPA</div>';
+      : '<div class="capa-album-placeholder">SEM FOTO</div>';
 
-  // Informações adicionais conforme tipo
   let infoAdicional = "";
   if (cand.tipo === "artista") {
     infoAdicional = `
-      ${cand.artist_birthdate ? `<span><strong>DATA DE NASCIMENTO:</strong> ${new Date(cand.artist_birthdate).toLocaleDateString("pt-PT")}</span>` : ""}
-      ${cand.profile_links ? `<span><strong>PERFIL:</strong> <a href="${escapeHTML(cand.profile_links)}" target="_blank" style="color: #ff0033; text-decoration: none;">Abrir</a></span>` : ""}
+      ${cand.artist_birthdate ? `<span><strong>NASCIMENTO:</strong> ${new Date(cand.artist_birthdate).toLocaleDateString("pt-PT")}</span>` : ""}
+      ${cand.profile_links ? `<span><strong>LINK:</strong> <a href="${escapeHTML(cand.profile_links)}" target="_blank" style="color: #ff0033;">Abrir</a></span>` : ""}
     `;
   } else {
     infoAdicional = `
-      ${cand.album_date ? `<span><strong>DATA DO ÁLBUM:</strong> ${new Date(cand.album_date).toLocaleDateString("pt-PT")}</span>` : ""}
-      ${cand.album_link ? `<span><strong>LINK:</strong> <a href="${escapeHTML(cand.album_link)}" target="_blank" style="color: #ff0033; text-decoration: none;">Abrir</a></span>` : ""}
+      ${cand.album_date ? `<span><strong>DATA:</strong> ${new Date(cand.album_date).toLocaleDateString("pt-PT")}</span>` : ""}
+      ${cand.album_link ? `<span><strong>LINK:</strong> <a href="${escapeHTML(cand.album_link)}" target="_blank" style="color: #ff0033;">Abrir</a></span>` : ""}
     `;
   }
-
-  const tipoEmoji = cand.tipo === "artista" ? "👤" : "💿";
 
   return `
     <div class="cartao-candidatura">
       <div class="cabecalho-cartao">
         <div class="info-status">
-          <span class="status-badge" style="color: ${cor};">${emoji} ${cand.status.toUpperCase()}</span>
-          <span class="tipo-candidatura" style="color: #0066ff;">${tipoEmoji} ${cand.tipo.toUpperCase()}</span>
-          <span class="data-submissao">Enviada: ${dataSubmissao}</span>
+          <span style="color: ${cor};">${emoji} ${cand.status.toUpperCase()}</span>
+          <span style="color: #0066ff;">${cand.tipo === "artista" ? "👤 ARTISTA" : "💿 ÁLBUM"}</span>
+          <span class="data-submissao">Submetido em ${dataSubmissao} por <strong>${escapeHTML(cand.submitted_by)}</strong></span>
         </div>
-        ${
-          cand.reviewed_by
-            ? `<span class="revisado-por">Revisada por ${cand.reviewed_by} em ${dataRevisao}</span>`
-            : ""
-        }
       </div>
 
       <div class="corpo-cartao">
-        <div class="col-esquerda">
-          ${imagemMostra}
-        </div>
+        ${imagemMostra}
 
         <div class="col-direita">
-          <h3>${escapeHTML(cand.artist_name)}</h3>
-          ${cand.album_title ? `<p class="album-title">${escapeHTML(cand.album_title)}</p>` : ""}
+          <h3>${escapeHTML(cand.artist_name)} ${cand.album_title ? `- ${escapeHTML(cand.album_title)}` : ""}</h3>
 
           <div class="info-candidatura">
-            <span><strong>SUBMISSÃO POR:</strong> ${escapeHTML(cand.submitted_by)}</span>
             ${cand.genre ? `<span><strong>GÉNERO:</strong> ${escapeHTML(cand.genre)}</span>` : ""}
             ${infoAdicional}
           </div>
 
-          ${
-            cand.description
-              ? `<p class="descricao">${escapeHTML(cand.description)}</p>`
-              : ""
-          }
+          ${cand.description ? `<p class="descricao">${escapeHTML(cand.description)}</p>` : ""}
+        </div>
 
-          ${
-            cand.rejection_reason
-              ? `<div class="motivo-rejeicao"><strong>MOTIVO DA REJEIÇÃO:</strong> ${escapeHTML(cand.rejection_reason)}</div>`
-              : ""
-          }
-
-          <div class="acoes-candidatura">
-            ${botoesAcao}
-          </div>
+        <div class="acoes-candidatura">
+          ${botoesAcao}
         </div>
       </div>
     </div>

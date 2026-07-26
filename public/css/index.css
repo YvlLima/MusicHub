@@ -1269,80 +1269,169 @@ footer p {
   }
 }
 
-/* Organização do Modal de Candidatura */
-#form-candidatura {
+/* Container Geral das Candidaturas */
+#container-candidaturas {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  max-width: 900px;
+  margin: 0 auto;
   width: 100%;
 }
 
-.campo-modal {
+/* Cartão Compacto na Horizontal */
+.cartao-candidatura {
+  background: #0d0d0d;
+  border: 1px solid #1a1a1a;
+  border-left: 4px solid #ff0033;
+  border-radius: 6px;
+  padding: 15px 20px;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
+  gap: 12px;
   text-align: left;
 }
 
-.campo-modal label {
-  display: block;
-  width: 100%;
-  color: #ff0033;
+.cartao-candidatura:hover {
+  border-color: #333333;
+  box-shadow: 0 0 15px rgba(255, 0, 51, 0.2);
+}
+
+.cabecalho-cartao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 8px;
+}
+
+.info-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 0.75rem;
   font-weight: bold;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
 }
 
-.campo-modal input[type="text"],
-.campo-modal input[type="date"],
-.campo-modal textarea {
-  display: block;
-  width: 100% !important;
-  box-sizing: border-box;
+.data-submissao {
+  color: #666666;
+  font-weight: normal;
+}
+
+/* Estrutura Interna Lado a Lado */
+.corpo-cartao {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Imagem Pequena e Fixa */
+.capa-album-admin {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #222222;
+  flex-shrink: 0;
+}
+
+.capa-album-placeholder {
+  width: 70px;
+  height: 70px;
   background: #050505;
   border: 1px solid #222222;
-  color: #ffffff;
-  padding: 10px 12px;
-  font-family: inherit;
-  font-size: 0.85rem;
   border-radius: 4px;
-  outline: none;
-}
-
-.campo-modal input:focus,
-.campo-modal textarea:focus {
-  border-color: #ff0033;
-  box-shadow: 0 0 8px rgba(255, 0, 51, 0.4);
-}
-
-.campo-modal textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-/* Radio Buttons de Seleção */
-.grupo-radio-candidatura {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  width: 100%;
-  margin: 10px 0;
-}
-
-.radio-candidatura {
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: #555;
+  flex-shrink: 0;
 }
 
-/* Imagem e Botão de Escolha */
-.container-preview-capa {
+.col-direita {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+
+.col-direita h3 {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.info-candidatura {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+.info-candidatura strong {
+  color: #ff0033;
+}
+
+.descricao {
+  font-size: 0.75rem;
+  color: #888888;
+  margin: 0;
+  background: #050505;
+  padding: 6px 10px;
+  border-radius: 3px;
+  border-left: 2px solid #333;
+}
+
+/* Botões de Ação Alinhados à Direita */
+.acoes-candidatura {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
   align-items: center;
-  gap: 10px;
-  width: 100%;
+}
+
+.btn-aprovar,
+.btn-rejeitar,
+.btn-historico {
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-aprovar {
+  background: #00aa00;
+  color: #000;
+}
+.btn-aprovar:hover {
+  background: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+}
+
+.btn-rejeitar {
+  background: #ff0033;
+  color: #fff;
+}
+.btn-rejeitar:hover {
+  background: #cc0029;
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.4);
+}
+
+.btn-historico {
+  background: #222;
+  color: #aaa;
+  border: 1px solid #333;
+}
+.btn-historico:hover {
+  color: #fff;
+  border-color: #ff0033;
 }
