@@ -1474,13 +1474,16 @@ footer p {
 }
 
 .btn-perigo {
-  border-color: #ff0033 !important;
-  color: #ff0033 !important;
+  background-color: #ff0033 !important;
+  color: #ffffff !important;
+  border: 1px solid #ff0033 !important;
+  font-weight: bold;
 }
 
 .btn-perigo:hover {
-  background: #ff0033 !important;
-  color: #000000 !important;
+  background-color: #cc0029 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(255, 0, 51, 0.6);
 }
 /* Container relativo para prender o olho no canto direito */
 .campo-pass {
