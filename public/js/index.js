@@ -589,12 +589,13 @@ async function carregarStatsEGlags() {
     const dados = await resposta.json();
     if (!resposta.ok) return;
 
-    document.getElementById("stat-total-users").innerText =
-      dados.stats.totalUsers;
-    document.getElementById("stat-total-mods").innerText =
-      dados.stats.totalMods;
-    document.getElementById("stat-total-likes").innerText =
-      dados.stats.totalLikes;
+    const elTotalUsers = document.getElementById("stat-total-users");
+    const elTotalMods = document.getElementById("stat-total-mods");
+    const elTotalLikes = document.getElementById("stat-total-likes");
+
+    if (elTotalUsers) elTotalUsers.innerText = dados.stats.totalUsers;
+    if (elTotalMods) elTotalMods.innerText = dados.stats.totalMods;
+    if (elTotalLikes) elTotalLikes.innerText = dados.stats.totalLikes;
 
     const tbodyLogs = document.getElementById("lista-logs-body");
     if (tbodyLogs) {

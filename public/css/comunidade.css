@@ -200,7 +200,7 @@ h1 {
 }
 
 /* ==========================================
-   3. MODAL DE PERFIL ANIMADO
+   3. MODAL DE PERFIL ANIMADO E SCROLLÁVEL
    ========================================== */
 #modal-ver-perfil {
   display: none;
@@ -227,6 +227,26 @@ h1 {
   transform: translateY(20px) scale(0.95);
   animation: slideUpModal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transition: all 0.3s ease;
+
+  /* Permite scroll vertical fluido quando o conteúdo excede o tamanho do ecrã */
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  padding-bottom: 30px;
+}
+
+/* Estilização da barra de scroll dentro do modal */
+#modal-ver-perfil .caixa-perfil::-webkit-scrollbar {
+  width: 6px;
+}
+
+#modal-ver-perfil .caixa-perfil::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+#modal-ver-perfil .caixa-perfil::-webkit-scrollbar-thumb {
+  background: #ff0033;
+  border-radius: 3px;
 }
 
 .btn-fechar-modal {
@@ -249,6 +269,7 @@ h1 {
   transition: all 0.25s ease;
   box-shadow: 0 0 10px rgba(255, 0, 51, 0.2);
   outline: none;
+  z-index: 10;
 }
 
 .btn-fechar-modal:hover {
@@ -294,34 +315,59 @@ h1 {
 }
 
 .grelha-favoritos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 14px;
+  margin-top: 15px;
+  width: 100%;
 }
 
-.item-favorito {
-  background: #050505;
-  border: 1px solid #222222;
-  border-radius: 4px;
-  padding: 10px;
-  min-width: 90px;
+/* Mini cartões de favoritos (artista/álbum) */
+.card-mini-fav {
+  background: #0d0d0d;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.item-favorito img {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
+.card-mini-fav:hover {
+  border-color: #ff0033;
+  transform: translateY(-2px);
+}
+
+.card-mini-fav img {
+  width: 74px;
+  height: 74px;
   border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #ff0033;
 }
 
-.item-favorito span {
-  font-size: 0.7rem;
-  color: #ffffff;
+.card-mini-fav span {
+  font-size: 0.78rem;
+  color: #fff;
   text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  width: 100%;
+  font-weight: bold;
+  line-height: 1.25;
+}
+
+/* Linha dos botões VER MAIS/VER TUDO ocupa a largura toda do grid */
+.linha-botoes-fav {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
 }
 
 .badge-fav {
