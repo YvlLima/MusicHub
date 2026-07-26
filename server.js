@@ -546,7 +546,7 @@ app.get(
       );
       // Contar apenas likes de utilizadores que ainda existem na BD
       const totalLikes = await pool.query(
-        "SELECT COUNT(*)::int as total FROM likes WHERE username IN (SELECT username FROM utilizadores)",
+        "SELECT COUNT(DISTINCT item_id)::int as total FROM likes WHERE username IN (SELECT username FROM utilizadores)",
       );
       const logs = await pool.query(
         "SELECT * FROM logs ORDER BY id DESC LIMIT 10",
