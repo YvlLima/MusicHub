@@ -290,8 +290,9 @@ async function carregarLikesBD() {
   const username = user.username || "";
 
   try {
+    // Adicionado /api antes de /likes
     const resposta = await fetch(
-      `${API_URL}/likes?username=${encodeURIComponent(username)}`,
+      `${API_URL}/api/likes?username=${encodeURIComponent(username)}`,
     );
     const dados = await resposta.json();
 
@@ -674,8 +675,9 @@ async function carregarRatingsBD() {
   const username = user.username || "";
 
   try {
+    // Adicionado /api antes de /ratings
     const res = await fetch(
-      `${API_URL}/ratings?username=${encodeURIComponent(username)}`,
+      `${API_URL}/api/ratings?username=${encodeURIComponent(username)}`,
     );
     const dados = await res.json();
     if (!res.ok) return;
@@ -922,7 +924,8 @@ function mostrarInfoSubmissao(submetidoPor, dataSubmissao, aprovadoPor) {
 // Carregar e renderizar artistas e álbuns aprovados no index.html
 async function carregarConteudoAprovado() {
   try {
-    const resposta = await fetch(`${API_URL}/candidaturas/aprovadas`);
+    // Adicionado /api/ antes de candidaturas/aprovadas
+    const resposta = await fetch(`${API_URL}/api/candidaturas/aprovadas`);
     const dados = await resposta.json();
 
     if (!resposta.ok) return;
