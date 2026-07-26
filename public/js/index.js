@@ -1,4 +1,4 @@
-const API_URL = "https://musichub-backend-bf0h.onrender.com";
+const API_URL = "https://musichub-backend-bf0h.onrender.com/api";
 
 // ==========================================
 // 1. UTILITÁRIOS E FEEDBACK DA INTERFACE
