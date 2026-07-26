@@ -907,6 +907,8 @@ select#filtro-status option {
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .caixa-modal-confirm {
@@ -919,6 +921,21 @@ select#filtro-status option {
   text-align: center;
   box-shadow: 0 0 25px rgba(255, 0, 51, 0.3);
   animation: popup 0.2s ease-out forwards;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+/* Scrollbar fina dentro dos modais */
+.caixa-modal-confirm::-webkit-scrollbar {
+  width: 6px;
+}
+
+.caixa-modal-confirm::-webkit-scrollbar-thumb {
+  background: #ff0033;
+  border-radius: 3px;
 }
 
 .caixa-modal-confirm.a-fechar {
@@ -1281,6 +1298,8 @@ footer p {
 .campo-modal textarea {
   display: block;
   width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   background: #050505;
   border: 1px solid #222222;
@@ -1290,6 +1309,11 @@ footer p {
   font-size: 0.85rem;
   border-radius: 4px;
   outline: none;
+}
+
+.campo-modal input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .campo-modal input:focus,
@@ -1324,6 +1348,11 @@ footer p {
   align-items: center;
   gap: 10px;
   width: 100%;
+}
+
+.container-preview-capa img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ==========================================
