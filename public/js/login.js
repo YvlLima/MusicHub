@@ -1,6 +1,8 @@
 // ==========================================
 // CONFIGURAÇÕES E ESTADO GLOBAL DE AUTENTICAÇÃO
 // ==========================================
+const API_URL = "https://musichub-backend-bf0h.onrender.com/api";
+
 let registoPfpBase64 = "";
 let novaPfpBase64 = "";
 let utilizadorDados =
@@ -72,7 +74,6 @@ function carregarPFPRegisto(e) {
 // ==========================================
 // PROCESSAMENTO DE LOGIN / REGISTO
 // ==========================================
-// Atualiza o processarAuth para não tentar carregar coisas do Hub no login.html
 async function processarAuth(e) {
   e.preventDefault();
   const user = document.getElementById("auth-username").value.trim();
@@ -119,14 +120,12 @@ async function processarAuth(e) {
       enviarEmailFeedback(emailInput, user);
     }
 
-    // Redireciona diretamente para o index.html
     iniciarHub();
   } catch (err) {
     mostrarToast("SERVIDOR OFFLINE OU BLOQUEADO!");
   }
 }
 
-// Redirecionamento limpo após Login/Registo
 function iniciarHub() {
   window.location.href = "index.html";
 }
