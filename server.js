@@ -544,8 +544,9 @@ app.get(
       const totalMods = await pool.query(
         "SELECT COUNT(*)::int as total FROM utilizadores WHERE is_admin = 2",
       );
+      // Contar apenas likes de utilizadores que ainda existem na BD
       const totalLikes = await pool.query(
-        "SELECT COUNT(*)::int as total FROM likes",
+        "SELECT COUNT(*)::int as total FROM likes WHERE username IN (SELECT username FROM utilizadores)",
       );
       const logs = await pool.query(
         "SELECT * FROM logs ORDER BY id DESC LIMIT 10",
@@ -1181,14 +1182,9 @@ app.get("/api/candidaturas/aprovadas", async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== "test") {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));
-}
-
-module.exports = { app, pool };
-
-// Rota temporária para resetar a conta de admin
+// ==========================================
+// ROTAS DE MANUTENÇÃO E UTILITÁRIAS
+// ==========================================
 app.get("/api/reset-admin", async (req, res) => {
   try {
     await pool.query("DELETE FROM utilizadores WHERE username = 'YvlLima'");
@@ -1199,13 +1195,21 @@ app.get("/api/reset-admin", async (req, res) => {
     res.status(500).send("Erro ao apagar utilizador: " + err.message);
   }
 });
+
 app.get("/api/make-admin", async (req, res) => {
   try {
     await pool.query(
       "UPDATE utilizadores SET is_admin = 1 WHERE username = 'YvlLima'",
     );
-    res.send("YvlLima agora e Admin!");
+    res.send("YvlLima agora é Admin!");
   } catch (err) {
     res.status(500).send("Erro: " + err.message);
   }
 });
+
+if (process.env.NODE_ENV !== "test") {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));
+}
+
+module.exports = { app, pool };
