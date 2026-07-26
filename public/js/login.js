@@ -276,11 +276,16 @@ async function carregarFavoritosPerfil() {
   if (!containerArtistas || !containerAlbuns || !utilizadorDados) return;
 
   try {
-    const resposta = await fetch(
-      `${API_URL}/likes?username=${utilizadorDados.username}`,
+    // 1. Pedir a lista de IDs aos quais o utilizador deu like
+    const resLikes = await fetch(
+      `${API_URL}/likes?username=${encodeURIComponent(utilizadorDados.username)}`,
     );
-    const dados = await resposta.json();
-    if (!resposta.ok) return;
+    const dadosLikes = await resLikes.json();
+    if (!resLikes.ok || !dadosLikes.deuLike) return;
+
+    // 2. Pedir a lista completa de conteúdos aprovados para saber quem é artista e quem é álbum
+    const resAprovados = await fetch(`${API_URL}/candidaturas/aprovadas`);
+    const dadosAprovados = await resAprovados.json();
 
     containerArtistas.innerHTML = "";
     containerAlbuns.innerHTML = "";
@@ -288,24 +293,31 @@ async function carregarFavoritosPerfil() {
     let temArtistas = false;
     let temAlbuns = false;
 
-    dados.deuLike.forEach((itemId) => {
-      const btnOriginal = document.querySelector(
-        `button[onclick*='${itemId}']`,
-      );
-      if (btnOriginal) {
-        const cartaoOriginal = btnOriginal.closest(".cartao");
-        if (cartaoOriginal) {
-          const titulo = cartaoOriginal.querySelector("h3").innerText;
-          const img = cartaoOriginal.querySelector("img").src;
+    if (resAprovados.ok && dadosAprovados.aprovados) {
+      dadosLikes.deuLike.forEach((itemId) => {
+        // Extrai o ID numérico removendo o prefixo "cand_" se existir
+        const idNumerico = itemId.replace("cand_", "");
+
+        // Procura o item na lista da base de dados
+        const itemInfo = dadosAprovados.aprovados.find(
+          (cand) => String(cand.id) === String(idNumerico),
+        );
+
+        if (itemInfo) {
+          const eAlbum = itemInfo.tipo === "album";
+          const titulo = eAlbum ? itemInfo.album_title : itemInfo.artist_name;
+          const img = eAlbum
+            ? itemInfo.album_cover || "imagens/pfp.png"
+            : itemInfo.artist_photo || "imagens/pfp.png";
 
           const itemDiv = document.createElement("div");
           itemDiv.className = "item-favorito";
           itemDiv.innerHTML = `
-            <img src="${img}" alt="${titulo}">
-            <span>${titulo}</span>
+            <img src="${img}" alt="${escapeHTML(titulo)}">
+            <span>${escapeHTML(titulo)}</span>
           `;
 
-          if (itemId.startsWith("album_")) {
+          if (eAlbum) {
             containerAlbuns.appendChild(itemDiv);
             temAlbuns = true;
           } else {
@@ -313,8 +325,8 @@ async function carregarFavoritosPerfil() {
             temArtistas = true;
           }
         }
-      }
-    });
+      });
+    }
 
     if (!temArtistas) {
       containerArtistas.innerHTML =
@@ -325,6 +337,6 @@ async function carregarFavoritosPerfil() {
         "<p style='color: #666; font-size: 0.8rem;'>Nenhum álbum favorito.</p>";
     }
   } catch (err) {
-    console.error("Erro ao carregar favoritos:", err);
+    console.error("Erro ao carregar favoritos no perfil:", err);
   }
 }
