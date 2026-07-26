@@ -11,24 +11,10 @@ const JWT_SECRET =
   process.env.JWT_SECRET || "chave_secreta_super_segura_opium_hub";
 const SUPER_ADMIN = "YvlLima";
 
-// Necessário para o rate-limit funcionar corretamente no Render
-app.set("trust proxy", 1);
-
 app.use(express.static("public"));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ limit: "2mb", extended: true }));
-
-// CORS configurado para permitir o teu frontend no Cloudflare Pages e ambiente local
-app.use(
-  cors({
-    origin: [
-      "https://musichub-9hu.pages.dev",
-      "http://localhost:3000",
-      "http://127.0.0.1:5500",
-    ],
-    credentials: true,
-  }),
-);
+app.use(cors());
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -98,49 +84,50 @@ async function initDB() {
       );
     `);
 
+    // ==========================================
+    // CONTEÚDOS (ARTISTAS / ÁLBUNS) — inclui candidaturas
+    // ==========================================
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS candidaturas (
+      CREATE TABLE IF NOT EXISTS conteudos (
         id SERIAL PRIMARY KEY,
         tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('artista', 'album')),
-        artist_name VARCHAR(255) NOT NULL,
-        artist_birthdate DATE,
-        artist_photo TEXT,
-        album_title VARCHAR(255),
-        album_cover TEXT,
-        album_date DATE,
-        year INT,
-        genre VARCHAR(100),
-        description TEXT,
-        profile_links TEXT,
-        album_link TEXT,
-        status VARCHAR(50) DEFAULT 'pendente',
-        submitted_by VARCHAR(255) NOT NULL,
-        submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        reviewed_by VARCHAR(255),
-        reviewed_date TIMESTAMP,
-        rejection_reason TEXT
+        item_id VARCHAR(255) UNIQUE NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        imagem TEXT DEFAULT 'imagens/pfp.png',
+        spotify_url TEXT,
+        artista_pai VARCHAR(255),
+        criado_por VARCHAR(255) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pendente' CHECK (status IN ('pendente', 'aprovado', 'rejeitado')),
+        data_submissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data_revisao TIMESTAMP,
+        revisto_por VARCHAR(255),
+        motivo_rejeicao TEXT
       );
     `);
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS historico_candidaturas (
-        id SERIAL PRIMARY KEY,
-        candidatura_id INT NOT NULL REFERENCES candidaturas(id) ON DELETE CASCADE,
-        acao VARCHAR(50) NOT NULL,
-        realizado_por VARCHAR(255) NOT NULL,
-        motivo TEXT,
-        data_acao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // Migração dos 6 itens que estavam hardcoded no index.html
+    // (só insere se ainda não existirem — ON CONFLICT ignora duplicados)
+    await pool.query(
+      `
+      INSERT INTO conteudos (tipo, item_id, nome, imagem, spotify_url, artista_pai, criado_por, status, data_revisao, revisto_por)
+      VALUES
+        ('artista', 'lon3r', 'Lon3r Johny', 'imagens/lon3r.png', 'https://open.spotify.com/artist/1fV7Au7ymGP3uhDV1TfjSd', NULL, $1, 'aprovado', CURRENT_TIMESTAMP, $1),
+        ('artista', 'carti', 'Playboi Carti', 'imagens/carti.png', 'https://open.spotify.com/artist/699OTQXzgjhIYAHMy9RyPD', NULL, $1, 'aprovado', CURRENT_TIMESTAMP, $1),
+        ('artista', 'ken', 'Ken Carson', 'imagens/ken.png', 'https://open.spotify.com/artist/3gBZUcNeVumkeeJ19CY2sX', NULL, $1, 'aprovado', CURRENT_TIMESTAMP, $1),
+        ('album', 'album_94', '94', 'imagens/94.png', 'https://open.spotify.com/album/0NqDtwq1iiuEqNrL0mkePy', 'lon3r', $1, 'aprovado', CURRENT_TIMESTAMP, $1),
+        ('album', 'album_wlr', 'Whole Lotta Red', 'imagens/wlr.png', 'https://open.spotify.com/album/2QRedhP5RmKJiJ1i8VgDGR', 'carti', $1, 'aprovado', CURRENT_TIMESTAMP, $1),
+        ('album', 'album_agc', 'A Great Chaos (Deluxe)', 'imagens/agc.png', 'https://open.spotify.com/album/58iEeJbYd6OBGRM0TiwltL', 'ken', $1, 'aprovado', CURRENT_TIMESTAMP, $1)
+      ON CONFLICT (item_id) DO NOTHING;
+    `,
+      [SUPER_ADMIN],
+    );
 
     console.log("✅ Tabelas e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
   }
 }
-if (process.env.NODE_ENV !== "test") {
-  initDB();
-}
+initDB();
 
 async function registarLog(autor, acao, alvo) {
   try {
@@ -150,22 +137,6 @@ async function registarLog(autor, acao, alvo) {
     );
   } catch (err) {
     console.error("Erro ao gravar log:", err.message);
-  }
-}
-
-async function registarHistoricoCandidatura(
-  candidatura_id,
-  acao,
-  realizado_por,
-  motivo = null,
-) {
-  try {
-    await pool.query(
-      "INSERT INTO historico_candidaturas (candidatura_id, acao, realizado_por, motivo) VALUES ($1, $2, $3, $4)",
-      [candidatura_id, acao, realizado_por, motivo],
-    );
-  } catch (err) {
-    console.error("Erro ao registar histórico de candidatura:", err.message);
   }
 }
 
@@ -206,6 +177,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "online", timestamp: new Date() });
 });
 
+// Limite de tentativas de login por IP (protege contra brute-force)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -256,6 +228,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
       return res.status(400).json({ erro: "UTILIZADOR OU PASS INCORRETA!" });
     }
 
+    // Reset em caso de sucesso
     await pool.query(
       "UPDATE utilizadores SET tentativas_falhadas = 0 WHERE id = $1",
       [user.id],
@@ -291,11 +264,6 @@ app.post("/api/register", async (req, res) => {
     return res.status(400).json({ erro: "Preenche todos os campos." });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ erro: "Formato de e-mail inválido." });
-  }
-
   const foto = pfp || "imagens/pfp.png";
 
   try {
@@ -326,7 +294,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// Likes
+// Contagem de likes (público) + likes do próprio utilizador
 app.get("/api/likes", async (req, res) => {
   const { username } = req.query;
 
@@ -352,6 +320,7 @@ app.get("/api/likes", async (req, res) => {
   }
 });
 
+// Dar / Remover Like
 app.post("/api/like", autenticarToken, async (req, res) => {
   const { username, item_id } = req.body;
 
@@ -383,7 +352,7 @@ app.post("/api/like", autenticarToken, async (req, res) => {
   }
 });
 
-// Estatísticas sociais e Seguidores
+// Estatísticas sociais públicas de um utilizador (usado no próprio perfil)
 app.get("/api/users/:username/social", async (req, res) => {
   const { username } = req.params;
 
@@ -406,6 +375,7 @@ app.get("/api/users/:username/social", async (req, res) => {
   }
 });
 
+// Lista de quem o próprio utilizador autenticado segue
 app.get("/api/my-following", autenticarToken, async (req, res) => {
   try {
     const result = await pool.query(
@@ -418,7 +388,7 @@ app.get("/api/my-following", autenticarToken, async (req, res) => {
   }
 });
 
-// Perfil
+// Atualizar Perfil
 app.put("/api/update-profile", autenticarToken, async (req, res) => {
   const { currentUsername, newUsername, email, newPassword, pfp } = req.body;
 
@@ -490,6 +460,7 @@ app.put("/api/update-profile", autenticarToken, async (req, res) => {
   }
 });
 
+// Eliminar a Própria Conta
 app.delete("/api/delete-profile", autenticarToken, async (req, res) => {
   const username = req.user.username;
 
@@ -515,7 +486,10 @@ app.delete("/api/delete-profile", autenticarToken, async (req, res) => {
   }
 });
 
-// Admin / Mod
+// ==========================================
+// ENDPOINTS EXCLUSIVOS DE ADMIN / MOD
+// ==========================================
+
 app.get(
   "/api/admin/users",
   autenticarToken,
@@ -545,7 +519,7 @@ app.get(
         "SELECT COUNT(*)::int as total FROM utilizadores WHERE is_admin = 2",
       );
       const totalLikes = await pool.query(
-        "SELECT COUNT(DISTINCT item_id)::int as total FROM likes WHERE username IN (SELECT username FROM utilizadores)",
+        "SELECT COUNT(*)::int as total FROM likes",
       );
       const logs = await pool.query(
         "SELECT * FROM logs ORDER BY id DESC LIMIT 10",
@@ -705,7 +679,7 @@ app.delete(
   },
 );
 
-// Comunidade
+// Utilizadores da comunidade com contadores
 app.get("/api/users", autenticarToken, async (req, res) => {
   const me = req.user.username;
 
@@ -738,6 +712,7 @@ app.get("/api/users", autenticarToken, async (req, res) => {
   }
 });
 
+// Perfil Completo para o Modal
 app.get("/api/users/:username/full-profile", async (req, res) => {
   const { username } = req.params;
 
@@ -761,7 +736,10 @@ app.get("/api/users/:username/full-profile", async (req, res) => {
     );
 
     const likesRes = await pool.query(
-      "SELECT item_id FROM likes WHERE username = $1",
+      `SELECT c.item_id, c.tipo, c.nome, c.imagem
+       FROM likes l
+       JOIN conteudos c ON c.item_id = l.item_id
+       WHERE l.username = $1`,
       [username],
     );
 
@@ -771,13 +749,14 @@ app.get("/api/users/:username/full-profile", async (req, res) => {
         followers: followers.rows[0].total,
         following: following.rows[0].total,
       },
-      likes: likesRes.rows.map((r) => r.item_id),
+      likes: likesRes.rows,
     });
   } catch (err) {
     res.status(500).json({ erro: "Erro ao obter perfil." });
   }
 });
 
+// Seguir / Deixar de Seguir
 app.post("/api/follow", autenticarToken, async (req, res) => {
   const follower = req.user.username;
   const { targetUsername } = req.body;
@@ -829,7 +808,11 @@ app.get("/api/activity-feed", async (req, res) => {
   }
 });
 
-// Ratings
+// ==========================================
+// ENDPOINTS PARA RATINGS (SISTEMA DE ESTRELAS)
+// ==========================================
+
+// 1. Obter a média de estrelas de todos os itens + nota dada pelo utilizador atual
 app.get("/api/ratings", async (req, res) => {
   const { username } = req.query;
 
@@ -865,6 +848,7 @@ app.get("/api/ratings", async (req, res) => {
   }
 });
 
+// 2. Dar ou atualizar nota (1 a 5 estrelas)
 app.post("/api/rate", autenticarToken, async (req, res) => {
   const { item_id, estrelas } = req.body;
   const username = req.user.username;
@@ -874,6 +858,18 @@ app.post("/api/rate", autenticarToken, async (req, res) => {
       .status(400)
       .json({ erro: "Dados inválidos. A nota deve ser entre 1 e 5." });
   }
+
+  // Dicionário para traduzir o código do item para o nome bonito que vai para a log
+  const nomesItens = {
+    lon3r: "Lon3r Johny",
+    carti: "Playboi Carti",
+    ken: "Ken Carson",
+    album_94: "94",
+    album_wlr: "Whole Lotta Red",
+    album_agc: "A Great Chaos (Deluxe)",
+  };
+
+  const nomeFormatado = nomesItens[item_id] || item_id;
 
   try {
     await pool.query(
@@ -886,18 +882,9 @@ app.post("/api/rate", autenticarToken, async (req, res) => {
       [username, item_id, estrelas],
     );
 
-    let nomeItem = item_id;
-    const idNumerico = String(item_id).replace("cand_", "");
-    const itemInfo = await pool.query(
-      "SELECT tipo, artist_name, album_title FROM candidaturas WHERE id = $1",
-      [idNumerico],
-    );
-    if (itemInfo.rows.length > 0) {
-      const info = itemInfo.rows[0];
-      nomeItem = info.tipo === "album" ? info.album_title : info.artist_name;
-    }
+    // Grava na log o texto exato com o nome do artista/álbum
+    await registarLog(username, "AVALIOU", `${nomeFormatado} com ${estrelas}★`);
 
-    await registarLog(username, "AVALIOU", `${nomeItem} com ${estrelas}★`);
     res.json({ mensagem: "Avaliação guardada com sucesso!" });
   } catch (err) {
     console.error("Erro ao guardar rating:", err);
@@ -905,326 +892,191 @@ app.post("/api/rate", autenticarToken, async (req, res) => {
   }
 });
 
-// Candidaturas
-app.post("/api/candidaturas/submit", autenticarToken, async (req, res) => {
-  const {
-    tipo,
-    artist_name,
-    artist_birthdate,
-    artist_photo,
-    artist_profile,
-    album_title,
-    album_artist,
-    album_cover,
-    album_date,
-    album_link,
-    genre,
-    description,
-  } = req.body;
-  const submitted_by = req.user.username;
+// ==========================================
+// CONTEÚDOS (ARTISTAS / ÁLBUNS APROVADOS) + CANDIDATURAS
+// ==========================================
 
-  if (!tipo || !["artista", "album"].includes(tipo)) {
-    return res.status(400).json({ erro: "Tipo de candidatura inválido." });
-  }
+// Gera um item_id único a partir do nome (slug)
+function gerarItemId(tipo, nome) {
+  const slug = nome
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return tipo === "album" ? `album_${slug}` : slug;
+}
+
+// Lista pública dos conteúdos aprovados (usado pelo index.js para renderizar os cartões)
+app.get("/api/conteudos", async (req, res) => {
+  const { tipo } = req.query;
 
   try {
-    if (tipo === "artista") {
-      if (
-        !artist_name ||
-        !artist_birthdate ||
-        !artist_photo ||
-        !artist_profile
-      ) {
-        return res.status(400).json({
-          erro: "Nome do artista, data de nascimento, foto e perfil são obrigatórios.",
-        });
-      }
+    const query = tipo
+      ? "SELECT * FROM conteudos WHERE status = 'aprovado' AND tipo = $1 ORDER BY id ASC"
+      : "SELECT * FROM conteudos WHERE status = 'aprovado' ORDER BY id ASC";
+    const params = tipo ? [tipo] : [];
 
-      if (!validarImagemBase64(artist_photo)) {
-        return res.status(400).json({
-          erro: "Formato de imagem inválido.",
-        });
-      }
-
-      const result = await pool.query(
-        `INSERT INTO candidaturas (tipo, artist_name, artist_birthdate, artist_photo, profile_links, genre, description, status, submitted_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING id, artist_name, status, submitted_date`,
-        [
-          "artista",
-          artist_name,
-          artist_birthdate || null,
-          artist_photo,
-          artist_profile || null,
-          genre || null,
-          description || null,
-          "pendente",
-          submitted_by,
-        ],
-      );
-
-      await registarLog(submitted_by, "SUBMETE ARTISTA", artist_name);
-
-      res.json({
-        mensagem: "Candidatura enviada com sucesso!",
-        candidatura: result.rows[0],
-      });
-    } else {
-      if (
-        !album_title ||
-        !album_artist ||
-        !album_cover ||
-        !album_date ||
-        !album_link
-      ) {
-        return res.status(400).json({
-          erro: "Título do álbum, artista, capa, data e link são obrigatórios.",
-        });
-      }
-
-      if (!validarImagemBase64(album_cover)) {
-        return res.status(400).json({
-          erro: "Formato de imagem inválido.",
-        });
-      }
-
-      const result = await pool.query(
-        `INSERT INTO candidaturas (tipo, artist_name, album_title, album_cover, album_date, album_link, genre, description, status, submitted_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         RETURNING id, album_title, status, submitted_date`,
-        [
-          "album",
-          album_artist,
-          album_title,
-          album_cover,
-          album_date,
-          album_link,
-          genre || null,
-          description || null,
-          "pendente",
-          submitted_by,
-        ],
-      );
-
-      await registarLog(
-        submitted_by,
-        "SUBMETE ÁLBUM",
-        `${album_artist} - ${album_title}`,
-      );
-
-      res.json({
-        mensagem: "Candidatura de álbum enviada com sucesso!",
-        candidatura: result.rows[0],
-      });
-    }
+    const result = await pool.query(query, params);
+    res.json({ conteudos: result.rows });
   } catch (err) {
-    console.error("Erro ao submeter candidatura:", err);
-    res.status(500).json({ erro: "Erro ao processar candidatura." });
+    res.status(500).json({ erro: "Erro ao obter conteúdos." });
   }
 });
 
+// Submeter candidatura (qualquer utilizador autenticado)
+app.post("/api/candidaturas", autenticarToken, async (req, res) => {
+  const { tipo, nome, imagem, spotify_url, artista_pai } = req.body;
+  const username = req.user.username;
+
+  if (!tipo || !["artista", "album"].includes(tipo)) {
+    return res.status(400).json({ erro: "Tipo inválido (artista ou album)." });
+  }
+  if (!nome || !nome.trim()) {
+    return res.status(400).json({ erro: "O nome é obrigatório." });
+  }
+  if (tipo === "album" && (!artista_pai || !artista_pai.trim())) {
+    return res
+      .status(400)
+      .json({ erro: "Indica o artista a que o álbum pertence." });
+  }
+  if (imagem && imagem !== "imagens/pfp.png" && !validarImagemBase64(imagem)) {
+    return res.status(400).json({ erro: "Formato de imagem inválido." });
+  }
+
+  try {
+    // Gera item_id único, adicionando sufixo se já existir
+    let itemId = gerarItemId(tipo, nome);
+    let sufixo = 1;
+    while (true) {
+      const existe = await pool.query(
+        "SELECT id FROM conteudos WHERE item_id = $1",
+        [itemId],
+      );
+      if (existe.rows.length === 0) break;
+      sufixo++;
+      itemId = `${gerarItemId(tipo, nome)}_${sufixo}`;
+    }
+
+    await pool.query(
+      `INSERT INTO conteudos (tipo, item_id, nome, imagem, spotify_url, artista_pai, criado_por, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendente')`,
+      [
+        tipo,
+        itemId,
+        nome.trim(),
+        imagem || "imagens/pfp.png",
+        spotify_url || null,
+        tipo === "album" ? artista_pai : null,
+        username,
+      ],
+    );
+
+    await registarLog(username, "SUBMETEU CANDIDATURA", nome.trim());
+    res.json({
+      mensagem: "Candidatura submetida! Aguarda aprovação de um admin/mod.",
+    });
+  } catch (err) {
+    console.error("Erro ao submeter candidatura:", err);
+    res.status(500).json({ erro: "Erro ao submeter candidatura." });
+  }
+});
+
+// Ver as próprias candidaturas (para o utilizador acompanhar o estado)
+app.get("/api/minhas-candidaturas", autenticarToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM conteudos WHERE criado_por = $1 ORDER BY id DESC",
+      [req.user.username],
+    );
+    res.json({ candidaturas: result.rows });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao obter candidaturas." });
+  }
+});
+
+// Admin/Mod: listar candidaturas (por defeito só pendentes)
 app.get(
-  "/api/candidaturas",
+  "/api/admin/candidaturas",
   autenticarToken,
   verificarAdmin,
   async (req, res) => {
-    const status = req.query.status || "pendente";
-
+    const { status } = req.query;
     try {
-      let query =
-        "SELECT id, tipo, artist_name, artist_birthdate, artist_photo, album_title, album_cover, album_date, genre, description, profile_links, album_link, status, submitted_by, submitted_date, reviewed_by, reviewed_date, rejection_reason FROM candidaturas";
-      let params = [];
-
-      if (status && status !== "todas") {
-        query += " WHERE status = $1";
-        params = [status];
-      }
-
-      query += " ORDER BY submitted_date DESC";
-
-      const result = await pool.query(query, params);
-
-      res.json({
-        total: result.rows.length,
-        candidaturas: result.rows,
-      });
+      const result = await pool.query(
+        "SELECT * FROM conteudos WHERE status = $1 ORDER BY id ASC",
+        [status || "pendente"],
+      );
+      res.json({ candidaturas: result.rows });
     } catch (err) {
-      console.error("Erro ao listar candidaturas:", err);
       res.status(500).json({ erro: "Erro ao obter candidaturas." });
     }
   },
 );
 
+// Admin/Mod: aprovar candidatura
 app.put(
-  "/api/candidaturas/:id/approve",
+  "/api/admin/candidaturas/:id/aprovar",
   autenticarToken,
   verificarAdmin,
   async (req, res) => {
     const { id } = req.params;
-    const reviewed_by = req.user.username;
-
     try {
-      const candidatura = await pool.query(
-        "SELECT * FROM candidaturas WHERE id = $1",
-        [id],
+      const result = await pool.query(
+        `UPDATE conteudos 
+         SET status = 'aprovado', data_revisao = CURRENT_TIMESTAMP, revisto_por = $1
+         WHERE id = $2 AND status = 'pendente' RETURNING nome`,
+        [req.user.username, id],
       );
-
-      if (candidatura.rows.length === 0) {
-        return res.status(404).json({ erro: "Candidatura não encontrada." });
+      if (result.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ erro: "Candidatura não encontrada ou já revista." });
       }
-
-      const cand = candidatura.rows[0];
-
-      await pool.query(
-        "UPDATE candidaturas SET status = $1, reviewed_by = $2, reviewed_date = CURRENT_TIMESTAMP WHERE id = $3",
-        ["aprovado", reviewed_by, id],
-      );
-
-      await registarHistoricoCandidatura(id, "APROVADO", reviewed_by, null);
       await registarLog(
-        reviewed_by,
+        req.user.username,
         "APROVOU CANDIDATURA",
-        `${cand.artist_name}${cand.album_title ? ` - ${cand.album_title}` : ""}`,
+        result.rows[0].nome,
       );
-
-      res.json({
-        mensagem: "Candidatura aprovada com sucesso!",
-      });
+      res.json({ mensagem: "Candidatura aprovada! Já está visível no site." });
     } catch (err) {
-      console.error("Erro ao aprovar candidatura:", err);
       res.status(500).json({ erro: "Erro ao aprovar candidatura." });
     }
   },
 );
 
+// Admin/Mod: rejeitar candidatura
 app.put(
-  "/api/candidaturas/:id/reject",
+  "/api/admin/candidaturas/:id/rejeitar",
   autenticarToken,
   verificarAdmin,
   async (req, res) => {
     const { id } = req.params;
-    const { rejection_reason } = req.body;
-    const reviewed_by = req.user.username;
-
+    const { motivo } = req.body;
     try {
-      const candidatura = await pool.query(
-        "SELECT * FROM candidaturas WHERE id = $1",
-        [id],
+      const result = await pool.query(
+        `UPDATE conteudos 
+         SET status = 'rejeitado', data_revisao = CURRENT_TIMESTAMP, revisto_por = $1, motivo_rejeicao = $2
+         WHERE id = $3 AND status = 'pendente' RETURNING nome`,
+        [req.user.username, motivo || null, id],
       );
-
-      if (candidatura.rows.length === 0) {
-        return res.status(404).json({ erro: "Candidatura não encontrada." });
+      if (result.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ erro: "Candidatura não encontrada ou já revista." });
       }
-
-      const cand = candidatura.rows[0];
-
-      await pool.query(
-        "UPDATE candidaturas SET status = $1, reviewed_by = $2, reviewed_date = CURRENT_TIMESTAMP, rejection_reason = $3 WHERE id = $4",
-        ["rejeitado", reviewed_by, rejection_reason || null, id],
-      );
-
-      await registarHistoricoCandidatura(
-        id,
-        "REJEITADO",
-        reviewed_by,
-        rejection_reason || null,
-      );
-
       await registarLog(
-        reviewed_by,
+        req.user.username,
         "REJEITOU CANDIDATURA",
-        `${cand.artist_name}${cand.album_title ? ` - ${cand.album_title}` : ""}`,
+        result.rows[0].nome,
       );
-
-      res.json({
-        mensagem: "Candidatura rejeitada com sucesso.",
-      });
+      res.json({ mensagem: "Candidatura rejeitada." });
     } catch (err) {
-      console.error("Erro ao rejeitar candidatura:", err);
       res.status(500).json({ erro: "Erro ao rejeitar candidatura." });
     }
   },
 );
 
-app.get(
-  "/api/candidaturas/:id/historico",
-  autenticarToken,
-  verificarAdmin,
-  async (req, res) => {
-    const { id } = req.params;
-
-    try {
-      const candidatura = await pool.query(
-        "SELECT id, tipo, artist_name, album_title, status, submitted_by, submitted_date FROM candidaturas WHERE id = $1",
-        [id],
-      );
-
-      if (candidatura.rows.length === 0) {
-        return res.status(404).json({ erro: "Candidatura não encontrada." });
-      }
-
-      const historico = await pool.query(
-        "SELECT acao, realizado_por, motivo, data_acao FROM historico_candidaturas WHERE candidatura_id = $1 ORDER BY data_acao DESC",
-        [id],
-      );
-
-      res.json({
-        candidatura: candidatura.rows[0],
-        historico: historico.rows,
-      });
-    } catch (err) {
-      console.error("Erro ao obter histórico:", err);
-      res.status(500).json({ erro: "Erro ao obter histórico." });
-    }
-  },
-);
-
-// Rota pública para obter conteúdo aprovado (Inclui a descrição)
-app.get("/api/candidaturas/aprovadas", async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, tipo, artist_name, artist_birthdate, artist_photo, 
-              album_title, album_cover, album_date, genre, profile_links, album_link,
-              description, submitted_by, submitted_date, reviewed_by, reviewed_date 
-       FROM candidaturas 
-       WHERE status = 'aprovado' 
-       ORDER BY reviewed_date DESC`,
-    );
-    res.json({ aprovados: result.rows });
-  } catch (err) {
-    console.error("Erro ao obter candidaturas aprovadas:", err);
-    res.status(500).json({ erro: "Erro ao carregar conteúdo aprovado." });
-  }
-});
-
-// ==========================================
-// ROTAS DE MANUTENÇÃO E UTILITÁRIAS
-// ==========================================
-app.get("/api/reset-admin", async (req, res) => {
-  try {
-    await pool.query("DELETE FROM utilizadores WHERE username = 'YvlLima'");
-    res.send(
-      "Conta YvlLima eliminada com sucesso. Podes registar novamente no site!",
-    );
-  } catch (err) {
-    res.status(500).send("Erro ao apagar utilizador: " + err.message);
-  }
-});
-
-app.get("/api/make-admin", async (req, res) => {
-  try {
-    await pool.query(
-      "UPDATE utilizadores SET is_admin = 1 WHERE username = 'YvlLima'",
-    );
-    res.send("YvlLima agora é Admin!");
-  } catch (err) {
-    res.status(500).send("Erro: " + err.message);
-  }
-});
-
-if (process.env.NODE_ENV !== "test") {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));
-}
-
-module.exports = { app, pool };
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));

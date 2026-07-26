@@ -293,6 +293,37 @@ h1 {
   color: #888;
 }
 
+.grelha-favoritos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.item-favorito {
+  background: #050505;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  padding: 10px;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-favorito img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.item-favorito span {
+  font-size: 0.7rem;
+  color: #ffffff;
+  text-align: center;
+}
+
 .badge-fav {
   background: rgba(255, 0, 51, 0.12) !important;
   border: 1px solid rgba(255, 0, 51, 0.4);

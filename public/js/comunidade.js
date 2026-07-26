@@ -255,20 +255,32 @@ async function abrirPerfilMembro(username) {
       carregarPaginaComunidade();
     };
 
-    const artistas = dados.likes.filter((id) => id.startsWith("art-"));
-    const albuns = dados.likes.filter((id) => !id.startsWith("art-"));
+    const artistas = dados.likes.filter((item) => item.tipo === "artista");
+    const albuns = dados.likes.filter((item) => item.tipo === "album");
 
     document.getElementById("out-favoritos-artistas").innerHTML =
       artistas.length
         ? artistas
             .map(
-              (a) => `<span class="badge-fav">${a.replace("art-", "")}</span>`,
+              (a) => `
+              <div class="item-favorito">
+                <img src="${a.imagem}" alt="${a.nome}">
+                <span>${a.nome}</span>
+              </div>`,
             )
             .join("")
         : "<p style='font-size: 0.75rem; color: #666;'>Sem artistas favoritos.</p>";
 
     document.getElementById("out-favoritos-albuns").innerHTML = albuns.length
-      ? albuns.map((a) => `<span class="badge-fav">${a}</span>`).join("")
+      ? albuns
+          .map(
+            (a) => `
+            <div class="item-favorito">
+              <img src="${a.imagem}" alt="${a.nome}">
+              <span>${a.nome}</span>
+            </div>`,
+          )
+          .join("")
       : "<p style='font-size: 0.75rem; color: #666;'>Sem álbuns favoritos.</p>";
 
     document.getElementById("modal-ver-perfil").style.display = "flex";
