@@ -1187,3 +1187,15 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 module.exports = { app, pool };
+
+// Rota temporária para resetar a conta de admin
+app.get("/api/reset-admin", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM utilizadores WHERE username = 'YvlLima'");
+    res.send(
+      "Conta YvlLima eliminada com sucesso. Podes registar novamente no site!",
+    );
+  } catch (err) {
+    res.status(500).send("Erro ao apagar utilizador: " + err.message);
+  }
+});
