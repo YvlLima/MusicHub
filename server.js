@@ -1199,3 +1199,13 @@ app.get("/api/reset-admin", async (req, res) => {
     res.status(500).send("Erro ao apagar utilizador: " + err.message);
   }
 });
+app.get("/api/make-admin", async (req, res) => {
+  try {
+    await pool.query(
+      "UPDATE utilizadores SET is_admin = 1 WHERE username = 'YvlLima'",
+    );
+    res.send("YvlLima agora e Admin!");
+  } catch (err) {
+    res.status(500).send("Erro: " + err.message);
+  }
+});
