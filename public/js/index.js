@@ -356,7 +356,6 @@ function confirmarAcao(
     elTexto.innerText = mensagem;
     btnConfirmar.innerText = textoBotao;
     btnConfirmar.className = `btn-hud-modal ${classeBotao}`;
-
     modal.style.display = "flex";
 
     function fechar(resultado) {
