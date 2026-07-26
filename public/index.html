@@ -306,304 +306,338 @@
           </div>
         </section>
 
-      <!-- SECÇÃO: PAINEL DE ADMINISTRAÇÃO -->
-      <div id="seccao-admin" style="display: none">
-        <h2>PAINEL DE ADMINISTRAÇÃO</h2>
+        <!-- SECÇÃO: PAINEL DE ADMINISTRAÇÃO -->
+        <div id="seccao-admin" style="display: none">
+          <h2>PAINEL DE ADMINISTRAÇÃO</h2>
 
-        <div class="stats-admin-container">
-          <div class="card-stat">
-            <span class="stat-num" id="stat-total-users">0</span>
-            <span class="stat-label">UTILIZADORES</span>
-          </div>
-          <div class="card-stat">
-            <span class="stat-num" id="stat-total-mods">0</span>
-            <span class="stat-label">MODERADORES</span>
-          </div>
-          <div class="card-stat">
-            <span class="stat-num" id="stat-total-likes">0</span>
-            <span class="stat-label">TOTAL DE LIKES</span>
-          </div>
-        </div>
-
-        <div class="controles-admin">
-          <input
-            type="text"
-            id="pesquisa-admin"
-            placeholder="🔍 Pesquisar por username, e-mail ou cargo..."
-            onkeyup="filtrarUtilizadores()"
-          />
-          <button
-            type="button"
-            class="btn-hud"
-            onclick="carregarUtilizadoresAdmin()"
-          >
-            🔄 ATUALIZAR
-          </button>
-          <button
-            type="button"
-            class="btn-hud"
-            onclick="exportarDadosAdmin('csv')"
-          >
-            📥 EXPORTAR CSV
-          </button>
-          <button
-            type="button"
-            class="btn-hud"
-            onclick="exportarDadosAdmin('json')"
-          >
-            📥 EXPORTAR JSON
-          </button>
-        </div>
-
-        <table class="tabela-admin">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>USERNAME</th>
-              <th>E-MAIL</th>
-              <th>CARGO</th>
-              <th>MODERAÇÃO</th>
-              <th>AÇÕES</th>
-            </tr>
-          </thead>
-          <tbody id="lista-utilizadores-body"></tbody>
-        </table>
-
-        <h3>LOG DE ATIVIDADES</h3>
-        <table class="tabela-admin">
-          <thead>
-            <tr>
-              <th>DATA</th>
-              <th>AUTOR</th>
-              <th>AÇÃO</th>
-              <th>ALVO</th>
-            </tr>
-          </thead>
-          <tbody id="lista-logs-body"></tbody>
-        </table>
-      </div>
-
-      <!-- Modal de Submissão de Candidatura -->
-      <div id="modal-candidatura" class="modal-overlay">
-        <div class="caixa-modal-confirm" style="max-width: 600px">
-          <h3>SUBMETER CANDIDATURA</h3>
-
-          <form id="form-candidatura" onsubmit="submeterCandidatura(event)">
-            <!-- SELETOR DE TIPO -->
-            <div class="campo-modal">
-              <label>TIPO DE SUBMISSÃO *</label>
-              <div class="grupo-radio-candidatura">
-                <label class="radio-candidatura">
-                  <input
-                    type="radio"
-                    name="tipo-candidatura"
-                    value="artista"
-                    checked
-                    onchange="mudarTipoCandidatura('artista')"
-                  />
-                  <span>👤 ARTISTA</span>
-                </label>
-                <label class="radio-candidatura">
-                  <input
-                    type="radio"
-                    name="tipo-candidatura"
-                    value="album"
-                    onchange="mudarTipoCandidatura('album')"
-                  />
-                  <span>💿 ÁLBUM</span>
-                </label>
-              </div>
+          <div class="stats-admin-container">
+            <div class="card-stat">
+              <span class="stat-num" id="stat-total-users">0</span>
+              <span class="stat-label">UTILIZADORES</span>
             </div>
+            <div class="card-stat">
+              <span class="stat-num" id="stat-total-mods">0</span>
+              <span class="stat-label">MODERADORES</span>
+            </div>
+            <div class="card-stat">
+              <span class="stat-num" id="stat-total-likes">0</span>
+              <span class="stat-label">TOTAL DE LIKES</span>
+            </div>
+          </div>
 
-            <!-- ===== CAMPOS DE ARTISTA ===== -->
-            <div id="campos-artista">
-              <div class="campo-modal">
-                <label>NOME DO ARTISTA *</label>
-                <input
-                  type="text"
-                  id="candidatura-artist-name"
-                  placeholder="Ex: Playboi Carti"
-                />
-              </div>
+          <div class="controles-admin">
+            <input
+              type="text"
+              id="pesquisa-admin"
+              placeholder="🔍 Pesquisar por username, e-mail ou cargo..."
+              onkeyup="filtrarUtilizadores()"
+            />
+            <button
+              type="button"
+              class="btn-hud"
+              onclick="carregarUtilizadoresAdmin()"
+            >
+              🔄 ATUALIZAR
+            </button>
+            <button
+              type="button"
+              class="btn-hud"
+              onclick="exportarDadosAdmin('csv')"
+            >
+              📥 EXPORTAR CSV
+            </button>
+            <button
+              type="button"
+              class="btn-hud"
+              onclick="exportarDadosAdmin('json')"
+            >
+              📥 EXPORTAR JSON
+            </button>
+          </div>
 
-              <div class="campo-modal">
-                <label>DATA DE NASCIMENTO *</label>
-                <input type="date" id="candidatura-artist-birthdate" required />
-              </div>
+          <table class="tabela-admin">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>USERNAME</th>
+                <th>E-MAIL</th>
+                <th>CARGO</th>
+                <th>MODERAÇÃO</th>
+                <th>AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody id="lista-utilizadores-body"></tbody>
+          </table>
 
+          <h3>LOG DE ATIVIDADES</h3>
+          <table class="tabela-admin">
+            <thead>
+              <tr>
+                <th>DATA</th>
+                <th>AUTOR</th>
+                <th>AÇÃO</th>
+                <th>ALVO</th>
+              </tr>
+            </thead>
+            <tbody id="lista-logs-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Modal de Submissão de Candidatura -->
+        <div id="modal-candidatura" class="modal-overlay">
+          <div class="caixa-modal-confirm" style="max-width: 600px">
+            <h3>SUBMETER CANDIDATURA</h3>
+
+            <form id="form-candidatura" onsubmit="submeterCandidatura(event)">
+              <!-- SELETOR DE TIPO -->
               <div class="campo-modal">
-                <label>FOTO DO ARTISTA *</label>
-                <div class="container-preview-capa">
-                  <img
-                    id="preview-artist-photo"
-                    src="imagens/pfp.png"
-                    alt="Foto do Artista"
-                    style="max-width: 150px; max-height: 150px"
-                  />
-                  <input
-                    type="file"
-                    id="input-artist-photo"
-                    accept="image/*"
-                    onchange="carregarFotoArtista(event)"
-                    style="display: none"
-                  />
-                  <button
-                    type="button"
-                    class="btn-hud-modal"
-                    onclick="
-                      document.getElementById('input-artist-photo').click()
-                    "
-                  >
-                    ESCOLHER IMAGEM
-                  </button>
+                <label>TIPO DE SUBMISSÃO *</label>
+                <div class="grupo-radio-candidatura">
+                  <label class="radio-candidatura">
+                    <input
+                      type="radio"
+                      name="tipo-candidatura"
+                      value="artista"
+                      checked
+                      onchange="mudarTipoCandidatura('artista')"
+                    />
+                    <span>👤 ARTISTA</span>
+                  </label>
+                  <label class="radio-candidatura">
+                    <input
+                      type="radio"
+                      name="tipo-candidatura"
+                      value="album"
+                      onchange="mudarTipoCandidatura('album')"
+                    />
+                    <span>💿 ÁLBUM</span>
+                  </label>
                 </div>
               </div>
 
-              <div class="campo-modal">
-                <label>PERFIL DO ARTISTA *</label>
-                <input
-                  type="text"
-                  id="candidatura-artist-profile"
-                  placeholder="Ex: https://open.spotify.com/artist/..."
-                />
-              </div>
-
-              <div class="campo-modal">
-                <label>GÉNERO (OPCIONAL)</label>
-                <input
-                  type="text"
-                  id="candidatura-artist-genre"
-                  placeholder="Ex: Rap, Pop, Rock"
-                />
-              </div>
-
-              <div class="campo-modal">
-                <label>DESCRIÇÃO (OPCIONAL)</label>
-                <textarea
-                  id="candidatura-artist-description"
-                  placeholder="Descreve este artista..."
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- ===== CAMPOS DE ÁLBUM ===== -->
-            <div id="campos-album" style="display: none">
-              <div class="campo-modal">
-                <label>NOME DO ÁLBUM *</label>
-                <input
-                  type="text"
-                  id="candidatura-album-title"
-                  placeholder="Ex: Whole Lotta Red"
-                />
-              </div>
-
-              <div class="campo-modal">
-                <label>ARTISTA/BANDA *</label>
-                <input
-                  type="text"
-                  id="candidatura-album-artist"
-                  placeholder="Ex: Playboi Carti"
-                />
-              </div>
-
-              <div class="campo-modal">
-                <label>CAPA DO ÁLBUM *</label>
-                <div class="container-preview-capa">
-                  <img
-                    id="preview-album-cover"
-                    src="imagens/pfp.png"
-                    alt="Capa do Álbum"
-                    style="max-width: 150px; max-height: 150px"
-                  />
+              <!-- ===== CAMPOS DE ARTISTA ===== -->
+              <div id="campos-artista">
+                <div class="campo-modal">
+                  <label>NOME DO ARTISTA *</label>
                   <input
-                    type="file"
-                    id="input-album-cover"
-                    accept="image/*"
-                    onchange="carregarCapaAlbum(event)"
-                    style="display: none"
+                    type="text"
+                    id="candidatura-artist-name"
+                    placeholder="Ex: Playboi Carti"
                   />
-                  <button
-                    type="button"
-                    class="btn-hud-modal"
-                    onclick="
-                      document.getElementById('input-album-cover').click()
-                    "
-                  >
-                    ESCOLHER IMAGEM
-                  </button>
+                </div>
+
+                <div class="campo-modal">
+                  <label>DATA DE NASCIMENTO *</label>
+                  <input
+                    type="date"
+                    id="candidatura-artist-birthdate"
+                    required
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>FOTO DO ARTISTA *</label>
+                  <div class="container-preview-capa">
+                    <img
+                      id="preview-artist-photo"
+                      src="imagens/pfp.png"
+                      alt="Foto do Artista"
+                      style="max-width: 150px; max-height: 150px"
+                    />
+                    <input
+                      type="file"
+                      id="input-artist-photo"
+                      accept="image/*"
+                      onchange="carregarFotoArtista(event)"
+                      style="display: none"
+                    />
+                    <button
+                      type="button"
+                      class="btn-hud-modal"
+                      onclick="
+                        document.getElementById('input-artist-photo').click()
+                      "
+                    >
+                      ESCOLHER IMAGEM
+                    </button>
+                  </div>
+                </div>
+
+                <div class="campo-modal">
+                  <label>PERFIL DO ARTISTA *</label>
+                  <input
+                    type="text"
+                    id="candidatura-artist-profile"
+                    placeholder="Ex: https://open.spotify.com/artist/..."
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>GÉNERO (OPCIONAL)</label>
+                  <input
+                    type="text"
+                    id="candidatura-artist-genre"
+                    placeholder="Ex: Rap, Pop, Rock"
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>DESCRIÇÃO (OPCIONAL)</label>
+                  <textarea
+                    id="candidatura-artist-description"
+                    placeholder="Descreve este artista..."
+                    rows="3"
+                  ></textarea>
                 </div>
               </div>
 
-              <div class="campo-modal">
-                <label>DATA DO ÁLBUM *</label>
-                <input type="date" id="candidatura-album-date" />
+              <!-- ===== CAMPOS DE ÁLBUM ===== -->
+              <div id="campos-album" style="display: none">
+                <div class="campo-modal">
+                  <label>NOME DO ÁLBUM *</label>
+                  <input
+                    type="text"
+                    id="candidatura-album-title"
+                    placeholder="Ex: Whole Lotta Red"
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>ARTISTA/BANDA *</label>
+                  <input
+                    type="text"
+                    id="candidatura-album-artist"
+                    placeholder="Ex: Playboi Carti"
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>CAPA DO ÁLBUM *</label>
+                  <div class="container-preview-capa">
+                    <img
+                      id="preview-album-cover"
+                      src="imagens/pfp.png"
+                      alt="Capa do Álbum"
+                      style="max-width: 150px; max-height: 150px"
+                    />
+                    <input
+                      type="file"
+                      id="input-album-cover"
+                      accept="image/*"
+                      onchange="carregarCapaAlbum(event)"
+                      style="display: none"
+                    />
+                    <button
+                      type="button"
+                      class="btn-hud-modal"
+                      onclick="
+                        document.getElementById('input-album-cover').click()
+                      "
+                    >
+                      ESCOLHER IMAGEM
+                    </button>
+                  </div>
+                </div>
+
+                <div class="campo-modal">
+                  <label>DATA DO ÁLBUM *</label>
+                  <input type="date" id="candidatura-album-date" />
+                </div>
+
+                <div class="campo-modal">
+                  <label>GÉNERO (OPCIONAL)</label>
+                  <input
+                    type="text"
+                    id="candidatura-album-genre"
+                    placeholder="Ex: Rap, Pop, Rock"
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>LINK DO ÁLBUM *</label>
+                  <input
+                    type="text"
+                    id="candidatura-album-link"
+                    placeholder="Ex: https://open.spotify.com/album/..."
+                  />
+                </div>
+
+                <div class="campo-modal">
+                  <label>DESCRIÇÃO (OPCIONAL)</label>
+                  <textarea
+                    id="candidatura-album-description"
+                    placeholder="Descreve este álbum..."
+                    rows="3"
+                  ></textarea>
+                </div>
               </div>
 
-              <div class="campo-modal">
-                <label>GÉNERO (OPCIONAL)</label>
-                <input
-                  type="text"
-                  id="candidatura-album-genre"
-                  placeholder="Ex: Rap, Pop, Rock"
-                />
+              <div class="acoes-modal-confirm">
+                <button
+                  type="button"
+                  class="btn-hud-modal"
+                  onclick="fecharModalCandidatura()"
+                >
+                  CANCELAR
+                </button>
+                <button type="submit" class="btn-hud-modal btn-perigo">
+                  SUBMETER CANDIDATURA
+                </button>
               </div>
+            </form>
+          </div>
+        </div>
 
-              <div class="campo-modal">
-                <label>LINK DO ÁLBUM *</label>
-                <input
-                  type="text"
-                  id="candidatura-album-link"
-                  placeholder="Ex: https://open.spotify.com/album/..."
-                />
-              </div>
-
-              <div class="campo-modal">
-                <label>DESCRIÇÃO (OPCIONAL)</label>
-                <textarea
-                  id="candidatura-album-description"
-                  placeholder="Descreve este álbum..."
-                  rows="3"
-                ></textarea>
-              </div>
-            </div>
+        <!-- Modal de Confirmação Personalizado -->
+        <div id="modal-confirmacao" class="modal-overlay">
+          <div class="caixa-modal-confirm">
+            <h3 id="modal-confirm-titulo">CONFIRMAÇÃO</h3>
+            <p id="modal-confirm-texto">
+              Tens a certeza que queres prosseguir?
+            </p>
 
             <div class="acoes-modal-confirm">
               <button
                 type="button"
+                id="btn-modal-cancelar"
                 class="btn-hud-modal"
-                onclick="fecharModalCandidatura()"
               >
                 CANCELAR
               </button>
-              <button type="submit" class="btn-hud-modal btn-perigo">
-                SUBMETER CANDIDATURA
+              <button
+                type="button"
+                id="btn-modal-confirmar"
+                class="btn-hud-modal btn-perigo"
+              >
+                CONFIRMAR
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
 
-      <!-- Modal de Confirmação Personalizado -->
-      <div id="modal-confirmacao" class="modal-overlay">
-        <div class="caixa-modal-confirm">
-          <h3 id="modal-confirm-titulo">CONFIRMAÇÃO</h3>
-          <p id="modal-confirm-texto">Tens a certeza que queres prosseguir?</p>
-
-          <div class="acoes-modal-confirm">
-            <button type="button" id="btn-modal-cancelar" class="btn-hud-modal">
-              CANCELAR
-            </button>
-            <button
-              type="button"
-              id="btn-modal-confirmar"
-              class="btn-hud-modal btn-perigo"
+        <!-- Modal de Informação do Item -->
+        <div id="modal-info-item" class="modal-overlay">
+          <div class="caixa-modal-confirm">
+            <h3 id="info-item-titulo">DETALHES DA SUBMISSÃO</h3>
+            <div
+              id="info-item-conteudo"
+              style="
+                text-align: left;
+                margin: 20px 0;
+                font-size: 0.85rem;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+              "
             >
-              CONFIRMAR
+              <!-- Conteúdo inserido via JS -->
+            </div>
+            <button class="btn-hud-modal" onclick="fecharModalInfoItem()">
+              FECHAR
             </button>
           </div>
         </div>
-      </div>
+      </main>
 
       <footer>
         <p>© 2026 - HUB PESSOAL</p>

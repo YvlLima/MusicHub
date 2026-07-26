@@ -544,7 +544,6 @@ app.get(
       const totalMods = await pool.query(
         "SELECT COUNT(*)::int as total FROM utilizadores WHERE is_admin = 2",
       );
-      // Contar apenas likes de utilizadores que ainda existem na BD
       const totalLikes = await pool.query(
         "SELECT COUNT(DISTINCT item_id)::int as total FROM likes WHERE username IN (SELECT username FROM utilizadores)",
       );
@@ -1169,13 +1168,13 @@ app.get(
   },
 );
 
-// Rota pública para obter conteúdo aprovado
+// Rota pública para obter conteúdo aprovado (Inclui a descrição)
 app.get("/api/candidaturas/aprovadas", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, tipo, artist_name, artist_birthdate, artist_photo, 
               album_title, album_cover, album_date, genre, profile_links, album_link,
-              submitted_by, submitted_date, reviewed_by, reviewed_date 
+              description, submitted_by, submitted_date, reviewed_by, reviewed_date 
        FROM candidaturas 
        WHERE status = 'aprovado' 
        ORDER BY reviewed_date DESC`,

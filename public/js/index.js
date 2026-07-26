@@ -816,7 +816,6 @@ async function submeterCandidatura(e) {
 
   let payload = {};
 
-  // Dentro da função submeterCandidatura(e) em index.js:
   if (tipoCandidaturaSelecionado === "artista") {
     const artist_name = document
       .getElementById("candidatura-artist-name")
@@ -910,15 +909,49 @@ function abrirPainelModeracaoCandidaturas() {
   window.location.href = "admin-submissions.html";
 }
 
-// Detalhes da submissão
-function mostrarInfoSubmissao(submetidoPor, dataSubmissao, aprovadoPor) {
-  const dataSub = dataSubmissao
-    ? new Date(dataSubmissao).toLocaleString("pt-PT")
-    : "Desconhecida";
-  const autor = submetidoPor || "Sistema";
-  const mod = aprovadoPor || "Sistema";
+// Detalhes da submissão no Modal
+async function abrirInfoItem(id) {
+  try {
+    const res = await fetch(`${API_URL}/candidaturas/aprovadas`);
+    const dados = await res.json();
 
-  mostrarToast(`Submetido por: ${autor} (${dataSub}) | Aprovado por: ${mod}`);
+    if (!res.ok) return mostrarToast("ERRO AO CARREGAR DETALHES!");
+
+    const item = dados.aprovados.find((c) => String(c.id) === String(id));
+    if (!item) return;
+
+    const titulo =
+      item.tipo === "album"
+        ? `${item.artist_name} - ${item.album_title}`
+        : item.artist_name;
+    document.getElementById("info-item-titulo").innerText =
+      titulo.toUpperCase();
+
+    const dataSubmissao = item.submitted_date
+      ? new Date(item.submitted_date).toLocaleDateString("pt-PT")
+      : "—";
+    const dataAprovacao = item.reviewed_date
+      ? new Date(item.reviewed_date).toLocaleDateString("pt-PT")
+      : "—";
+
+    document.getElementById("info-item-conteudo").innerHTML = `
+      <p><strong>SUBMETIDO POR:</strong> <span style="color: #ff0033;">${escapeHTML(item.submitted_by || "Anónimo")}</span> (${dataSubmissao})</p>
+      <p><strong>APROVADO POR:</strong> <span style="color: #00ff00;">${escapeHTML(item.reviewed_by || "Admin")}</span> (${dataAprovacao})</p>
+      <p><strong>DESCRIÇÃO:</strong></p>
+      <div style="background: #050505; padding: 10px; border-left: 2px solid #ff0033; border-radius: 4px; color: #ccc;">
+        ${escapeHTML(item.description || "Sem descrição disponível.")}
+      </div>
+    `;
+
+    document.getElementById("modal-info-item").style.display = "flex";
+  } catch (err) {
+    console.error("Erro ao abrir detalhes:", err);
+  }
+}
+
+function fecharModalInfoItem() {
+  const modal = document.getElementById("modal-info-item");
+  if (modal) modal.style.display = "none";
 }
 
 // Carregar e renderizar artistas e álbuns aprovados no index.html
@@ -938,14 +971,10 @@ async function carregarConteudoAprovado() {
     dados.aprovados.forEach((item) => {
       const idUnico = `cand_${item.id}`;
 
-      const submetidoPor = item.submitted_by || "Sistema";
-      const dataSubmissao = item.submitted_date || "";
-      const aprovadoPor = item.reviewed_by || "Sistema";
-
       const btnInfoHTML = `
         <button type="button" class="btn-share" 
                 title="Informações de Submissão"
-                onclick="mostrarInfoSubmissao('${escapeJS(submetidoPor)}', '${escapeJS(dataSubmissao)}', '${escapeJS(aprovadoPor)}')" 
+                onclick="abrirInfoItem(${item.id})" 
                 style="border-radius: 50%; width: 22px; height: 22px; padding: 0; font-weight: bold;">
           i
         </button>
