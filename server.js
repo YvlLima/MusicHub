@@ -124,7 +124,9 @@ async function initDB() {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
   }
 }
-initDB();
+if (process.env.NODE_ENV !== "test") {
+  initDB();
+}
 
 async function registarLog(autor, acao, alvo) {
   try {
@@ -268,11 +270,18 @@ app.post("/api/login", loginLimiter, async (req, res) => {
 });
 
 // Registo
+// Procura a rota /api/register no server.js e substitui por isto:
 app.post("/api/register", async (req, res) => {
   const { username, email, password, pfp } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({ erro: "Preenche todos os campos." });
+  }
+
+  // Validação do formato do e-mail
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ erro: "Formato de e-mail inválido." });
   }
 
   const foto = pfp || "imagens/pfp.png";
@@ -1160,5 +1169,9 @@ app.get("/api/candidaturas/aprovadas", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));
+if (process.env.NODE_ENV !== "test") {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));
+}
+
+module.exports = { app, pool };
