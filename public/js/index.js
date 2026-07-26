@@ -964,23 +964,15 @@ function fecharModalInfoItem() {
 }
 
 // Carregar e renderizar artistas e álbuns aprovados no index.html
-async function carregarConteudoAprovado() {
-  try {
-    const resposta = await fetch(`${API_URL}/candidaturas/aprovadas`);
-    const dados = await resposta.json();
+let todosArtistasAprovados = [];
+let todosAlbunsAprovados = [];
+let limiteArtistasIndex = 5;
+let limiteAlbunsIndex = 5;
 
-    if (!resposta.ok) return;
+function construirCartaoArtista(item) {
+  const idUnico = `cand_${item.id}`;
 
-    const grelhaArtistas = document.querySelector("#musica .grelha");
-    const grelhaAlbuns = document.querySelector("#albuns .grelha");
-
-    if (grelhaArtistas) grelhaArtistas.innerHTML = "";
-    if (grelhaAlbuns) grelhaAlbuns.innerHTML = "";
-
-    dados.aprovados.forEach((item) => {
-      const idUnico = `cand_${item.id}`;
-
-      const btnInfoHTML = `
+  const btnInfoHTML = `
   <button type="button" class="btn-share" 
           title="Informações de Submissão"
           onclick="abrirInfoItem(${item.id})" 
@@ -989,114 +981,216 @@ async function carregarConteudoAprovado() {
   </button>
 `;
 
-      if (item.tipo === "artista" && grelhaArtistas) {
-        const generos = item.genre
-          ? item.genre.split(",").map((g) => g.trim())
-          : [];
-        const tagsHTML = generos
-          .map(
-            (g, i) =>
-              `<span class="${i % 2 === 1 ? "tag alt" : "tag"}">${escapeHTML(g)}</span>`,
-          )
-          .join(" ");
+  const generos = item.genre ? item.genre.split(",").map((g) => g.trim()) : [];
+  const tagsHTML = generos
+    .map(
+      (g, i) =>
+        `<span class="${i % 2 === 1 ? "tag alt" : "tag"}">${escapeHTML(g)}</span>`,
+    )
+    .join(" ");
 
-        let embedHTML = "";
-        if (item.profile_links && item.profile_links.includes("spotify.com")) {
-          const match = item.profile_links.match(
-            /(artist|album)\/([a-zA-Z0-9]+)/,
-          );
-          if (match) {
-            const tipoItem = match[1];
-            const spotifyId = match[2];
-            const altura = tipoItem === "artist" ? 352 : 152;
-            embedHTML = `<iframe src="https://open.spotify.com/embed/${tipoItem}/${spotifyId}?utm_source=generator" width="100%" height="${altura}" frameborder="0" allowfullscreen="" loading="lazy"></iframe>`;
-          }
-        }
+  let embedHTML = "";
+  if (item.profile_links && item.profile_links.includes("spotify.com")) {
+    const match = item.profile_links.match(/(artist|album)\/([a-zA-Z0-9]+)/);
+    if (match) {
+      const tipoItem = match[1];
+      const spotifyId = match[2];
+      const altura = tipoItem === "artist" ? 352 : 152;
+      embedHTML = `<iframe src="https://open.spotify.com/embed/${tipoItem}/${spotifyId}?utm_source=generator" width="100%" height="${altura}" frameborder="0" allowfullscreen="" loading="lazy"></iframe>`;
+    }
+  }
 
-        const dataNasc = item.artist_birthdate
-          ? new Date(item.artist_birthdate).toLocaleDateString("pt-PT")
-          : "";
+  const dataNasc = item.artist_birthdate
+    ? new Date(item.artist_birthdate).toLocaleDateString("pt-PT")
+    : "";
 
-        const cartaoArtista = `
-          <div class="cartao" data-candidatura="${idUnico}">
-            <div class="top-cartao">
-              <div class="status-indicator"><span class="ponto-pisca"></span> REC 4K</div>
-              <div class="acoes-cartao">
-                ${btnInfoHTML}
-                <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
-                  ♥ <span id="count-like-${idUnico}" class="contador">0</span>
-                </button>
-                ${item.profile_links ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.profile_links)}')">SHARE</button>` : ""}
-              </div>
-            </div>
-            <img class="imagem-cartao" src="${item.artist_photo || "imagens/pfp.png"}" alt="${escapeHTML(item.artist_name)}" />
-            <h3>${escapeHTML(item.artist_name)}</h3>
-            ${dataNasc ? `<p>Data de Nascimento: ${dataNasc}</p>` : ""}
-            <div class="tags-container">${tagsHTML}</div>
-            ${embedHTML}
-            <div class="rating-box" data-item="${idUnico}">
-              <div class="estrelas-container">
-                <span class="estrela" onclick="submeterRating('${idUnico}', 1)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 2)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 3)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 4)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 5)">★</span>
-              </div>
-              <span class="rating-info" id="info-rating-${idUnico}">0.0 ★ (0)</span>
-            </div>
-          </div>
-        `;
-        grelhaArtistas.insertAdjacentHTML("beforeend", cartaoArtista);
-      } else if (item.tipo === "album" && grelhaAlbuns) {
-        let embedHTML = "";
-        if (item.album_link && item.album_link.includes("spotify.com")) {
-          const match = item.album_link.match(/(artist|album)\/([a-zA-Z0-9]+)/);
-          if (match) {
-            const tipoItem = match[1];
-            const spotifyId = match[2];
-            embedHTML = `<iframe src="https://open.spotify.com/embed/${tipoItem}/${spotifyId}?utm_source=generator" width="100%" height="152" frameborder="0" allowfullscreen="" loading="lazy"></iframe>`;
-          }
-        }
+  return `
+    <div class="cartao" data-candidatura="${idUnico}">
+      <div class="top-cartao">
+        <div class="status-indicator"><span class="ponto-pisca"></span> REC 4K</div>
+        <div class="acoes-cartao">
+          ${btnInfoHTML}
+          <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
+            ♥ <span id="count-like-${idUnico}" class="contador">0</span>
+          </button>
+          ${item.profile_links ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.profile_links)}')">SHARE</button>` : ""}
+        </div>
+      </div>
+      <img class="imagem-cartao" src="${item.artist_photo || "imagens/pfp.png"}" alt="${escapeHTML(item.artist_name)}" />
+      <h3>${escapeHTML(item.artist_name)}</h3>
+      ${dataNasc ? `<p>Data de Nascimento: ${dataNasc}</p>` : ""}
+      <div class="tags-container">${tagsHTML}</div>
+      ${embedHTML}
+      <div class="rating-box" data-item="${idUnico}">
+        <div class="estrelas-container">
+          <span class="estrela" onclick="submeterRating('${idUnico}', 1)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 2)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 3)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 4)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 5)">★</span>
+        </div>
+        <span class="rating-info" id="info-rating-${idUnico}">0.0 ★ (0)</span>
+      </div>
+    </div>
+  `;
+}
 
-        const anoAlbum = item.album_date
-          ? new Date(item.album_date).getFullYear()
-          : "";
+function construirCartaoAlbum(item) {
+  const idUnico = `cand_${item.id}`;
 
-        const cartaoAlbum = `
-          <div class="cartao" data-candidatura="${idUnico}">
-            <div class="top-cartao">
-              <div class="status-indicator"><span class="ponto-pisca"></span> REC 4K</div>
-              <div class="acoes-cartao">
-                ${btnInfoHTML}
-                <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
-                  ♥ <span id="count-like-${idUnico}" class="contador">0</span>
-                </button>
-                ${item.album_link ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.album_link)}')">SHARE</button>` : ""}
-              </div>
-            </div>
-            <img class="imagem-cartao" src="${item.album_cover || "imagens/pfp.png"}" alt="${escapeHTML(item.album_title)}" />
-            <h3>${escapeHTML(item.album_title)}</h3>
-            <p>${escapeHTML(item.artist_name)} ${anoAlbum ? `(${anoAlbum})` : ""}</p>
-            ${embedHTML}
-            <div class="rating-box" data-item="${idUnico}">
-              <div class="estrelas-container">
-                <span class="estrela" onclick="submeterRating('${idUnico}', 1)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 2)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 3)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 4)">★</span>
-                <span class="estrela" onclick="submeterRating('${idUnico}', 5)">★</span>
-              </div>
-              <span class="rating-info" id="info-rating-${idUnico}">0.0 ★ (0)</span>
-            </div>
-          </div>
-        `;
-        grelhaAlbuns.insertAdjacentHTML("beforeend", cartaoAlbum);
-      }
-    });
+  const btnInfoHTML = `
+  <button type="button" class="btn-share" 
+          title="Informações de Submissão"
+          onclick="abrirInfoItem(${item.id})" 
+          style="border-radius: 50%; width: 22px; height: 22px; padding: 0; font-weight: bold;">
+    i
+  </button>
+`;
 
-    carregarLikesBD();
-    if (typeof carregarRatingsBD === "function") carregarRatingsBD();
-    if (typeof atualizarStatsHUD === "function") atualizarStatsHUD();
+  let embedHTML = "";
+  if (item.album_link && item.album_link.includes("spotify.com")) {
+    const match = item.album_link.match(/(artist|album)\/([a-zA-Z0-9]+)/);
+    if (match) {
+      const tipoItem = match[1];
+      const spotifyId = match[2];
+      embedHTML = `<iframe src="https://open.spotify.com/embed/${tipoItem}/${spotifyId}?utm_source=generator" width="100%" height="152" frameborder="0" allowfullscreen="" loading="lazy"></iframe>`;
+    }
+  }
+
+  const anoAlbum = item.album_date
+    ? new Date(item.album_date).getFullYear()
+    : "";
+
+  return `
+    <div class="cartao" data-candidatura="${idUnico}">
+      <div class="top-cartao">
+        <div class="status-indicator"><span class="ponto-pisca"></span> REC 4K</div>
+        <div class="acoes-cartao">
+          ${btnInfoHTML}
+          <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
+            ♥ <span id="count-like-${idUnico}" class="contador">0</span>
+          </button>
+          ${item.album_link ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.album_link)}')">SHARE</button>` : ""}
+        </div>
+      </div>
+      <img class="imagem-cartao" src="${item.album_cover || "imagens/pfp.png"}" alt="${escapeHTML(item.album_title)}" />
+      <h3>${escapeHTML(item.album_title)}</h3>
+      <p>${escapeHTML(item.artist_name)} ${anoAlbum ? `(${anoAlbum})` : ""}</p>
+      ${embedHTML}
+      <div class="rating-box" data-item="${idUnico}">
+        <div class="estrelas-container">
+          <span class="estrela" onclick="submeterRating('${idUnico}', 1)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 2)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 3)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 4)">★</span>
+          <span class="estrela" onclick="submeterRating('${idUnico}', 5)">★</span>
+        </div>
+        <span class="rating-info" id="info-rating-${idUnico}">0.0 ★ (0)</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderizarGrelhasAprovadas() {
+  const grelhaArtistas = document.querySelector("#musica .grelha");
+  const grelhaAlbuns = document.querySelector("#albuns .grelha");
+  const botoesArtistas = document.getElementById("botoes-grelha-artistas");
+  const botoesAlbuns = document.getElementById("botoes-grelha-albuns");
+
+  if (grelhaArtistas) {
+    const subArtistas = todosArtistasAprovados.slice(0, limiteArtistasIndex);
+    grelhaArtistas.innerHTML = subArtistas
+      .map((item) => construirCartaoArtista(item))
+      .join("");
+  }
+
+  if (botoesArtistas) {
+    let html = "";
+    if (limiteArtistasIndex < todosArtistasAprovados.length) {
+      html += `
+        <button type="button" class="btn-hud" onclick="verMaisArtistasIndex()">VER MAIS</button>
+        <button type="button" class="btn-hud" onclick="verTudoArtistasIndex()">VER TUDO</button>
+      `;
+    }
+    if (limiteArtistasIndex > 5) {
+      html += `<button type="button" class="btn-hud" onclick="verMenosArtistasIndex()">VER MENOS</button>`;
+    }
+    botoesArtistas.innerHTML = html;
+  }
+
+  if (grelhaAlbuns) {
+    const subAlbuns = todosAlbunsAprovados.slice(0, limiteAlbunsIndex);
+    grelhaAlbuns.innerHTML = subAlbuns
+      .map((item) => construirCartaoAlbum(item))
+      .join("");
+  }
+
+  if (botoesAlbuns) {
+    let html = "";
+    if (limiteAlbunsIndex < todosAlbunsAprovados.length) {
+      html += `
+        <button type="button" class="btn-hud" onclick="verMaisAlbunsIndex()">VER MAIS</button>
+        <button type="button" class="btn-hud" onclick="verTudoAlbunsIndex()">VER TUDO</button>
+      `;
+    }
+    if (limiteAlbunsIndex > 5) {
+      html += `<button type="button" class="btn-hud" onclick="verMenosAlbunsIndex()">VER MENOS</button>`;
+    }
+    botoesAlbuns.innerHTML = html;
+  }
+
+  carregarLikesBD();
+  if (typeof carregarRatingsBD === "function") carregarRatingsBD();
+  if (typeof atualizarStatsHUD === "function") atualizarStatsHUD();
+}
+
+function verMaisArtistasIndex() {
+  limiteArtistasIndex += 5;
+  renderizarGrelhasAprovadas();
+}
+
+function verTudoArtistasIndex() {
+  limiteArtistasIndex = todosArtistasAprovados.length;
+  renderizarGrelhasAprovadas();
+}
+
+function verMenosArtistasIndex() {
+  limiteArtistasIndex = 5;
+  renderizarGrelhasAprovadas();
+}
+
+function verMaisAlbunsIndex() {
+  limiteAlbunsIndex += 5;
+  renderizarGrelhasAprovadas();
+}
+
+function verTudoAlbunsIndex() {
+  limiteAlbunsIndex = todosAlbunsAprovados.length;
+  renderizarGrelhasAprovadas();
+}
+
+function verMenosAlbunsIndex() {
+  limiteAlbunsIndex = 5;
+  renderizarGrelhasAprovadas();
+}
+
+async function carregarConteudoAprovado() {
+  try {
+    const resposta = await fetch(`${API_URL}/candidaturas/aprovadas`);
+    const dados = await resposta.json();
+
+    if (!resposta.ok) return;
+
+    todosArtistasAprovados = dados.aprovados.filter(
+      (item) => item.tipo === "artista",
+    );
+    todosAlbunsAprovados = dados.aprovados.filter(
+      (item) => item.tipo === "album",
+    );
+    limiteArtistasIndex = 5;
+    limiteAlbunsIndex = 5;
+
+    renderizarGrelhasAprovadas();
   } catch (err) {
     console.error("Erro ao carregar conteúdo aprovado:", err);
   }
