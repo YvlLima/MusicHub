@@ -111,6 +111,14 @@ function atualizarStatsHUD() {
   if (elArt) elArt.innerText = totalArtistas;
   if (elAlb) elAlb.innerText = totalAlbuns;
 
+  const elContagemTudo = document.getElementById("contagem-tudo");
+  const elContagemArtistas = document.getElementById("contagem-artistas");
+  const elContagemAlbuns = document.getElementById("contagem-albuns");
+
+  if (elContagemTudo) elContagemTudo.innerText = totalArtistas + totalAlbuns;
+  if (elContagemArtistas) elContagemArtistas.innerText = totalArtistas;
+  if (elContagemAlbuns) elContagemAlbuns.innerText = totalAlbuns;
+
   atualizarTopArtistaSuave();
 }
 
