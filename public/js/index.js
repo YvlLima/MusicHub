@@ -1,4 +1,5 @@
-const API_URL = "https://musichub-backend-bf0h.onrender.com/api";
+// Substitui a declaração do API_URL no topo do index.js por:
+var API_URL = API_URL || "https://musichub-backend-bf0h.onrender.com/api";
 
 // ==========================================
 // 1. UTILITÁRIOS E FEEDBACK DA INTERFACE

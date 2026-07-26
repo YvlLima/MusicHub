@@ -1,7 +1,8 @@
 // ==========================================
 // CONFIGURAÇÕES E ESTADO GLOBAL DE AUTENTICAÇÃO
 // ==========================================
-const API_URL = "https://musichub-backend-bf0h.onrender.com/api";
+// Substitui a linha 1 do login.js por:
+var API_URL = API_URL || "https://musichub-backend-bf0h.onrender.com/api";
 
 let registoPfpBase64 = "";
 let novaPfpBase64 = "";
