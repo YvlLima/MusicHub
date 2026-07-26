@@ -886,7 +886,18 @@ app.post("/api/rate", autenticarToken, async (req, res) => {
       [username, item_id, estrelas],
     );
 
-    await registarLog(username, "AVALIOU", `${item_id} com ${estrelas}★`);
+    let nomeItem = item_id;
+    const idNumerico = String(item_id).replace("cand_", "");
+    const itemInfo = await pool.query(
+      "SELECT tipo, artist_name, album_title FROM candidaturas WHERE id = $1",
+      [idNumerico],
+    );
+    if (itemInfo.rows.length > 0) {
+      const info = itemInfo.rows[0];
+      nomeItem = info.tipo === "album" ? info.album_title : info.artist_name;
+    }
+
+    await registarLog(username, "AVALIOU", `${nomeItem} com ${estrelas}★`);
     res.json({ mensagem: "Avaliação guardada com sucesso!" });
   } catch (err) {
     console.error("Erro ao guardar rating:", err);
