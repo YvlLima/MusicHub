@@ -414,11 +414,18 @@ function confirmarAcao(
 // ==========================================
 function verificarEstatutoAdmin() {
   const seccaoAdmin = document.getElementById("seccao-admin");
-  if (seccaoAdmin && utilizadorDados && utilizadorDados.is_admin > 0) {
-    seccaoAdmin.style.display = "block";
+  const btnAdminCandidaturas = document.getElementById(
+    "btn-admin-candidaturas",
+  );
+
+  if (utilizadorDados && utilizadorDados.is_admin > 0) {
+    if (seccaoAdmin) seccaoAdmin.style.display = "block";
+    if (btnAdminCandidaturas)
+      btnAdminCandidaturas.style.display = "inline-block";
     carregarUtilizadoresAdmin();
-  } else if (seccaoAdmin) {
-    seccaoAdmin.style.display = "none";
+  } else {
+    if (seccaoAdmin) seccaoAdmin.style.display = "none";
+    if (btnAdminCandidaturas) btnAdminCandidaturas.style.display = "none";
   }
 }
 
@@ -766,11 +773,228 @@ async function submeterRating(itemId, estrelas) {
   }
 }
 
+// ==========================================
+// SISTEMA DE CANDIDATURAS DE ARTISTAS/ÁLBUNS
+// ==========================================
+// Variáveis globais para armazenar imagens em base64
+let artistPhotoBase64 = "";
+let albumCoverBase64 = "";
+let tipoCandidaturaSelecionado = "artista";
+
+function abrirFormularioCandidatura() {
+  if (!utilizadorDados || !tokenJWT) {
+    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    return;
+  }
+
+  artistPhotoBase64 = "";
+  albumCoverBase64 = "";
+  tipoCandidaturaSelecionado = "artista";
+  document.getElementById("form-candidatura").reset();
+  document.querySelector(
+    'input[name="tipo-candidatura"][value="artista"]',
+  ).checked = true;
+  mudarTipoCandidatura("artista");
+  document.getElementById("modal-candidatura").style.display = "flex";
+}
+
+function fecharModalCandidatura() {
+  document.getElementById("modal-candidatura").style.display = "none";
+  artistPhotoBase64 = "";
+  albumCoverBase64 = "";
+}
+
+function mudarTipoCandidatura(tipo) {
+  tipoCandidaturaSelecionado = tipo;
+  const camposArtista = document.getElementById("campos-artista");
+  const camposAlbum = document.getElementById("campos-album");
+
+  if (tipo === "artista") {
+    camposArtista.style.display = "block";
+    camposAlbum.style.display = "none";
+  } else {
+    camposArtista.style.display = "none";
+    camposAlbum.style.display = "block";
+  }
+}
+
+function carregarFotoArtista(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    artistPhotoBase64 = "";
+    document.getElementById("preview-artist-photo").src = "imagens/pfp.png";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    artistPhotoBase64 = evt.target.result;
+    document.getElementById("preview-artist-photo").src = artistPhotoBase64;
+  };
+  reader.readAsDataURL(file);
+}
+
+function carregarCapaAlbum(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    albumCoverBase64 = "";
+    document.getElementById("preview-album-cover").src = "imagens/pfp.png";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    albumCoverBase64 = evt.target.result;
+    document.getElementById("preview-album-cover").src = albumCoverBase64;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submeterCandidatura(e) {
+  e.preventDefault();
+
+  if (!utilizadorDados || !tokenJWT) {
+    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    return;
+  }
+
+  let payload = {};
+
+  if (tipoCandidaturaSelecionado === "artista") {
+    const artist_name = document
+      .getElementById("candidatura-artist-name")
+      .value.trim();
+    const artist_photo = artistPhotoBase64 || null;
+    const artist_profile = document
+      .getElementById("candidatura-artist-profile")
+      .value.trim();
+    const artist_birthdate =
+      document.getElementById("candidatura-artist-birthdate").value || null;
+    const genre =
+      document.getElementById("candidatura-artist-genre").value.trim() || null;
+    const description =
+      document.getElementById("candidatura-artist-description").value.trim() ||
+      null;
+
+    if (!artist_name) {
+      mostrarToast("PREENCHE O NOME DO ARTISTA!");
+      return;
+    }
+
+    if (!artist_photo) {
+      mostrarToast("CARREGA UMA FOTO DO ARTISTA!");
+      return;
+    }
+
+    if (!artist_profile) {
+      mostrarToast(
+        "PREENCHE O PERFIL DO ARTISTA (SPOTIFY/SOUNDCLOUD/APPLE MUSIC)!",
+      );
+      return;
+    }
+
+    payload = {
+      tipo: "artista",
+      artist_name,
+      artist_photo,
+      artist_profile,
+      artist_birthdate,
+      genre,
+      description,
+    };
+  } else {
+    const album_title = document
+      .getElementById("candidatura-album-title")
+      .value.trim();
+    const album_artist = document
+      .getElementById("candidatura-album-artist")
+      .value.trim();
+    const album_cover = albumCoverBase64 || null;
+    const album_date =
+      document.getElementById("candidatura-album-date").value || null;
+    const album_link = document
+      .getElementById("candidatura-album-link")
+      .value.trim();
+    const genre =
+      document.getElementById("candidatura-album-genre").value.trim() || null;
+    const description =
+      document.getElementById("candidatura-album-description").value.trim() ||
+      null;
+
+    if (!album_title) {
+      mostrarToast("PREENCHE O NOME DO ÁLBUM!");
+      return;
+    }
+
+    if (!album_artist) {
+      mostrarToast("PREENCHE O NOME DO ARTISTA/BANDA!");
+      return;
+    }
+
+    if (!album_cover) {
+      mostrarToast("CARREGA UMA CAPA PARA O ÁLBUM!");
+      return;
+    }
+
+    if (!album_date) {
+      mostrarToast("PREENCHE A DATA DO ÁLBUM!");
+      return;
+    }
+
+    if (!album_link) {
+      mostrarToast(
+        "PREENCHE O LINK DO ÁLBUM (SPOTIFY/SOUNDCLOUD/APPLE MUSIC)!",
+      );
+      return;
+    }
+
+    payload = {
+      tipo: "album",
+      album_title,
+      artist_name: album_artist,
+      album_cover,
+      album_date,
+      album_link,
+      genre,
+      description,
+    };
+  }
+
+  try {
+    const resposta = await fetch(`${API_URL}/candidaturas/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${tokenJWT}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      mostrarToast(dados.erro || "ERRO AO SUBMETER CANDIDATURA!");
+      return;
+    }
+
+    mostrarToast("✓ CANDIDATURA SUBMETIDA COM SUCESSO! À ESPERA DE APROVAÇÃO.");
+    fecharModalCandidatura();
+  } catch (err) {
+    console.error("Erro:", err);
+    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+  }
+}
+
+function abrirPainelModeracaoCandidaturas() {
+  window.location.href = "admin-submissions.html";
+}
+
 // ARRANQUE DA PÁGINA
 window.addEventListener("DOMContentLoaded", () => {
   if (typeof verificarEstadoServidor === "function") verificarEstadoServidor();
   if (typeof carregarTagsArtistas === "function") carregarTagsArtistas();
   if (typeof atualizarRelogio === "function") atualizarRelogio();
+  if (typeof verificarEstatutoAdmin === "function") verificarEstatutoAdmin();
 
   carregarLikesBD();
   verificarEstatutoAdmin();

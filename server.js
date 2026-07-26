@@ -84,6 +84,49 @@ async function initDB() {
       );
     `);
 
+    await pool.query(`
+      DROP TABLE IF EXISTS historico_candidaturas CASCADE;
+    `);
+
+    await pool.query(`
+      DROP TABLE IF EXISTS candidaturas CASCADE;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS candidaturas (
+        id SERIAL PRIMARY KEY,
+        tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('artista', 'album')),
+        artist_name VARCHAR(255) NOT NULL,
+        artist_birthdate DATE,
+        artist_photo TEXT,
+        album_title VARCHAR(255),
+        album_cover TEXT,
+        album_date DATE,
+        year INT,
+        genre VARCHAR(100),
+        description TEXT,
+        profile_links TEXT,
+        album_link TEXT,
+        status VARCHAR(50) DEFAULT 'pendente',
+        submitted_by VARCHAR(255) NOT NULL,
+        submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reviewed_by VARCHAR(255),
+        reviewed_date TIMESTAMP,
+        rejection_reason TEXT
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS historico_candidaturas (
+        id SERIAL PRIMARY KEY,
+        candidatura_id INT NOT NULL REFERENCES candidaturas(id) ON DELETE CASCADE,
+        acao VARCHAR(50) NOT NULL,
+        realizado_por VARCHAR(255) NOT NULL,
+        motivo TEXT,
+        data_acao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log("✅ Tabelas e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
@@ -99,6 +142,22 @@ async function registarLog(autor, acao, alvo) {
     );
   } catch (err) {
     console.error("Erro ao gravar log:", err.message);
+  }
+}
+
+async function registarHistoricoCandidatura(
+  candidatura_id,
+  acao,
+  realizado_por,
+  motivo = null,
+) {
+  try {
+    await pool.query(
+      "INSERT INTO historico_candidaturas (candidatura_id, acao, realizado_por, motivo) VALUES ($1, $2, $3, $4)",
+      [candidatura_id, acao, realizado_por, motivo],
+    );
+  } catch (err) {
+    console.error("Erro ao registar histórico de candidatura:", err.message);
   }
 }
 
@@ -850,6 +909,295 @@ app.post("/api/rate", autenticarToken, async (req, res) => {
     res.status(500).json({ erro: "Erro ao guardar avaliação." });
   }
 });
+
+// ==========================================
+// ENDPOINTS PARA CANDIDATURAS DE ARTISTAS E ÁLBUNS
+// ==========================================
+
+// 1. Submeter uma candidatura de artista/álbum
+app.post("/api/candidaturas/submit", autenticarToken, async (req, res) => {
+  const {
+    tipo,
+    artist_name,
+    artist_birthdate,
+    artist_photo,
+    artist_profile,
+    album_title,
+    album_artist,
+    album_cover,
+    album_date,
+    album_link,
+    year,
+    genre,
+    description,
+    profile_links,
+  } = req.body;
+  const submitted_by = req.user.username;
+
+  // Validação de tipo
+  if (!tipo || !["artista", "album"].includes(tipo)) {
+    return res.status(400).json({ erro: "Tipo de candidatura inválido." });
+  }
+
+  try {
+    if (tipo === "artista") {
+      // Validação para artista
+      if (!artist_name || !artist_photo || !artist_profile) {
+        return res.status(400).json({
+          erro: "Nome do artista, foto e perfil são obrigatórios para submissão de artista.",
+        });
+      }
+
+      if (!validarImagemBase64(artist_photo)) {
+        return res.status(400).json({
+          erro: "Formato de imagem inválido (apenas PNG, JPEG, WEBP, GIF).",
+        });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO candidaturas (tipo, artist_name, artist_birthdate, artist_photo, profile_links, genre, description, status, submitted_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING id, artist_name, status, submitted_date`,
+        [
+          "artista",
+          artist_name,
+          artist_birthdate || null,
+          artist_photo,
+          artist_profile || null,
+          genre || null,
+          description || null,
+          "pendente",
+          submitted_by,
+        ],
+      );
+
+      await registarLog(submitted_by, "SUBMETE ARTISTA", artist_name);
+
+      res.json({
+        mensagem: "Candidatura de artista enviada com sucesso!",
+        candidatura: result.rows[0],
+      });
+    } else {
+      // Validação para álbum
+      if (
+        !album_title ||
+        !album_artist ||
+        !album_cover ||
+        !album_date ||
+        !album_link
+      ) {
+        return res.status(400).json({
+          erro: "Título do álbum, artista, capa, data e link são obrigatórios.",
+        });
+      }
+
+      if (!validarImagemBase64(album_cover)) {
+        return res.status(400).json({
+          erro: "Formato de imagem inválido (apenas PNG, JPEG, WEBP, GIF).",
+        });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO candidaturas (tipo, artist_name, album_title, album_cover, album_date, album_link, genre, description, status, submitted_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         RETURNING id, album_title, status, submitted_date`,
+        [
+          "album",
+          album_artist,
+          album_title,
+          album_cover,
+          album_date,
+          album_link,
+          genre || null,
+          description || null,
+          "pendente",
+          submitted_by,
+        ],
+      );
+
+      await registarLog(
+        submitted_by,
+        "SUBMETE ÁLBUM",
+        `${album_artist} - ${album_title}`,
+      );
+
+      res.json({
+        mensagem: "Candidatura de álbum enviada com sucesso!",
+        candidatura: result.rows[0],
+      });
+    }
+  } catch (err) {
+    console.error("Erro ao submeter candidatura:", err);
+    res.status(500).json({ erro: "Erro ao processar candidatura." });
+  }
+});
+
+// 2. Listar todas as candidaturas (apenas admin/mod)
+app.get(
+  "/api/candidaturas",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const status = req.query.status || "pendente"; // Por padrão, mostra pendentes
+
+    try {
+      let query =
+        "SELECT id, tipo, artist_name, artist_birthdate, artist_photo, album_title, album_cover, album_date, genre, description, profile_links, album_link, status, submitted_by, submitted_date, reviewed_by, reviewed_date, rejection_reason FROM candidaturas";
+      let params = [];
+
+      if (status && status !== "todas") {
+        query += " WHERE status = $1";
+        params = [status];
+      }
+
+      query += " ORDER BY submitted_date DESC";
+
+      const result = await pool.query(query, params);
+
+      res.json({
+        total: result.rows.length,
+        candidaturas: result.rows,
+      });
+    } catch (err) {
+      console.error("Erro ao listar candidaturas:", err);
+      res.status(500).json({ erro: "Erro ao obter candidaturas." });
+    }
+  },
+);
+
+// 3. Aprovar uma candidatura
+app.put(
+  "/api/candidaturas/:id/approve",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const reviewed_by = req.user.username;
+
+    try {
+      const candidatura = await pool.query(
+        "SELECT * FROM candidaturas WHERE id = $1",
+        [id],
+      );
+
+      if (candidatura.rows.length === 0) {
+        return res.status(404).json({ erro: "Candidatura não encontrada." });
+      }
+
+      const cand = candidatura.rows[0];
+
+      // Atualizar status para aprovado
+      await pool.query(
+        "UPDATE candidaturas SET status = $1, reviewed_by = $2, reviewed_date = CURRENT_TIMESTAMP WHERE id = $3",
+        ["aprovado", reviewed_by, id],
+      );
+
+      // Registar no histórico
+      await registarHistoricoCandidatura(id, "APROVADO", reviewed_by, null);
+
+      // Registar log geral
+      await registarLog(
+        reviewed_by,
+        "APROVOU CANDIDATURA",
+        `${cand.artist_name}${cand.album_title ? ` - ${cand.album_title}` : ""}`,
+      );
+
+      res.json({
+        mensagem: `Candidatura de '${cand.artist_name}${cand.album_title ? ` - ${cand.album_title}` : ""}' aprovada com sucesso!`,
+      });
+    } catch (err) {
+      console.error("Erro ao aprovar candidatura:", err);
+      res.status(500).json({ erro: "Erro ao aprovar candidatura." });
+    }
+  },
+);
+
+// 4. Rejeitar uma candidatura
+app.put(
+  "/api/candidaturas/:id/reject",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { rejection_reason } = req.body;
+    const reviewed_by = req.user.username;
+
+    try {
+      const candidatura = await pool.query(
+        "SELECT * FROM candidaturas WHERE id = $1",
+        [id],
+      );
+
+      if (candidatura.rows.length === 0) {
+        return res.status(404).json({ erro: "Candidatura não encontrada." });
+      }
+
+      const cand = candidatura.rows[0];
+
+      // Atualizar status para rejeitado
+      await pool.query(
+        "UPDATE candidaturas SET status = $1, reviewed_by = $2, reviewed_date = CURRENT_TIMESTAMP, rejection_reason = $3 WHERE id = $4",
+        ["rejeitado", reviewed_by, rejection_reason || null, id],
+      );
+
+      // Registar no histórico
+      await registarHistoricoCandidatura(
+        id,
+        "REJEITADO",
+        reviewed_by,
+        rejection_reason || null,
+      );
+
+      // Registar log geral
+      await registarLog(
+        reviewed_by,
+        "REJEITOU CANDIDATURA",
+        `${cand.artist_name}${cand.album_title ? ` - ${cand.album_title}` : ""}`,
+      );
+
+      res.json({
+        mensagem: `Candidatura de '${cand.artist_name}${cand.album_title ? ` - ${cand.album_title}` : ""}' rejeitada.`,
+      });
+    } catch (err) {
+      console.error("Erro ao rejeitar candidatura:", err);
+      res.status(500).json({ erro: "Erro ao rejeitar candidatura." });
+    }
+  },
+);
+
+// 5. Obter histórico completo de uma candidatura
+app.get(
+  "/api/candidaturas/:id/historico",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      const candidatura = await pool.query(
+        "SELECT id, tipo, artist_name, album_title, status, submitted_by, submitted_date FROM candidaturas WHERE id = $1",
+        [id],
+      );
+
+      if (candidatura.rows.length === 0) {
+        return res.status(404).json({ erro: "Candidatura não encontrada." });
+      }
+
+      const historico = await pool.query(
+        "SELECT acao, realizado_por, motivo, data_acao FROM historico_candidaturas WHERE candidatura_id = $1 ORDER BY data_acao DESC",
+        [id],
+      );
+
+      res.json({
+        candidatura: candidatura.rows[0],
+        historico: historico.rows,
+      });
+    } catch (err) {
+      console.error("Erro ao obter histórico:", err);
+      res.status(500).json({ erro: "Erro ao obter histórico." });
+    }
+  },
+);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor a rodar na porta ${PORT}`));
