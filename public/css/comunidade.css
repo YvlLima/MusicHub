@@ -11,6 +11,12 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background-color: #050505;
   color: #e0e0e0;
@@ -420,5 +426,127 @@ h1 {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* ==========================================
+   4. RESPONSIVIDADE
+   ========================================== */
+
+/* ---------- TABLET (≤768px) ---------- */
+@media (max-width: 768px) {
+  body {
+    padding: 20px 10px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 3px;
+  }
+
+  header {
+    padding-bottom: 18px;
+    margin-bottom: 25px;
+    gap: 10px;
+  }
+
+  .seccao h2 {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .caixa-perfil {
+    padding: 20px;
+    width: 96% !important;
+  }
+
+  .grelha-comunidade-lista {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .grelha-favoritos {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+}
+
+/* ---------- TELEMÓVEL (≤480px) ---------- */
+@media (max-width: 480px) {
+  body {
+    padding: 14px 8px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+    letter-spacing: 1.5px;
+  }
+
+  .btn-hud {
+    padding: 6px 10px;
+    font-size: 0.68rem;
+  }
+
+  .seccao h2 {
+    font-size: 1.15rem;
+  }
+
+  .caixa-perfil {
+    padding: 14px;
+    border-radius: 4px;
+  }
+
+  .grelha-comunidade-lista {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .card-membro-comunidade {
+    flex-wrap: wrap;
+    padding: 12px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .membro-info {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .membro-nome {
+    white-space: normal;
+  }
+
+  .card-membro-comunidade .btn-hud {
+    width: 100%;
+  }
+
+  #modal-ver-perfil .caixa-perfil {
+    max-height: 90vh;
+    padding-bottom: 20px;
+  }
+
+  .stats-sociais-perfil {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+
+  .grelha-favoritos {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+  }
+
+  .card-mini-fav img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .btn-fechar-modal {
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
   }
 }

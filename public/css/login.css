@@ -157,7 +157,44 @@
 }
 
 @media (max-width: 480px) {
+  #seccao-auth {
+    min-height: 92vh;
+    padding: 14px;
+  }
+
   .caixa-auth {
-    padding: 30px 20px;
+    padding: 26px 18px;
+    gap: 16px;
+  }
+
+  #titulo-auth {
+    font-size: 1.15rem;
+    letter-spacing: 2px;
+  }
+
+  #form-auth input {
+    padding: 11px 14px;
+    font-size: 0.8rem;
+  }
+
+  .btn-auth {
+    padding: 11px;
+    font-size: 0.8rem;
+  }
+
+  .registo-pfp-preview {
+    width: 65px;
+    height: 65px;
+  }
+}
+
+@media (max-width: 360px) {
+  .caixa-auth {
+    padding: 20px 14px;
+  }
+
+  .logo-header {
+    width: 90px;
+    height: 90px;
   }
 }
