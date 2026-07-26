@@ -972,13 +972,13 @@ async function carregarConteudoAprovado() {
       const idUnico = `cand_${item.id}`;
 
       const btnInfoHTML = `
-        <button type="button" class="btn-share" 
-                title="Informações de Submissão"
-                onclick="abrirInfoItem(${item.id})" 
-                style="border-radius: 50%; width: 22px; height: 22px; padding: 0; font-weight: bold;">
-          i
-        </button>
-      `;
+  <button type="button" class="btn-share" 
+          title="Informações de Submissão"
+          onclick="abrirInfoItem(${item.id})" 
+          style="border-radius: 50%; width: 22px; height: 22px; padding: 0; font-weight: bold;">
+    i
+  </button>
+`;
 
       if (item.tipo === "artista" && grelhaArtistas) {
         const generos = item.genre
