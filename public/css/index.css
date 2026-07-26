@@ -630,6 +630,34 @@ iframe:hover {
   box-shadow: 0 0 10px rgba(255, 0, 51, 0.3);
 }
 
+/* Estilização da Dropdown no Tema HUD */
+select#filtro-status,
+.caixa-filtro select {
+  background-color: #0d0d0d !important;
+  color: #ffffff !important;
+  border: 1px solid #ff0033 !important;
+  padding: 8px 14px !important;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+select#filtro-status:hover,
+select#filtro-status:focus {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.5);
+}
+
+select#filtro-status option {
+  background-color: #0d0d0d !important;
+  color: #ffffff !important;
+}
+
 /* Badge e Botões de Ação na Tabela do Admin */
 .badge-admin {
   color: #ff0033;
@@ -1240,6 +1268,7 @@ footer p {
     min-width: 600px;
   }
 }
+
 /* Organização do Modal de Candidatura */
 #form-candidatura {
   display: flex;

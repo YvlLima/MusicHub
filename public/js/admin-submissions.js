@@ -1,5 +1,3 @@
-const API_URL = "https://musichub-backend-bf0h.onrender.com";
-
 // ==========================================
 // ESTADO GLOBAL
 // ==========================================
@@ -359,7 +357,7 @@ function exibirModalHistorico(candidatura, historico) {
     html +=
       '<p style="text-align: center; color: #888; padding: 20px;">Sem histórico de ações ainda.</p>';
   } else {
-    historico.forEach((acao, index) => {
+    historico.forEach((acao) => {
       const data = new Date(acao.data_acao);
       const dataFormatada = data.toLocaleDateString("pt-PT");
       const horaFormatada = data.toLocaleTimeString("pt-PT");
