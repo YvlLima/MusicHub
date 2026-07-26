@@ -115,25 +115,19 @@ function atualizarStatsHUD() {
 }
 
 function atualizarTopArtistaSuave() {
-  const artistas = [
-    { nome: "Lon3r Johny", id: "lon3r" },
-    { nome: "Playboi Carti", id: "carti" },
-    { nome: "Ken Carson", id: "ken" },
-  ];
-
   let topArtista = "—";
   let maxLikes = 0;
 
-  artistas.forEach((art) => {
-    const btn = document.querySelector(`button[onclick*='${art.id}']`);
-    if (btn) {
-      const likesLocais = parseInt(
-        btn.querySelector(".contador").innerText || "0",
-      );
-      if (likesLocais > maxLikes) {
-        maxLikes = likesLocais;
-        topArtista = art.nome;
-      }
+  const cartoesArtistas = document.querySelectorAll("#musica .cartao");
+
+  cartoesArtistas.forEach((cartao) => {
+    const nome = cartao.querySelector("h3")?.innerText || "—";
+    const contador = cartao.querySelector(".contador")?.innerText || "0";
+    const likes = parseInt(contador, 10);
+
+    if (likes > maxLikes) {
+      maxLikes = likes;
+      topArtista = nome;
     }
   });
 
@@ -286,9 +280,6 @@ async function darLike(btn, id) {
   }
 }
 
-// ==========================================
-// FUNÇÃO PARA CARREGAR E PINTAR OS LIKES (F5)
-// ==========================================
 async function carregarLikesBD() {
   const userString = localStorage.getItem("utilizador_ativo");
   const user = userString
@@ -306,18 +297,12 @@ async function carregarLikesBD() {
 
     if (!resposta.ok) return;
 
-    // 1. Limpar estados visuais anteriores
     document.querySelectorAll(".btn-like").forEach((btn) => {
       btn.classList.remove("liked");
-      const contador =
-        btn.querySelector(".contador") ||
-        document.getElementById(
-          `count-like-${btn.id.replace("btn-like-", "")}`,
-        );
+      const contador = btn.querySelector(".contador");
       if (contador) contador.innerText = "0";
     });
 
-    // 2. Atualizar os números totais de likes
     if (dados.contagem) {
       for (const [itemId, total] of Object.entries(dados.contagem)) {
         const contador =
@@ -329,7 +314,6 @@ async function carregarLikesBD() {
       }
     }
 
-    // 3. Ativar a cor vermelha (.liked) para os itens que este utilizador gostou
     if (dados.deuLike && Array.isArray(dados.deuLike)) {
       dados.deuLike.forEach((itemId) => {
         const btn =
@@ -349,7 +333,6 @@ async function carregarLikesBD() {
   }
 }
 
-// Modal de Confirmação Generico
 function confirmarAcao(
   mensagem,
   titulo = "CONFIRMAÇÃO",
@@ -685,31 +668,6 @@ function filtrarCategoria(categoria, btn) {
   }
 }
 
-const generosArtistas = {
-  lon3r: ["Trap", " Rage Rap ", "Hip Hop Tuga"],
-  carti: ["Trap", " Rage ", "Cloud Rap"],
-  ken: ["Rage", " Trap ", "Hip Hop"],
-};
-
-function carregarTagsArtistas() {
-  const cartoes = document.querySelectorAll(".cartao[data-artista]");
-
-  cartoes.forEach((cartao) => {
-    const idArtista = cartao.getAttribute("data-artista");
-    const generos = generosArtistas[idArtista];
-    const container = cartao.querySelector(".tags-container");
-
-    if (container && generos) {
-      container.innerHTML = generos
-        .map((genero, index) => {
-          const classeCor = index % 2 === 1 ? "tag alt" : "tag";
-          return `<span class="${classeCor}">${genero}</span>`;
-        })
-        .join("");
-    }
-  });
-}
-
 async function carregarRatingsBD() {
   const userString = localStorage.getItem("utilizador_ativo");
   const user = userString ? JSON.parse(userString) : {};
@@ -774,9 +732,8 @@ async function submeterRating(itemId, estrelas) {
 }
 
 // ==========================================
-// SISTEMA DE CANDIDATURAS DE ARTISTAS/ÁLBUNS
+// CANDIDATURAS
 // ==========================================
-// Variáveis globais para armazenar imagens em base64
 let artistPhotoBase64 = "";
 let albumCoverBase64 = "";
 let tipoCandidaturaSelecionado = "artista";
@@ -876,22 +833,9 @@ async function submeterCandidatura(e) {
       document.getElementById("candidatura-artist-description").value.trim() ||
       null;
 
-    if (!artist_name) {
-      mostrarToast("PREENCHE O NOME DO ARTISTA!");
-      return;
-    }
-
-    if (!artist_photo) {
-      mostrarToast("CARREGA UMA FOTO DO ARTISTA!");
-      return;
-    }
-
-    if (!artist_profile) {
-      mostrarToast(
-        "PREENCHE O PERFIL DO ARTISTA (SPOTIFY/SOUNDCLOUD/APPLE MUSIC)!",
-      );
-      return;
-    }
+    if (!artist_name) return mostrarToast("PREENCHE O NOME DO ARTISTA!");
+    if (!artist_photo) return mostrarToast("CARREGA UMA FOTO DO ARTISTA!");
+    if (!artist_profile) return mostrarToast("PREENCHE O PERFIL DO ARTISTA!");
 
     payload = {
       tipo: "artista",
@@ -921,37 +865,16 @@ async function submeterCandidatura(e) {
       document.getElementById("candidatura-album-description").value.trim() ||
       null;
 
-    if (!album_title) {
-      mostrarToast("PREENCHE O NOME DO ÁLBUM!");
-      return;
-    }
-
-    if (!album_artist) {
-      mostrarToast("PREENCHE O NOME DO ARTISTA/BANDA!");
-      return;
-    }
-
-    if (!album_cover) {
-      mostrarToast("CARREGA UMA CAPA PARA O ÁLBUM!");
-      return;
-    }
-
-    if (!album_date) {
-      mostrarToast("PREENCHE A DATA DO ÁLBUM!");
-      return;
-    }
-
-    if (!album_link) {
-      mostrarToast(
-        "PREENCHE O LINK DO ÁLBUM (SPOTIFY/SOUNDCLOUD/APPLE MUSIC)!",
-      );
-      return;
-    }
+    if (!album_title) return mostrarToast("PREENCHE O NOME DO ÁLBUM!");
+    if (!album_artist) return mostrarToast("PREENCHE O ARTISTA!");
+    if (!album_cover) return mostrarToast("CARREGA UMA CAPA!");
+    if (!album_date) return mostrarToast("PREENCHE A DATA!");
+    if (!album_link) return mostrarToast("PREENCHE O LINK DO ÁLBUM!");
 
     payload = {
       tipo: "album",
       album_title,
-      artist_name: album_artist,
+      album_artist,
       album_cover,
       album_date,
       album_link,
@@ -972,15 +895,11 @@ async function submeterCandidatura(e) {
 
     const dados = await resposta.json();
 
-    if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO SUBMETER CANDIDATURA!");
-      return;
-    }
+    if (!resposta.ok) return mostrarToast(dados.erro || "ERRO!");
 
-    mostrarToast("✓ CANDIDATURA SUBMETIDA COM SUCESSO! À ESPERA DE APROVAÇÃO.");
+    mostrarToast("✓ CANDIDATURA SUBMETIDA COM SUCESSO!");
     fecharModalCandidatura();
   } catch (err) {
-    console.error("Erro:", err);
     mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
   }
 }
@@ -989,15 +908,185 @@ function abrirPainelModeracaoCandidaturas() {
   window.location.href = "admin-submissions.html";
 }
 
-// ARRANQUE DA PÁGINA
-window.addEventListener("DOMContentLoaded", () => {
+// Detalhes da submissão
+function mostrarInfoSubmissao(submetidoPor, dataSubmissao, aprovadoPor) {
+  const dataSub = dataSubmissao
+    ? new Date(dataSubmissao).toLocaleString("pt-PT")
+    : "Desconhecida";
+  const autor = submetidoPor || "Sistema";
+  const mod = aprovadoPor || "Sistema";
+
+  mostrarToast(`Submetido por: ${autor} (${dataSub}) | Aprovado por: ${mod}`);
+}
+
+// Carregar e renderizar artistas e álbuns aprovados no index.html
+async function carregarConteudoAprovado() {
+  try {
+    const resposta = await fetch(`${API_URL}/candidaturas/aprovadas`);
+    const dados = await resposta.json();
+
+    if (!resposta.ok) return;
+
+    const grelhaArtistas = document.querySelector("#musica .grelha");
+    const grelhaAlbuns = document.querySelector("#albuns .grelha");
+
+    if (grelhaArtistas) grelhaArtistas.innerHTML = "";
+    if (grelhaAlbuns) grelhaAlbuns.innerHTML = "";
+
+    dados.aprovados.forEach((item) => {
+      const idUnico = `cand_${item.id}`;
+
+      const submetidoPor = item.submitted_by || "Sistema";
+      const dataSubmissao = item.submitted_date || "";
+      const aprovadoPor = item.reviewed_by || "Sistema";
+
+      const btnInfoHTML = `
+        <button type="button" class="btn-share" 
+                title="Informações de Submissão"
+                onclick="mostrarInfoSubmissao('${escapeJS(submetidoPor)}', '${escapeJS(dataSubmissao)}', '${escapeJS(aprovadoPor)}')" 
+                style="border-radius: 50%; width: 22px; height: 22px; padding: 0; font-weight: bold;">
+          i
+        </button>
+      `;
+
+      if (item.tipo === "artista" && grelhaArtistas) {
+        const generos = item.genre
+          ? item.genre.split(",").map((g) => g.trim())
+          : [];
+        const tagsHTML = generos
+          .map(
+            (g, i) =>
+              `<span class="${i % 2 === 1 ? "tag alt" : "tag"}">${escapeHTML(g)}</span>`,
+          )
+          .join(" ");
+
+        let embedHTML = "";
+        if (item.profile_links && item.profile_links.includes("spotify.com")) {
+          const match = item.profile_links.match(
+            /(artist|album)\/([a-zA-Z0-9]+)/,
+          );
+          if (match) {
+            const tipoItem = match[1];
+            const spotifyId = match[2];
+            const altura = tipoItem === "artist" ? 352 : 152;
+            embedHTML = `<iframe src="https://open.spotify.com/embed/${tipoItem}/${spotifyId}?utm_source=generator" width="100%" height="${altura}" frameborder="0" allowfullscreen="" loading="lazy"></iframe>`;
+          }
+        }
+
+        const dataNasc = item.artist_birthdate
+          ? new Date(item.artist_birthdate).toLocaleDateString("pt-PT")
+          : "";
+
+        const cartaoArtista = `
+          <div class="cartao" data-candidatura="${idUnico}">
+            <div class="top-cartao">
+              <div class="status-indicator"><span class="ponto-pisca"></span> REC 4K</div>
+              <div class="acoes-cartao">
+                ${btnInfoHTML}
+                <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
+                  ♥ <span id="count-like-${idUnico}" class="contador">0</span>
+                </button>
+                ${item.profile_links ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.profile_links)}')">SHARE</button>` : ""}
+              </div>
+            </div>
+            <img class="imagem-cartao" src="${item.artist_photo || "imagens/pfp.png"}" alt="${escapeHTML(item.artist_name)}" />
+            <h3>${escapeHTML(item.artist_name)}</h3>
+            ${dataNasc ? `<p>Data de Nascimento: ${dataNasc}</p>` : ""}
+            <div class="tags-container">${tagsHTML}</div>
+            ${embedHTML}
+            <div class="rating-box" data-item="${idUnico}">
+              <div class="estrelas-container">
+                <span class="estrela" onclick="submeterRating('${idUnico}', 1)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 2)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 3)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 4)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 5)">★</span>
+              </div>
+              <span class="rating-info" id="info-rating-${idUnico}">0.0 ★ (0)</span>
+            </div>
+          </div>
+        `;
+        grelhaArtistas.insertAdjacentHTML("beforeend", cartaoArtista);
+      } else if (item.tipo === "album" && grelhaAlbuns) {
+        let embedHTML = "";
+        if (item.album_link && item.album_link.includes("spotify.com")) {
+          const match = item.album_link.match(/(artist|album)\/([a-zA-Z0-9]+)/);
+          if (match) {
+            const tipoItem = match[1];
+            const spotifyId = match[2];
+            embedHTML = `<iframe src="https://open.spotify.com/embed/${tipoItem}/${spotifyId}?utm_source=generator" width="100%" height="152" frameborder="0" allowfullscreen="" loading="lazy"></iframe>`;
+          }
+        }
+
+        const anoAlbum = item.album_date
+          ? new Date(item.album_date).getFullYear()
+          : "";
+
+        const cartaoAlbum = `
+          <div class="cartao" data-candidatura="${idUnico}">
+            <div class="top-cartao">
+              <div class="status-indicator"><span class="ponto-pisca"></span> REC 4K</div>
+              <div class="acoes-cartao">
+                ${btnInfoHTML}
+                <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
+                  ♥ <span id="count-like-${idUnico}" class="contador">0</span>
+                </button>
+                ${item.album_link ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.album_link)}')">SHARE</button>` : ""}
+              </div>
+            </div>
+            <img class="imagem-cartao" src="${item.album_cover || "imagens/pfp.png"}" alt="${escapeHTML(item.album_title)}" />
+            <h3>${escapeHTML(item.album_title)}</h3>
+            <p>${escapeHTML(item.artist_name)} ${anoAlbum ? `(${anoAlbum})` : ""}</p>
+            ${embedHTML}
+            <div class="rating-box" data-item="${idUnico}">
+              <div class="estrelas-container">
+                <span class="estrela" onclick="submeterRating('${idUnico}', 1)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 2)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 3)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 4)">★</span>
+                <span class="estrela" onclick="submeterRating('${idUnico}', 5)">★</span>
+              </div>
+              <span class="rating-info" id="info-rating-${idUnico}">0.0 ★ (0)</span>
+            </div>
+          </div>
+        `;
+        grelhaAlbuns.insertAdjacentHTML("beforeend", cartaoAlbum);
+      }
+    });
+
+    carregarLikesBD();
+    if (typeof carregarRatingsBD === "function") carregarRatingsBD();
+    if (typeof atualizarStatsHUD === "function") atualizarStatsHUD();
+  } catch (err) {
+    console.error("Erro ao carregar conteúdo aprovado:", err);
+  }
+}
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+        tag
+      ] || tag,
+  );
+}
+
+function escapeJS(str) {
+  if (!str) return "";
+  return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+// Arranque
+window.addEventListener("DOMContentLoaded", async () => {
   if (typeof verificarEstadoServidor === "function") verificarEstadoServidor();
-  if (typeof carregarTagsArtistas === "function") carregarTagsArtistas();
   if (typeof atualizarRelogio === "function") atualizarRelogio();
   if (typeof verificarEstatutoAdmin === "function") verificarEstatutoAdmin();
 
+  await carregarConteudoAprovado();
+
   carregarLikesBD();
-  verificarEstatutoAdmin();
   reiniciarTemporizador();
 
   if (typeof carregarRatingsBD === "function") {
@@ -1005,7 +1094,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Easter Egg (Opium) - Protegido contra undefined
+// Easter Egg
 let sequencia = "";
 const codigo = "opium";
 
