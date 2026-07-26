@@ -1240,3 +1240,80 @@ footer p {
     min-width: 600px;
   }
 }
+/* Organização do Modal de Candidatura */
+#form-candidatura {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.campo-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+}
+
+.campo-modal label {
+  display: block;
+  width: 100%;
+  color: #ff0033;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.campo-modal input[type="text"],
+.campo-modal input[type="date"],
+.campo-modal textarea {
+  display: block;
+  width: 100% !important;
+  box-sizing: border-box;
+  background: #050505;
+  border: 1px solid #222222;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  outline: none;
+}
+
+.campo-modal input:focus,
+.campo-modal textarea:focus {
+  border-color: #ff0033;
+  box-shadow: 0 0 8px rgba(255, 0, 51, 0.4);
+}
+
+.campo-modal textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Radio Buttons de Seleção */
+.grupo-radio-candidatura {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.radio-candidatura {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Imagem e Botão de Escolha */
+.container-preview-capa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
