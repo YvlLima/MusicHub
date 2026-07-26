@@ -11,10 +11,24 @@ const JWT_SECRET =
   process.env.JWT_SECRET || "chave_secreta_super_segura_opium_hub";
 const SUPER_ADMIN = "YvlLima";
 
+// Necessário para o rate-limit funcionar corretamente no Render
+app.set("trust proxy", 1);
+
 app.use(express.static("public"));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ limit: "2mb", extended: true }));
-app.use(cors());
+
+// CORS configurado para permitir o teu frontend no Cloudflare Pages e ambiente local
+app.use(
+  cors({
+    origin: [
+      "https://musichub-9hu.pages.dev",
+      "http://localhost:3000",
+      "http://127.0.0.1:5500",
+    ],
+    credentials: true,
+  }),
+);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -270,7 +284,6 @@ app.post("/api/login", loginLimiter, async (req, res) => {
 });
 
 // Registo
-// Procura a rota /api/register no server.js e substitui por isto:
 app.post("/api/register", async (req, res) => {
   const { username, email, password, pfp } = req.body;
 
@@ -278,7 +291,6 @@ app.post("/api/register", async (req, res) => {
     return res.status(400).json({ erro: "Preenche todos os campos." });
   }
 
-  // Validação do formato do e-mail
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ erro: "Formato de e-mail inválido." });
@@ -1151,7 +1163,7 @@ app.get(
   },
 );
 
-// Rota pública para ir buscar o conteúdo aprovado para a página inicial
+// Rota pública para obter conteúdo aprovado
 app.get("/api/candidaturas/aprovadas", async (req, res) => {
   try {
     const result = await pool.query(
