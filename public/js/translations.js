@@ -194,6 +194,11 @@ const traducoes = {
     perfilBtnGuardar: "GUARDAR ALTERAÇÕES",
     perfilBtnEliminarConta: "ELIMINAR MINHA CONTA",
     perfilBtnVoltar: "VOLTAR",
+    logUploadMusica: "UPLOAD MÚSICA",
+    logAvaliou: "AVALIOU",
+    logRejeitouCandidatura: "REJEITOU CANDIDATURA",
+    logSubmeteuAlbum: "SUBMETEU ÁLBUM",
+    logSubmeteuArtista: "SUBMETEU ARTISTA",
   },
   en: {
     tituloHub: "MUSIC HUB",
@@ -390,5 +395,10 @@ const traducoes = {
     perfilBtnGuardar: "SAVE CHANGES",
     perfilBtnEliminarConta: "DELETE MY ACCOUNT",
     perfilBtnVoltar: "BACK",
+    logUploadMusica: "UPLOAD MUSIC",
+    logAvaliou: "RATED",
+    logRejeitouCandidatura: "REJECTED APPLICATION",
+    logSubmeteuAlbum: "SUBMITTED ALBUM",
+    logSubmeteuArtista: "SUBMITTED ARTIST",
   },
 };

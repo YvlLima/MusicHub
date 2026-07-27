@@ -739,6 +739,21 @@ async function carregarStatsEGlags() {
           chaveAcao = "logDeixouSeguir";
         else if (acaoUpper.includes("COMEÇOU A SEGUIR"))
           chaveAcao = "logComecouSeguir";
+        else if (acaoUpper.includes("UPLOAD MÚSICA"))
+          chaveAcao = "logUploadMusica";
+        else if (acaoUpper.includes("AVALIOU")) chaveAcao = "logAvaliou";
+        else if (acaoUpper.includes("REJEITOU CANDIDATURA"))
+          chaveAcao = "logRejeitouCandidatura";
+        else if (
+          acaoUpper.includes("SUBMETE ÁLBUM") ||
+          acaoUpper.includes("SUBMETEU ÁLBUM")
+        )
+          chaveAcao = "logSubmeteuAlbum";
+        else if (
+          acaoUpper.includes("SUBMETE ARTISTA") ||
+          acaoUpper.includes("SUBMETEU ARTISTA")
+        )
+          chaveAcao = "logSubmeteuArtista";
 
         const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
         const t =
