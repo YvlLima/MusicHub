@@ -104,6 +104,7 @@ setInterval(verificarEstadoServidor, 5000);
 function aplicarTraducoes(lang) {
   if (!traducoes[lang]) lang = "pt";
 
+  // Atribuir data-i18n automático a botões dinâmicos de paginação detetados no DOM
   document.querySelectorAll("button").forEach((btn) => {
     const textoOriginal = (btn.innerText || "").trim().toUpperCase();
     if (textoOriginal === "VER MAIS" || textoOriginal === "SHOW MORE") {
@@ -122,6 +123,7 @@ function aplicarTraducoes(lang) {
     }
   });
 
+  // Traduzir placeholders
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     const chave = el.getAttribute("data-i18n-placeholder");
     if (traducoes[lang][chave]) {
@@ -144,6 +146,7 @@ function mudarIdioma(lang) {
   const select = document.getElementById("idioma-select");
   if (select && select.value !== lang) select.value = lang;
 
+  // Se estiveres na página da comunidade, recarrega a lista para aplicar as novas traduções de labels
   if (
     typeof carregarPaginaComunidade === "function" &&
     document.getElementById("lista-comunidade")
@@ -1598,167 +1601,13 @@ function escapeJS(str) {
   return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
-// ==========================================
-// LEITOR DE MÚSICA GLOBAL & UPLOAD (ADMIN/MOD)
-// ==========================================
-let playlistMusicas = [];
-let indiceMusicaAtual = 0;
-
-async function inicializarLeitorMusica() {
-  const containerLeitor = document.getElementById("leitor-global-container");
-  const containerUpload = document.getElementById("container-upload-musica");
-  const audio = document.getElementById("audio-player");
-
-  if (!containerLeitor || !audio) return;
-
-  const userStr = localStorage.getItem("utilizador_ativo");
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      if (user && user.is_admin > 0) {
-        containerLeitor.style.display = "flex";
-        if (containerUpload) containerUpload.style.display = "block";
-      }
-    } catch (e) {
-      console.error("Erro ao validar permissões do leitor:", e);
-    }
-  }
-
-  await carregarPlaylistServidor();
-}
-
-async function carregarPlaylistServidor() {
-  try {
-    const resposta = await fetch(`${API_URL}/musicas`);
-    const dados = await resposta.json();
-    if (resposta.ok && dados.musicas && dados.musicas.length > 0) {
-      playlistMusicas = dados.musicas;
-      carregarMusicaAtual();
-    } else {
-      // Fallback caso não haja músicas na BD
-      playlistMusicas = [
-        {
-          titulo: "Playboi Carti - Over",
-          url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        },
-      ];
-      carregarMusicaAtual();
-    }
-  } catch (err) {
-    console.error("Erro ao carregar músicas:", err);
-  }
-}
-
-function carregarMusicaAtual() {
-  const audio = document.getElementById("audio-player");
-  const tituloEl = document.getElementById("leitor-titulo-musica");
-  if (!audio || playlistMusicas.length === 0) return;
-
-  audio.src = playlistMusicas[indiceMusicaAtual].url;
-  if (tituloEl) {
-    tituloEl.innerText = playlistMusicas[indiceMusicaAtual].titulo;
-  }
-  audio.volume = document.getElementById("input-volume")
-    ? document.getElementById("input-volume").value
-    : 0.5;
-
-  audio.onended = () => {
-    tocarProximaMusica();
-  };
-
-  audio.play().catch(() => {
-    // Autoplay policy do browser bloqueada até interação do utilizador
-  });
-}
-
-function togglePlayPause() {
-  const audio = document.getElementById("audio-player");
-  const btn = document.getElementById("btn-play-pause");
-  if (!audio) return;
-
-  if (audio.paused) {
-    audio.play();
-    if (btn) btn.innerText = "⏸";
-  } else {
-    audio.pause();
-    if (btn) btn.innerText = "▶";
-  }
-}
-
-function tocarProximaMusica() {
-  if (playlistMusicas.length === 0) return;
-  indiceMusicaAtual = (indiceMusicaAtual + 1) % playlistMusicas.length;
-  carregarMusicaAtual();
-}
-
-function tocarMusicaAnterior() {
-  if (playlistMusicas.length === 0) return;
-  indiceMusicaAtual =
-    (indiceMusicaAtual - 1 + playlistMusicas.length) % playlistMusicas.length;
-  carregarMusicaAtual();
-}
-
-function mudarVolume(valor) {
-  const audio = document.getElementById("audio-player");
-  if (audio) {
-    audio.volume = parseFloat(valor);
-  }
-}
-
-function abrirModalUploadMusica() {
-  const modal = document.getElementById("modal-upload-musica");
-  if (modal) modal.style.display = "flex";
-}
-
-function fecharModalUploadMusica() {
-  const modal = document.getElementById("modal-upload-musica");
-  if (modal) modal.style.display = "none";
-  const form = document.getElementById("form-upload-musica");
-  if (form) form.reset();
-}
-
-async function submeterUploadMusica(e) {
-  e.preventDefault();
-
-  const tokenJWT = localStorage.getItem("token_jwt");
-  if (!tokenJWT) {
-    return mostrarToast("PRECISAS DE ESTAR AUTENTICADO!");
-  }
-
-  const titulo = document.getElementById("upload-titulo-musica").value.trim();
-  const url = document.getElementById("upload-url-musica").value.trim();
-
-  try {
-    const resposta = await fetch(`${API_URL}/musicas/upload`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${tokenJWT}`,
-      },
-      body: JSON.stringify({ titulo, url }),
-    });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-      return mostrarToast(dados.erro || "ERRO AO FAZER UPLOAD!");
-    }
-
-    mostrarToast("✓ MÚSICA ADICIONADA COM SUCESSO!");
-    fecharModalUploadMusica();
-    await carregarPlaylistServidor();
-  } catch (err) {
-    console.error("Erro no upload:", err);
-    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
-  }
-}
-
 // Arranque
 window.addEventListener("DOMContentLoaded", async () => {
   if (typeof verificarEstadoServidor === "function") verificarEstadoServidor();
   if (typeof atualizarRelogio === "function") atualizarRelogio();
   if (typeof verificarEstatutoAdmin === "function") verificarEstatutoAdmin();
 
+  // Inicializar Idioma Guardado
   const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
   const select = document.getElementById("idioma-select");
   if (select) select.value = idiomaSalvo;
@@ -1774,6 +1623,4 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof carregarRatingsBD === "function") {
     carregarRatingsBD();
   }
-
-  setTimeout(inicializarLeitorMusica, 500);
 });
