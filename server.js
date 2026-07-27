@@ -154,6 +154,16 @@ async function initDB() {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS musicas (
+        id SERIAL PRIMARY KEY,
+        titulo VARCHAR(255) NOT NULL,
+        url TEXT NOT NULL,
+        uploaded_by VARCHAR(255) NOT NULL,
+        data_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log("✅ Tabelas e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
@@ -210,6 +220,13 @@ function autenticarToken(req, res, next) {
 function verificarAdmin(req, res, next) {
   if (!req.user || !req.user.is_admin) {
     return res.status(403).json({ erro: "Acesso restrito!" });
+  }
+  next();
+}
+
+function verificarAdminOuMod(req, res, next) {
+  if (!req.user || !req.user.is_admin || req.user.is_admin <= 0) {
+    return res.status(403).json({ erro: "Acesso restrito a Admins e Mods!" });
   }
   next();
 }
@@ -374,7 +391,7 @@ app.get("/api/likes", async (req, res) => {
 });
 
 app.post("/api/like", autenticarToken, async (req, res) => {
-  const username = req.user.username; // vem do token, nunca do corpo do pedido
+  const username = req.user.username;
   const { item_id } = req.body;
 
   if (!username || !item_id) {
@@ -442,7 +459,7 @@ app.get("/api/my-following", autenticarToken, async (req, res) => {
 
 // Perfil
 app.put("/api/update-profile", autenticarToken, async (req, res) => {
-  const currentUsername = req.user.username; // vem do token, nunca do corpo do pedido
+  const currentUsername = req.user.username;
   const { newUsername, email, newPassword, pfp } = req.body;
 
   if (!newUsername || !newUsername.trim()) {
@@ -740,7 +757,7 @@ app.get("/api/users", autenticarToken, async (req, res) => {
                 WHERE s.follower_username = $1 AND s.following_username = u.username
               ) as ja_segue,
               (SELECT COUNT(*) FROM seguidores WHERE following_username = u.username) as seguidores,
-              (SELECT COUNT(*) FROM seguidores WHERE follower_username = u.username) as seguindo
+              (SELECT COUNT(*) FROM seguidores WHERE follower_username = $1) as seguindo
        FROM utilizadores u
        WHERE u.username != $1
        ORDER BY u.id DESC`,
@@ -1224,7 +1241,6 @@ app.get("/api/candidaturas/aprovadas", async (req, res) => {
 // SUGESTÕES DE QUOTES
 // ==========================================
 
-// Utilizador autenticado sugere uma quote
 app.post("/api/quotes/submit", autenticarToken, async (req, res) => {
   const { texto, autor, artista } = req.body;
   const submitted_by = req.user.username;
@@ -1255,7 +1271,6 @@ app.post("/api/quotes/submit", autenticarToken, async (req, res) => {
   }
 });
 
-// Apenas admin — lista quotes pendentes de revisão
 app.get("/api/quotes", autenticarToken, verificarAdmin, async (req, res) => {
   const status = req.query.status || "pendente";
 
@@ -1283,7 +1298,6 @@ app.get("/api/quotes", autenticarToken, verificarAdmin, async (req, res) => {
   }
 });
 
-// Apenas admin — aprova uma quote
 app.put(
   "/api/quotes/:id/approve",
   autenticarToken,
@@ -1316,7 +1330,6 @@ app.put(
   },
 );
 
-// Apenas admin — rejeita uma quote
 app.put(
   "/api/quotes/:id/reject",
   autenticarToken,
@@ -1354,7 +1367,6 @@ app.put(
   },
 );
 
-// Rota pública — quotes aprovadas, para alimentar o gerador de quotes do Hub
 app.get("/api/quotes/aprovadas", async (req, res) => {
   try {
     const result = await pool.query(
@@ -1371,13 +1383,52 @@ app.get("/api/quotes/aprovadas", async (req, res) => {
 });
 
 // ==========================================
-// ROTAS DE MANUTENÇÃO E UTILITÁRIAS
+// ROTAS DE MÚSICA (LEITOR GLOBAL & UPLOAD)
 // ==========================================
-// As rotas /api/reset-admin e /api/make-admin foram REMOVIDAS por segurança:
-// eram públicas (sem autenticação) e permitiam a qualquer pessoa na internet
-// apagar ou promover a conta do Super Admin só por conhecer o URL.
-// Se precisares de reset/promover manualmente, faz isso diretamente na base
-// de dados (ex: painel do Render > Database > Query), nunca por uma rota pública.
+
+// Listar músicas para o leitor
+app.get("/api/musicas", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, titulo, url FROM musicas ORDER BY id DESC",
+    );
+    res.json({ musicas: result.rows });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao obter músicas." });
+  }
+});
+
+// Upload de música (Apenas Admins e Mods)
+app.post(
+  "/api/musicas/upload",
+  autenticarToken,
+  verificarAdminOuMod,
+  async (req, res) => {
+    const { titulo, url } = req.body;
+    const uploaded_by = req.user.username;
+
+    if (!titulo || !url) {
+      return res.status(400).json({ erro: "Título e URL são obrigatórios." });
+    }
+
+    try {
+      const result = await pool.query(
+        "INSERT INTO musicas (titulo, url, uploaded_by) VALUES ($1, $2, $3) RETURNING id, titulo, url",
+        [titulo, url, uploaded_by],
+      );
+
+      await registarLog(uploaded_by, "UPLOAD MÚSICA", titulo);
+
+      res.status(201).json({
+        mensagem: "Música adicionada com sucesso!",
+        musica: result.rows[0],
+      });
+    } catch (err) {
+      console.error("Erro no upload de música:", err);
+      res.status(500).json({ erro: "Erro ao guardar música." });
+    }
+  },
+);
 
 if (process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 3000;
