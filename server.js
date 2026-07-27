@@ -1315,7 +1315,7 @@ app.put(
   verificarAdmin,
   async (req, res) => {
     const { id } = req.params;
-    const { rejection_reason } = req.body;
+    const rejection_reason = (req.body && req.body.rejection_reason) || null;
     const reviewed_by = req.user.username;
 
     try {
