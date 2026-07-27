@@ -516,88 +516,6 @@
             <tbody id="lista-utilizadores-body"></tbody>
           </table>
 
-          <h3 data-i18n="musicaFundoTitulo">MÚSICA DE FUNDO DO SITE</h3>
-          <div class="controles-musica-fundo">
-            <div id="musica-fundo-estado" class="musica-fundo-estado">
-              A verificar música de fundo atual...
-            </div>
-
-            <div class="grupo-radio-candidatura">
-              <label class="radio-candidatura">
-                <input
-                  type="radio"
-                  name="tipo-musica-fundo"
-                  value="youtube"
-                  checked
-                  onchange="mudarTipoMusicaFundo('youtube')"
-                />
-                <span data-i18n="musicaFundoOpcaoYoutube"
-                  >▶ LINK DO YOUTUBE</span
-                >
-              </label>
-              <label class="radio-candidatura">
-                <input
-                  type="radio"
-                  name="tipo-musica-fundo"
-                  value="upload"
-                  onchange="mudarTipoMusicaFundo('upload')"
-                />
-                <span data-i18n="musicaFundoOpcaoUpload"
-                  >📁 UPLOAD DE FICHEIRO</span
-                >
-              </label>
-            </div>
-
-            <div id="campo-musica-youtube" class="campo-modal">
-              <label data-i18n="musicaFundoLinkLabel">LINK DO YOUTUBE</label>
-              <input
-                type="text"
-                id="input-musica-youtube"
-                data-i18n-placeholder="musicaFundoLinkPlaceholder"
-                placeholder="Ex: https://www.youtube.com/watch?v=..."
-              />
-            </div>
-
-            <div
-              id="campo-musica-upload"
-              class="campo-modal"
-              style="display: none"
-            >
-              <label data-i18n="musicaFundoUploadLabel"
-                >FICHEIRO DE ÁUDIO (MÁX. ~10MB)</label
-              >
-              <input
-                type="file"
-                id="input-musica-upload"
-                accept="audio/*"
-                onchange="carregarFicheiroMusicaFundo(event)"
-              />
-              <span
-                id="nome-ficheiro-musica"
-                class="nome-ficheiro-musica"
-              ></span>
-            </div>
-
-            <div class="acoes-musica-fundo">
-              <button
-                type="button"
-                class="btn-hud"
-                data-i18n="musicaFundoBtnGuardar"
-                onclick="guardarMusicaFundo()"
-              >
-                💾 GUARDAR MÚSICA DE FUNDO
-              </button>
-              <button
-                type="button"
-                class="btn-hud btn-perigo-outline"
-                data-i18n="musicaFundoBtnRemover"
-                onclick="removerMusicaFundo()"
-              >
-                🗑 REMOVER MÚSICA DE FUNDO
-              </button>
-            </div>
-          </div>
-
           <h3 data-i18n="adminLogsTitulo">LOG DE ATIVIDADES</h3>
           <table class="tabela-admin">
             <thead>
@@ -970,68 +888,11 @@
       <span id="toast-mensagem">LINK COPIADO COM SUCESSO</span>
     </div>
 
-    <!-- Player de Música de Fundo (Visível com controlos completos) -->
-    <div
-      id="youtube-player-fundo"
-      style="position: absolute; width: 0; height: 0; overflow: hidden"
-    ></div>
-    <audio id="audio-player-fundo" loop style="display: none"></audio>
-
-    <div
-      id="container-musica-fundo"
-      class="caixa-player-fundo"
-      style="display: none"
-    >
-      <div class="player-info">
-        <span id="icone-player-status">🎵</span>
-        <span id="nome-musica-atual">Música de Fundo</span>
-      </div>
-      <div class="player-controles">
-        <button
-          type="button"
-          class="btn-player"
-          onclick="unskipMusicaFundo()"
-          title="Anterior"
-        >
-          ⏮
-        </button>
-        <button
-          type="button"
-          class="btn-player"
-          id="btn-play-pause-fundo"
-          onclick="alternarMusicaFundo()"
-          title="Play/Pause"
-        >
-          ⏸
-        </button>
-        <button
-          type="button"
-          class="btn-player"
-          onclick="skipMusicaFundo()"
-          title="Seguinte"
-        >
-          ⏭
-        </button>
-        <input
-          type="range"
-          id="slider-volume-fundo"
-          min="0"
-          max="1"
-          step="0.05"
-          value="0.5"
-          oninput="definirVolumeMusicaFundo(this.value)"
-          title="Volume"
-        />
-      </div>
-    </div>
-
     <!-- Scripts JS -->
     <script src="js/config.js"></script>
     <script src="js/translations.js"></script>
     <script src="js/index.js"></script>
     <script src="js/login.js"></script>
     <script src="js/comunidade.js"></script>
-    <script src="js/musica-fundo.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
   </body>
 </html>
