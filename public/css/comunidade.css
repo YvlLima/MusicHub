@@ -61,6 +61,7 @@ header {
   padding-bottom: 25px;
   margin-bottom: 40px;
   gap: 15px;
+  position: relative;
 }
 
 h1 {
@@ -233,15 +234,12 @@ h1 {
   transform: translateY(20px) scale(0.95);
   animation: slideUpModal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transition: all 0.3s ease;
-
-  /* Permite scroll vertical fluido quando o conteúdo excede o tamanho do ecrã */
   max-height: 85vh;
   overflow-y: auto;
   position: relative;
   padding-bottom: 30px;
 }
 
-/* Estilização da barra de scroll dentro do modal */
 #modal-ver-perfil .caixa-perfil::-webkit-scrollbar {
   width: 6px;
 }
@@ -328,7 +326,6 @@ h1 {
   width: 100%;
 }
 
-/* Mini cartões de favoritos (artista/álbum) */
 .card-mini-fav {
   background: #0d0d0d;
   border: 1px solid #1a1a1a;
@@ -368,35 +365,12 @@ h1 {
   text-transform: uppercase;
 }
 
-/* Linha dos botões VER MAIS/VER TUDO ocupa a largura toda do grid */
 .linha-botoes-fav {
   grid-column: 1 / -1;
   display: flex;
   gap: 10px;
   justify-content: center;
   margin-top: 15px;
-}
-
-.badge-fav {
-  background: rgba(255, 0, 51, 0.12) !important;
-  border: 1px solid rgba(255, 0, 51, 0.4);
-  color: #fff;
-  padding: 6px 12px !important;
-  border-radius: 20px !important;
-  font-size: 0.75rem !important;
-  letter-spacing: 0.5px;
-  margin: 4px !important;
-  display: inline-block;
-  transition: all 0.25s ease;
-  animation: fadeInBadges 0.4s ease forwards;
-}
-
-.badge-fav:hover {
-  background: #ff0033 !important;
-  color: #000;
-  font-weight: bold;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 0, 51, 0.5);
 }
 
 @keyframes fadeInModal {
@@ -419,22 +393,47 @@ h1 {
   }
 }
 
-@keyframes fadeInBadges {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* ==========================================
+   4. SELETOR DE IDIOMA ESTILIZADO (HUD)
+   ========================================== */
+.seletor-idioma {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+#idioma-select {
+  background-color: #0d0d0d;
+  color: #ff0033;
+  border: 1px solid #ff0033;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  font-weight: bold;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 0, 51, 0.2);
+}
+
+#idioma-select:hover,
+#idioma-select:focus {
+  background-color: #ff0033;
+  color: #000000;
+  box-shadow: 0 0 12px rgba(255, 0, 51, 0.6);
+}
+
+#idioma-select option {
+  background-color: #0d0d0d;
+  color: #ffffff;
 }
 
 /* ==========================================
-   4. RESPONSIVIDADE
+   5. RESPONSIVIDADE
    ========================================== */
-
-/* ---------- TABLET (≤768px) ---------- */
 @media (max-width: 768px) {
   body {
     padding: 20px 10px;
@@ -472,8 +471,14 @@ h1 {
   }
 }
 
-/* ---------- TELEMÓVEL (≤480px) ---------- */
 @media (max-width: 480px) {
+  .seletor-idioma {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-bottom: 5px;
+  }
+
   body {
     padding: 14px 8px;
   }

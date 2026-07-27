@@ -84,14 +84,16 @@ async function alternarSeguir(targetUsername, btnElement) {
     mostrarToast(dados.mensagem);
 
     if (btnElement) {
+      const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+      const t = traducoes[idiomaAtual] || traducoes["pt"];
       if (dados.acao === "followed") {
         btnElement.classList.remove("btn-principal");
         btnElement.classList.add("btn-seguindo");
-        btnElement.innerText = "DEIXAR DE SEGUIR";
+        btnElement.innerText = t.btnDeixarSeguir || "DEIXAR DE SEGUIR";
       } else {
         btnElement.classList.remove("btn-seguindo");
         btnElement.classList.add("btn-principal");
-        btnElement.innerText = "SEGUIR";
+        btnElement.innerText = t.btnSeguir || "SEGUIR";
       }
     }
   } catch (err) {
@@ -129,13 +131,16 @@ async function carregarDadosSociaisPerfil() {
     const container = document.getElementById("lista-seguindo-perfil");
     if (!container) return;
 
+    const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+    const t = traducoes[idiomaAtual] || traducoes["pt"];
+
     if (res.ok && dados.following && dados.following.length > 0) {
       container.innerHTML = dados.following
         .map(
           (user) => `
         <div class="item-favorito">
           <span>${user}</span>
-          <button type="button" class="btn-sm btn-perigo" onclick="alternarSeguir('${user}', this)">DEIXAR DE SEGUIR</button>
+          <button type="button" class="btn-sm btn-perigo" onclick="alternarSeguir('${user}', this)">${t.btnDeixarSeguir || "DEIXAR DE SEGUIR"}</button>
         </div>
       `,
         )
@@ -186,6 +191,9 @@ async function carregarPaginaComunidade() {
       return;
     }
 
+    const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+    const t = traducoes[idiomaAtual] || traducoes["pt"];
+
     container.innerHTML = dados.utilizadores
       .map((u) => {
         const numSeguidores = Number(u.followers) || 0;
@@ -198,17 +206,18 @@ async function carregarPaginaComunidade() {
               <div>
                 <strong class="membro-nome">${u.username}</strong>
                 <div class="membro-stats-mini">
-                  <span><strong id="card-followers-${u.username}">${numSeguidores}</strong> seguidores</span>
+                  <span><strong id="card-followers-${u.username}">${numSeguidores}</strong> <span data-i18n="comunidadeSeguidores">${t.comunidadeSeguidores || "seguidores"}</span></span>
                   <span>•</span>
-                  <span><strong id="card-following-${u.username}">${numSeguindo}</strong> a seguir</span>
+                  <span><strong id="card-following-${u.username}">${numSeguindo}</strong> <span data-i18n="comunidadeASeguir">${t.comunidadeASeguir || "a seguir"}</span></span>
                 </div>
               </div>
             </div>
             <button 
               type="button"
               class="btn-hud ${u.ja_segue ? "btn-seguindo" : "btn-principal"}" 
+              data-i18n="${u.ja_segue ? "btnASeguir" : "btnSeguir"}"
               onclick="event.stopPropagation(); alternarSeguirComunidade('${u.username}', this)">
-              ${u.ja_segue ? "A SEGUIR" : "SEGUIR"}
+              ${u.ja_segue ? t.btnASeguir || "A SEGUIR" : t.btnSeguir || "SEGUIR"}
             </button>
           </div>
         `;
@@ -229,16 +238,19 @@ async function alternarSeguirComunidade(username, btn) {
     ? parseInt(elemSeguidoresCard.innerText || "0", 10)
     : 0;
 
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   if (jaSegue) {
     btn.classList.remove("btn-seguindo");
     btn.classList.add("btn-principal");
-    btn.innerText = "SEGUIR";
+    btn.innerText = t.btnSeguir || "SEGUIR";
     if (elemSeguidoresCard)
       elemSeguidoresCard.innerText = Math.max(0, totalSeguidores - 1);
   } else {
     btn.classList.remove("btn-principal");
     btn.classList.add("btn-seguindo");
-    btn.innerText = "A SEGUIR";
+    btn.innerText = t.btnASeguir || "A SEGUIR";
     if (elemSeguidoresCard) elemSeguidoresCard.innerText = totalSeguidores + 1;
   }
 
@@ -265,12 +277,12 @@ async function alternarSeguirComunidade(username, btn) {
       if (jaSegue) {
         btn.classList.remove("btn-principal");
         btn.classList.add("btn-seguindo");
-        btn.innerText = "A SEGUIR";
+        btn.innerText = t.btnASeguir || "A SEGUIR";
         if (elemSeguidoresCard) elemSeguidoresCard.innerText = totalSeguidores;
       } else {
         btn.classList.remove("btn-seguindo");
         btn.classList.add("btn-principal");
-        btn.innerText = "SEGUIR";
+        btn.innerText = t.btnSeguir || "SEGUIR";
         if (elemSeguidoresCard) elemSeguidoresCard.innerText = totalSeguidores;
       }
     } else {
@@ -281,12 +293,12 @@ async function alternarSeguirComunidade(username, btn) {
     if (jaSegue) {
       btn.classList.remove("btn-principal");
       btn.classList.add("btn-seguindo");
-      btn.innerText = "A SEGUIR";
+      btn.innerText = t.btnASeguir || "A SEGUIR";
       if (elemSeguidoresCard) elemSeguidoresCard.innerText = totalSeguidores;
     } else {
       btn.classList.remove("btn-seguindo");
       btn.classList.add("btn-principal");
-      btn.innerText = "SEGUIR";
+      btn.innerText = t.btnSeguir || "SEGUIR";
       if (elemSeguidoresCard) elemSeguidoresCard.innerText = totalSeguidores;
     }
   }
@@ -340,6 +352,9 @@ function renderizarSecoesPerfilModal() {
   const containerArtistas = document.getElementById("out-favoritos-artistas");
   const containerAlbuns = document.getElementById("out-favoritos-albuns");
 
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   // ARTISTAS
   if (containerArtistas) {
     if (artistasIds.length > 0) {
@@ -363,19 +378,18 @@ function renderizarSecoesPerfilModal() {
         html += `<div class="linha-botoes-fav">`;
         if (limiteArtistasExibidos < artistasIds.length) {
           html += `
-            <button type="button" class="btn-hud" onclick="verMaisArtistasModal()">VER MAIS</button>
-            <button type="button" class="btn-hud" onclick="verTudoArtistasModal()">VER TUDO</button>
+            <button type="button" class="btn-hud" onclick="verMaisArtistasModal()">${t.btnVerMais || "VER MAIS"}</button>
+            <button type="button" class="btn-hud" onclick="verTudoArtistasModal()">${t.btnVerTudo || "VER TUDO"}</button>
           `;
         }
         if (limiteArtistasExibidos > 5) {
-          html += `<button type="button" class="btn-hud" onclick="verMenosArtistasModal()">VER MENOS</button>`;
+          html += `<button type="button" class="btn-hud" onclick="verMenosArtistasModal()">${t.btnVerMenos || "VER MENOS"}</button>`;
         }
         html += `</div>`;
       }
       containerArtistas.innerHTML = html;
     } else {
-      containerArtistas.innerHTML =
-        "<p style='font-size: 0.75rem; color: #666;'>Sem artistas favoritos.</p>";
+      containerArtistas.innerHTML = `<p style='font-size: 0.75rem; color: #666;'>${t.perfilSemArtistas || "Sem artistas favoritos."}</p>`;
     }
   }
 
@@ -399,19 +413,18 @@ function renderizarSecoesPerfilModal() {
         html += `<div class="linha-botoes-fav">`;
         if (limiteAlbunsExibidos < albunsIds.length) {
           html += `
-            <button type="button" class="btn-hud" onclick="verMaisAlbunsModal()">VER MAIS</button>
-            <button type="button" class="btn-hud" onclick="verTudoAlbunsModal()">VER TUDO</button>
+            <button type="button" class="btn-hud" onclick="verMaisAlbunsModal()">${t.btnVerMais || "VER MAIS"}</button>
+            <button type="button" class="btn-hud" onclick="verTudoAlbunsModal()">${t.btnVerTudo || "VER TUDO"}</button>
           `;
         }
         if (limiteAlbunsExibidos > 5) {
-          html += `<button type="button" class="btn-hud" onclick="verMenosAlbunsModal()">VER MENOS</button>`;
+          html += `<button type="button" class="btn-hud" onclick="verMenosAlbunsModal()">${t.btnVerMenos || "VER MENOS"}</button>`;
         }
         html += `</div>`;
       }
       containerAlbuns.innerHTML = html;
     } else {
-      containerAlbuns.innerHTML =
-        "<p style='font-size: 0.75rem; color: #666;'>Sem álbuns favoritos.</p>";
+      containerAlbuns.innerHTML = `<p style='font-size: 0.75rem; color: #666;'>${t.perfilSemAlbuns || "Sem álbuns favoritos."}</p>`;
     }
   }
 }

@@ -122,24 +122,24 @@
             onclick="abrirFormularioCandidatura()"
           >
             SUBMETER ARTISTA/ÁLBUM
-            <button
-              class="btn-hud"
-              id="btn-admin-candidaturas"
-              data-i18n="btnAdminCandidaturas"
-              style="display: none"
-              onclick="abrirPainelModeracaoCandidaturas()"
-            >
-              APROVAR CANDIDATURAS
-            </button>
-            <button
-              class="btn-hud"
-              id="btn-admin-quotes"
-              data-i18n="btnAdminQuotes"
-              style="display: none"
-              onclick="abrirPainelModeracaoQuotes()"
-            >
-              APROVAR QUOTES
-            </button>
+          </button>
+          <button
+            class="btn-hud"
+            id="btn-admin-candidaturas"
+            data-i18n="btnAdminCandidaturas"
+            style="display: none"
+            onclick="abrirPainelModeracaoCandidaturas()"
+          >
+            APROVAR CANDIDATURAS
+          </button>
+          <button
+            class="btn-hud"
+            id="btn-admin-quotes"
+            data-i18n="btnAdminQuotes"
+            style="display: none"
+            onclick="abrirPainelModeracaoQuotes()"
+          >
+            APROVAR QUOTES
           </button>
           <button class="btn-hud" data-i18n="btnPerfil" onclick="abrirPerfil()">
             PERFIL
@@ -422,20 +422,26 @@
 
         <!-- SECÇÃO: PAINEL DE ADMINISTRAÇÃO -->
         <div id="seccao-admin" style="display: none">
-          <h2>PAINEL DE ADMINISTRAÇÃO</h2>
+          <h2 data-i18n="adminTitulo">PAINEL DE ADMINISTRAÇÃO</h2>
 
           <div class="stats-admin-container">
             <div class="card-stat">
               <span class="stat-num" id="stat-total-users">0</span>
-              <span class="stat-label">UTILIZADORES</span>
+              <span class="stat-label" data-i18n="adminStatUtilizadores"
+                >UTILIZADORES</span
+              >
             </div>
             <div class="card-stat">
               <span class="stat-num" id="stat-total-mods">0</span>
-              <span class="stat-label">MODERADORES</span>
+              <span class="stat-label" data-i18n="adminStatModeradores"
+                >MODERADORES</span
+              >
             </div>
             <div class="card-stat">
               <span class="stat-num" id="stat-total-likes">0</span>
-              <span class="stat-label">TOTAL DE LIKES</span>
+              <span class="stat-label" data-i18n="adminStatLikes"
+                >TOTAL DE LIKES</span
+              >
             </div>
           </div>
 
@@ -443,12 +449,14 @@
             <input
               type="text"
               id="pesquisa-admin"
+              data-i18n-placeholder="adminPlaceholderPesquisa"
               placeholder="🔍 Pesquisar por username, e-mail ou cargo..."
               onkeyup="filtrarUtilizadores()"
             />
             <button
               type="button"
               class="btn-hud"
+              data-i18n="adminBtnAtualizar"
               onclick="carregarUtilizadoresAdmin()"
             >
               🔄 ATUALIZAR
@@ -456,6 +464,7 @@
             <button
               type="button"
               class="btn-hud"
+              data-i18n="adminBtnExportarCsv"
               onclick="exportarDadosAdmin('csv')"
             >
               📥 EXPORTAR CSV
@@ -463,6 +472,7 @@
             <button
               type="button"
               class="btn-hud"
+              data-i18n="adminBtnExportarJson"
               onclick="exportarDadosAdmin('json')"
             >
               📥 EXPORTAR JSON
@@ -472,25 +482,25 @@
           <table class="tabela-admin">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>USERNAME</th>
-                <th>E-MAIL</th>
-                <th>CARGO</th>
-                <th>MODERAÇÃO</th>
-                <th>AÇÕES</th>
+                <th data-i18n="adminTabelaId">ID</th>
+                <th data-i18n="adminTabelaUsername">USERNAME</th>
+                <th data-i18n="adminTabelaEmail">E-MAIL</th>
+                <th data-i18n="adminTabelaCargo">CARGO</th>
+                <th data-i18n="adminTabelaModeracao">MODERAÇÃO</th>
+                <th data-i18n="adminTabelaAcoes">AÇÕES</th>
               </tr>
             </thead>
             <tbody id="lista-utilizadores-body"></tbody>
           </table>
 
-          <h3>LOG DE ATIVIDADES</h3>
+          <h3 data-i18n="adminLogsTitulo">LOG DE ATIVIDADES</h3>
           <table class="tabela-admin">
             <thead>
               <tr>
-                <th>DATA</th>
-                <th>AUTOR</th>
-                <th>AÇÃO</th>
-                <th>ALVO</th>
+                <th data-i18n="adminLogsData">DATA</th>
+                <th data-i18n="adminLogsAutor">AUTOR</th>
+                <th data-i18n="adminLogsAcao">AÇÃO</th>
+                <th data-i18n="adminLogsAlvo">ALVO</th>
               </tr>
             </thead>
             <tbody id="lista-logs-body"></tbody>
@@ -500,12 +510,12 @@
         <!-- Modal de Submissão de Candidatura -->
         <div id="modal-candidatura" class="modal-overlay">
           <div class="caixa-modal-confirm" style="max-width: 600px">
-            <h3>SUBMETER CANDIDATURA</h3>
+            <h3 data-i18n="modalSubmeterTitulo">SUBMETER CANDIDATURA</h3>
 
             <form id="form-candidatura" onsubmit="submeterCandidatura(event)">
               <!-- SELETOR DE TIPO -->
               <div class="campo-modal">
-                <label>TIPO DE SUBMISSÃO *</label>
+                <label data-i18n="subTipoSubmissao">TIPO DE SUBMISSÃO *</label>
                 <div class="grupo-radio-candidatura">
                   <label class="radio-candidatura">
                     <input
@@ -515,7 +525,7 @@
                       checked
                       onchange="mudarTipoCandidatura('artista')"
                     />
-                    <span>👤 ARTISTA</span>
+                    <span data-i18n="subArtistaRadio">👤 ARTISTA</span>
                   </label>
                   <label class="radio-candidatura">
                     <input
@@ -524,7 +534,7 @@
                       value="album"
                       onchange="mudarTipoCandidatura('album')"
                     />
-                    <span>💿 ÁLBUM</span>
+                    <span data-i18n="subAlbumRadio">💿 ÁLBUM</span>
                   </label>
                 </div>
               </div>
@@ -532,21 +542,24 @@
               <!-- ===== CAMPOS DE ARTISTA ===== -->
               <div id="campos-artista">
                 <div class="campo-modal">
-                  <label>NOME DO ARTISTA *</label>
+                  <label data-i18n="subNomeArtista">NOME DO ARTISTA *</label>
                   <input
                     type="text"
                     id="candidatura-artist-name"
+                    data-i18n-placeholder="subPlaceholderArtista"
                     placeholder="Ex: Playboi Carti"
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>DATA DE NASCIMENTO *</label>
+                  <label data-i18n="subDataNascimento"
+                    >DATA DE NASCIMENTO *</label
+                  >
                   <input type="date" id="candidatura-artist-birthdate" />
                 </div>
 
                 <div class="campo-modal">
-                  <label>FOTO DO ARTISTA *</label>
+                  <label data-i18n="subFotoArtista">FOTO DO ARTISTA *</label>
                   <div class="container-preview-capa">
                     <img
                       id="preview-artist-photo"
@@ -564,6 +577,7 @@
                     <button
                       type="button"
                       class="btn-hud-modal"
+                      data-i18n="subBtnEscolherImagem"
                       onclick="
                         document.getElementById('input-artist-photo').click()
                       "
@@ -574,27 +588,34 @@
                 </div>
 
                 <div class="campo-modal">
-                  <label>PERFIL DO ARTISTA *</label>
+                  <label data-i18n="subPerfilArtista"
+                    >PERFIL DO ARTISTA *</label
+                  >
                   <input
                     type="text"
                     id="candidatura-artist-profile"
+                    data-i18n-placeholder="subPlaceholderPerfil"
                     placeholder="Ex: https://open.spotify.com/artist/..."
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>GÉNERO (OPCIONAL)</label>
+                  <label data-i18n="subGeneroOpcional">GÉNERO (OPCIONAL)</label>
                   <input
                     type="text"
                     id="candidatura-artist-genre"
+                    data-i18n-placeholder="subPlaceholderGenero"
                     placeholder="Ex: Rap, Pop, Rock"
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>DESCRIÇÃO (OPCIONAL)</label>
+                  <label data-i18n="subDescricaoOpcional"
+                    >DESCRIÇÃO (OPCIONAL)</label
+                  >
                   <textarea
                     id="candidatura-artist-description"
+                    data-i18n-placeholder="subPlaceholderDescArtista"
                     placeholder="Descreve este artista..."
                     rows="3"
                   ></textarea>
@@ -604,25 +625,27 @@
               <!-- ===== CAMPOS DE ÁLBUM ===== -->
               <div id="campos-album" style="display: none">
                 <div class="campo-modal">
-                  <label>NOME DO ÁLBUM *</label>
+                  <label data-i18n="subNomeAlbum">NOME DO ÁLBUM *</label>
                   <input
                     type="text"
                     id="candidatura-album-title"
+                    data-i18n-placeholder="subPlaceholderAlbum"
                     placeholder="Ex: Whole Lotta Red"
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>ARTISTA/BANDA *</label>
+                  <label data-i18n="subArtistaBanda">ARTISTA/BANDA *</label>
                   <input
                     type="text"
                     id="candidatura-album-artist"
+                    data-i18n-placeholder="subPlaceholderBanda"
                     placeholder="Ex: Playboi Carti"
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>CAPA DO ÁLBUM *</label>
+                  <label data-i18n="subCapaAlbum">CAPA DO ÁLBUM *</label>
                   <div class="container-preview-capa">
                     <img
                       id="preview-album-cover"
@@ -640,6 +663,7 @@
                     <button
                       type="button"
                       class="btn-hud-modal"
+                      data-i18n="subBtnEscolherImagem"
                       onclick="
                         document.getElementById('input-album-cover').click()
                       "
@@ -650,32 +674,37 @@
                 </div>
 
                 <div class="campo-modal">
-                  <label>DATA DO ÁLBUM *</label>
+                  <label data-i18n="subDataAlbum">DATA DO ÁLBUM *</label>
                   <input type="date" id="candidatura-album-date" />
                 </div>
 
                 <div class="campo-modal">
-                  <label>GÉNERO (OPCIONAL)</label>
+                  <label data-i18n="subGeneroOpcional">GÉNERO (OPCIONAL)</label>
                   <input
                     type="text"
                     id="candidatura-album-genre"
+                    data-i18n-placeholder="subPlaceholderGenero"
                     placeholder="Ex: Rap, Pop, Rock"
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>LINK DO ÁLBUM *</label>
+                  <label data-i18n="subLinkAlbum">LINK DO ÁLBUM *</label>
                   <input
                     type="text"
                     id="candidatura-album-link"
+                    data-i18n-placeholder="subPlaceholderLinkAlbum"
                     placeholder="Ex: https://open.spotify.com/album/..."
                   />
                 </div>
 
                 <div class="campo-modal">
-                  <label>DESCRIÇÃO (OPCIONAL)</label>
+                  <label data-i18n="subDescricaoOpcional"
+                    >DESCRIÇÃO (OPCIONAL)</label
+                  >
                   <textarea
                     id="candidatura-album-description"
+                    data-i18n-placeholder="subPlaceholderDescAlbum"
                     placeholder="Descreve este álbum..."
                     rows="3"
                   ></textarea>
@@ -686,11 +715,16 @@
                 <button
                   type="button"
                   class="btn-hud-modal"
+                  data-i18n="subBtnCancelar"
                   onclick="fecharModalCandidatura()"
                 >
                   CANCELAR
                 </button>
-                <button type="submit" class="btn-hud-modal btn-perigo">
+                <button
+                  type="submit"
+                  class="btn-hud-modal btn-perigo"
+                  data-i18n="subBtnSubmeter"
+                >
                   SUBMETER CANDIDATURA
                 </button>
               </div>
@@ -802,7 +836,7 @@
       </main>
 
       <footer>
-        <p>© 2026 - HUB PESSOAL</p>
+        <p>© 2026 - MUSIC HUB</p>
         <div class="redes-sociais">
           <a
             href="https://guns.lol/yvllima36"

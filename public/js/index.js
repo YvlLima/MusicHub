@@ -111,6 +111,14 @@ function aplicarTraducoes(lang) {
     }
   });
 
+  // Traduzir placeholders
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-placeholder");
+    if (traducoes[lang][chave]) {
+      el.placeholder = traducoes[lang][chave];
+    }
+  });
+
   const campoPesquisa = document.getElementById("campo-pesquisa");
   if (campoPesquisa) {
     campoPesquisa.placeholder = traducoes[lang].pesquisaPlaceholder;
@@ -125,6 +133,14 @@ function mudarIdioma(lang) {
 
   const select = document.getElementById("idioma-select");
   if (select && select.value !== lang) select.value = lang;
+
+  // Se estiveres na página da comunidade, recarrega a lista para aplicar as novas traduções de labels
+  if (
+    typeof carregarPaginaComunidade === "function" &&
+    document.getElementById("lista-comunidade")
+  ) {
+    carregarPaginaComunidade();
+  }
 }
 
 // ==========================================
@@ -532,19 +548,22 @@ async function carregarUtilizadoresAdmin() {
       if (eAdmin) cargoHTML = `<span class="badge-admin">ADMIN</span>`;
       else if (eMod) cargoHTML = `<span class="badge-mod">MOD</span>`;
 
+      const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+      const t = traducoes[idiomaAtual] || traducoes["pt"];
+
       let promoverBtnHTML = `—`;
       if (!eAdmin && !eProprioUser) {
         if (eMod) {
-          promoverBtnHTML = `<button type="button" class="btn-despromover" onclick="despromoverUtilizador('${user.username}')">👇 DESPROMOVER</button>`;
+          promoverBtnHTML = `<button type="button" class="btn-despromover" onclick="despromoverUtilizador('${user.username}')">${t.adminBtnDespromover || "👇 DESPROMOVER"}</button>`;
         } else {
-          promoverBtnHTML = `<button type="button" class="btn-promover" onclick="promoverMod('${user.username}')">👆 PROMOVER</button>`;
+          promoverBtnHTML = `<button type="button" class="btn-promover" onclick="promoverMod('${user.username}')">${t.adminBtnPromover || "👆 PROMOVER"}</button>`;
         }
       }
 
       const eliminarBtnHTML =
         eAdmin || eProprioUser
           ? `—`
-          : `<button type="button" class="btn-eliminar" onclick="eliminarUtilizador(${user.id}, '${user.username}')">❌ APAGAR</button>`;
+          : `<button type="button" class="btn-eliminar" onclick="eliminarUtilizador(${user.id}, '${user.username}')">${t.adminBtnApagar || "❌ APAGAR"}</button>`;
 
       tr.innerHTML = `
         <td>${user.id}</td>
@@ -682,10 +701,32 @@ async function carregarStatsEGlags() {
       dados.logs.forEach((log) => {
         const tr = document.createElement("tr");
         const dataFormatada = new Date(log.data).toLocaleString("pt-PT");
+
+        // Mapeia a ação da base de dados para a chave de tradução correspondente
+        let chaveAcao = "";
+        const acaoUpper = (log.acao || "").toUpperCase();
+        if (acaoUpper.includes("SUGERIU QUOTE")) chaveAcao = "logSugeriurQuote";
+        else if (acaoUpper.includes("APROVOU QUOTE"))
+          chaveAcao = "logAprovouQuote";
+        else if (acaoUpper.includes("ELIMINOU CONTA"))
+          chaveAcao = "logEliminouConta";
+        else if (acaoUpper.includes("DEIXOU DE SEGUIR"))
+          chaveAcao = "logDeixouSeguir";
+        else if (acaoUpper.includes("COMEÇOU A SEGUIR"))
+          chaveAcao = "logComecouSeguir";
+
+        const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+        const acaoTraduzida =
+          chaveAcao &&
+          traducoes[idiomaAtual] &&
+          traducoes[idiomaAtual][chaveAcao]
+            ? traducoes[idiomaAtual][chaveAcao]
+            : log.acao;
+
         tr.innerHTML = `
           <td>${dataFormatada}</td>
           <td>${log.autor}</td>
-          <td><span style="color: #ff0033;">${log.acao}</span></td>
+          <td><span style="color: #ff0033;">${acaoTraduzida}</span></td>
           <td>${log.alvo}</td>
         `;
         tbodyLogs.appendChild(tr);
@@ -946,8 +987,13 @@ function carregarCapaAlbum(event) {
 async function submeterCandidatura(e) {
   e.preventDefault();
 
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   if (!utilizadorDados || !tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    mostrarToast(
+      idiomaAtual === "en" ? "PLEASE LOG IN FIRST!" : "AUTENTICA-TE PRIMEIRO!",
+    );
     return;
   }
 
@@ -969,11 +1015,22 @@ async function submeterCandidatura(e) {
       document.getElementById("candidatura-artist-description").value.trim() ||
       null;
 
-    if (!artist_name) return mostrarToast("PREENCHE O NOME DO ARTISTA!");
+    if (!artist_name)
+      return mostrarToast(
+        t.subToastPreencherNomeArtista || "PREENCHE O NOME DO ARTISTA!",
+      );
     if (!artist_birthdate)
-      return mostrarToast("PREENCHE A DATA DE NASCIMENTO!");
-    if (!artist_photo) return mostrarToast("CARREGA UMA FOTO DO ARTISTA!");
-    if (!artist_profile) return mostrarToast("PREENCHE O PERFIL DO ARTISTA!");
+      return mostrarToast(
+        t.subToastPreencherDataNasc || "PREENCHE A DATA DE NASCIMENTO!",
+      );
+    if (!artist_photo)
+      return mostrarToast(
+        t.subToastEscolherFotoArtista || "CARREGA UMA FOTO DO ARTISTA!",
+      );
+    if (!artist_profile)
+      return mostrarToast(
+        t.subToastPreencherPerfilArtista || "PREENCHE O PERFIL DO ARTISTA!",
+      );
 
     payload = {
       tipo: "artista",
@@ -1003,11 +1060,22 @@ async function submeterCandidatura(e) {
       document.getElementById("candidatura-album-description").value.trim() ||
       null;
 
-    if (!album_title) return mostrarToast("PREENCHE O NOME DO ÁLBUM!");
-    if (!album_artist) return mostrarToast("PREENCHE O ARTISTA!");
-    if (!album_cover) return mostrarToast("CARREGA UMA CAPA!");
-    if (!album_date) return mostrarToast("PREENCHE A DATA!");
-    if (!album_link) return mostrarToast("PREENCHE O LINK DO ÁLBUM!");
+    if (!album_title)
+      return mostrarToast(
+        t.subToastPreencherNomeAlbum || "PREENCHE O NOME DO ÁLBUM!",
+      );
+    if (!album_artist)
+      return mostrarToast(
+        t.subToastPreencherArtistaAlbum || "PREENCHE O ARTISTA!",
+      );
+    if (!album_cover)
+      return mostrarToast(t.subToastEscolherCapaAlbum || "CARREGA UMA CAPA!");
+    if (!album_date)
+      return mostrarToast(t.subToastPreencherDataAlbum || "PREENCHE A DATA!");
+    if (!album_link)
+      return mostrarToast(
+        t.subToastPreencherLinkAlbum || "PREENCHE O LINK DO ÁLBUM!",
+      );
 
     payload = {
       tipo: "album",
@@ -1045,7 +1113,7 @@ async function submeterCandidatura(e) {
       return mostrarToast(dados.erro || `ERRO! (status ${resposta.status})`);
     }
 
-    mostrarToast("✓ CANDIDATURA SUBMETIDA COM SUCESSO!");
+    mostrarToast(t.subToastSucesso || "✓ CANDIDATURA SUBMETIDA COM SUCESSO!");
     fecharModalCandidatura();
   } catch (err) {
     console.error("Erro ao submeter candidatura:", err);
@@ -1247,7 +1315,7 @@ function construirCartaoArtista(item) {
       </div>
       <img class="imagem-cartao" src="${item.artist_photo || "imagens/pfp.png"}" alt="${escapeHTML(item.artist_name)}" />
       <h3>${escapeHTML(item.artist_name)}</h3>
-      ${dataNasc ? `<p>Data de Nascimento: ${dataNasc}</p>` : ""}
+      ${dataNasc ? `<p><span data-i18n="dataNascimento">Data de Nascimento</span>: ${dataNasc}</p>` : ""}
       <div class="tags-container">${tagsHTML}</div>
       ${embedHTML}
       <div class="rating-box" data-item="${idUnico}">

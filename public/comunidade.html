@@ -9,13 +9,23 @@
   <body>
     <header style="text-align: center; padding: 20px">
       <h1 style="color: #ff0033; letter-spacing: 2px">MUSIC HUB</h1>
+
+      <div class="seletor-idioma" style="margin: 10px auto">
+        <select id="idioma-select" onchange="mudarIdioma(this.value)">
+          <option value="pt">PT-PT</option>
+          <option value="en">ENGLISH</option>
+        </select>
+      </div>
+
       <nav style="margin-top: 15px">
-        <a href="index.html" class="btn-hud">VOLTAR À HOME</a>
+        <a href="index.html" class="btn-hud" data-i18n="navVoltarHome"
+          >VOLTAR À HOME</a
+        >
       </nav>
     </header>
 
     <main class="seccao">
-      <h2>MEMBROS DA COMUNIDADE</h2>
+      <h2 data-i18n="comunidadeTitulo">MEMBROS DA COMUNIDADE</h2>
       <div
         class="caixa-perfil"
         style="max-width: 900px; margin: 0 auto; width: 92%"
@@ -73,12 +83,16 @@
           <div class="stats-sociais-perfil" style="margin-top: 15px">
             <div class="stat-item">
               <span id="out-seguidores" class="num-stat">0</span>
-              <span class="label-stat">SEGUIDORES</span>
+              <span class="label-stat" data-i18n="comunidadeSeguidores"
+                >SEGUIDORES</span
+              >
             </div>
             <div class="stat-divisor"></div>
             <div class="stat-item">
               <span id="out-seguindo" class="num-stat">0</span>
-              <span class="label-stat">A SEGUIR</span>
+              <span class="label-stat" data-i18n="comunidadeASeguir"
+                >A SEGUIR</span
+              >
             </div>
           </div>
 
@@ -86,26 +100,39 @@
             id="out-btn-seguir"
             class="btn-hud btn-principal"
             style="margin-top: 15px"
+            data-i18n="btnSeguir"
           >
             SEGUIR
           </button>
         </div>
 
         <div class="seccao-favoritos-perfil">
-          <h3>ARTISTAS FAVORITOS</h3>
+          <h3 data-i18n="artistasTitulo">ARTISTAS FAVORITOS</h3>
           <div id="out-favoritos-artistas" class="grelha-favoritos"></div>
 
-          <h3 style="margin-top: 15px">ÁLBUNS FAVORITOS</h3>
+          <h3 style="margin-top: 15px" data-i18n="albunsTitulo">
+            ÁLBUNS FAVORITOS
+          </h3>
           <div id="out-favoritos-albuns" class="grelha-favoritos"></div>
         </div>
       </div>
     </div>
 
+    <script src="js/config.js"></script>
+    <script src="js/translations.js"></script>
     <script src="js/index.js"></script>
     <script src="js/login.js"></script>
     <script src="js/comunidade.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
+        const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+        const select = document.getElementById("idioma-select");
+        if (select) {
+          select.value = idiomaSalvo;
+        }
+        if (typeof aplicarTraducoes === "function") {
+          aplicarTraducoes(idiomaSalvo);
+        }
         if (typeof carregarPaginaComunidade === "function") {
           carregarPaginaComunidade();
         }
