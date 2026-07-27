@@ -8,8 +8,11 @@ var youtubeIdPendente = null;
 var musicaFundoTipoSelecionado = "youtube";
 var musicaFundoAudioBase64 = "";
 var musicaFundoNomeFicheiro = "";
+var playlistMusicas = []; // Lista para skip/unskip se houver várias
+var indiceMusicaAtual = 0;
 
 const CHAVE_MUTE_MUSICA = "musica_fundo_silenciada";
+const CHAVE_VOLUME_MUSICA = "musica_fundo_volume";
 const LIMITE_BYTES_MUSICA = 10 * 1024 * 1024; // ~10MB
 
 // ------------------------------------------
@@ -165,21 +168,41 @@ async function carregarMusicaFundoSite() {
 
     if (btn) btn.style.display = "flex";
 
-    if (dados.tipo === "youtube" && dados.youtube_id) {
-      tipoMusicaFundoAtual = "youtube";
-      iniciarPlayerYoutube(dados.youtube_id);
+    // Suporte para playlist ou item único
+    if (dados.playlist && Array.isArray(dados.playlist)) {
+      playlistMusicas = dados.playlist;
+    } else if (dados.tipo === "youtube" && dados.youtube_id) {
+      playlistMusicas = [{ tipo: "youtube", id: dados.youtube_id }];
     } else if (dados.tipo === "upload" && dados.audio_data) {
-      tipoMusicaFundoAtual = "upload";
-      const audio = document.getElementById("audio-player-fundo");
-      if (audio) {
-        audio.src = dados.audio_data;
-        tentarTocarMusicaFundo();
-      }
+      playlistMusicas = [
+        { tipo: "upload", src: dados.audio_data, nome: dados.nome_ficheiro },
+      ];
     }
 
+    indiceMusicaAtual = 0;
+    tocarMusicaAtual();
     atualizarIconeMusicaFundo();
   } catch (err) {
     console.error("Erro ao carregar música de fundo:", err);
+  }
+}
+
+function tocarMusicaAtual() {
+  if (playlistMusicas.length === 0) return;
+  const musica = playlistMusicas[indiceMusicaAtual];
+
+  pararMusicaFundo();
+
+  if (musica.tipo === "youtube") {
+    tipoMusicaFundoAtual = "youtube";
+    iniciarPlayerYoutube(musica.id || musica.youtube_id);
+  } else if (musica.tipo === "upload") {
+    tipoMusicaFundoAtual = "upload";
+    const audio = document.getElementById("audio-player-fundo");
+    if (audio) {
+      audio.src = musica.src || musica.audio_data;
+      tentarTocarMusicaFundo();
+    }
   }
 }
 
@@ -194,9 +217,71 @@ function pararMusicaFundo() {
   }
 }
 
+// --- CONTROLOS: PLAY, PAUSE, SKIP, UNSKIP, VOLUME ---
+
+function playMusicaFundo() {
+  const audio = document.getElementById("audio-player-fundo");
+  const volume = obterVolumeGuardado();
+
+  if (tipoMusicaFundoAtual === "upload" && audio) {
+    audio.volume = volume;
+    audio.play().catch(() => {});
+  } else if (tipoMusicaFundoAtual === "youtube" && ytPlayerFundo) {
+    if (typeof ytPlayerFundo.unMute === "function") ytPlayerFundo.unMute();
+    if (typeof ytPlayerFundo.setVolume === "function")
+      ytPlayerFundo.setVolume(volume * 100);
+    if (typeof ytPlayerFundo.playVideo === "function")
+      ytPlayerFundo.playVideo();
+  }
+  localStorage.setItem(CHAVE_MUTE_MUSICA, "nao");
+  atualizarIconeMusicaFundo();
+}
+
+function pauseMusicaFundo() {
+  const audio = document.getElementById("audio-player-fundo");
+
+  if (tipoMusicaFundoAtual === "upload" && audio) {
+    audio.pause();
+  } else if (tipoMusicaFundoAtual === "youtube" && ytPlayerFundo) {
+    if (typeof ytPlayerFundo.pauseVideo === "function")
+      ytPlayerFundo.pauseVideo();
+  }
+  localStorage.setItem(CHAVE_MUTE_MUSICA, "sim");
+  atualizarIconeMusicaFundo();
+}
+
+function skipMusicaFundo() {
+  if (playlistMusicas.length <= 1) return;
+  indiceMusicaAtual = (indiceMusicaAtual + 1) % playlistMusicas.length;
+  tocarMusicaAtual();
+}
+
+function unskipMusicaFundo() {
+  if (playlistMusicas.length <= 1) return;
+  indiceMusicaAtual =
+    (indiceMusicaAtual - 1 + playlistMusicas.length) % playlistMusicas.length;
+  tocarMusicaAtual();
+}
+
+function definirVolumeMusicaFundo(valor) {
+  // valor entre 0.0 e 1.0
+  localStorage.setItem(CHAVE_VOLUME_MUSICA, valor);
+  const audio = document.getElementById("audio-player-fundo");
+
+  if (audio) {
+    audio.volume = valor;
+  }
+  if (ytPlayerFundo && typeof ytPlayerFundo.setVolume === "function") {
+    ytPlayerFundo.setVolume(valor * 100);
+  }
+}
+
+function obterVolumeGuardado() {
+  const vol = localStorage.getItem(CHAVE_VOLUME_MUSICA);
+  return vol !== null ? parseFloat(vol) : 0.5;
+}
+
 function estaSilenciado() {
-  // Por omissão começa silenciado, por causa das políticas de autoplay dos browsers.
-  // O utilizador tem de clicar no botão para ativar o som.
   return localStorage.getItem(CHAVE_MUTE_MUSICA) !== "nao";
 }
 
@@ -206,17 +291,16 @@ function tentarTocarMusicaFundo() {
   if (!audio) return;
 
   audio.muted = silenciado;
-  audio.volume = 0.5;
-  audio.play().catch(() => {
-    // Autoplay bloqueado pelo browser — fica à espera do clique do utilizador
-  });
+  audio.volume = obterVolumeGuardado();
+  if (!silenciado) {
+    audio.play().catch(() => {});
+  }
 }
 
 function iniciarPlayerYoutube(videoId) {
   youtubeIdPendente = videoId;
 
   if (typeof YT === "undefined" || !YT.Player) {
-    // API do YouTube ainda não carregou — onYouTubeIframeAPIReady trata disto assim que carregar
     return;
   }
 
@@ -225,18 +309,24 @@ function iniciarPlayerYoutube(videoId) {
 
 function criarOuAtualizarPlayerYoutube(videoId) {
   const silenciado = estaSilenciado();
+  const volume = obterVolumeGuardado() * 100;
 
   if (ytPlayerFundo && typeof ytPlayerFundo.loadVideoById === "function") {
     ytPlayerFundo.loadVideoById(videoId);
-    if (silenciado) ytPlayerFundo.mute();
-    else ytPlayerFundo.unMute();
+    if (silenciado) {
+      ytPlayerFundo.mute();
+    } else {
+      ytPlayerFundo.unMute();
+      ytPlayerFundo.setVolume(volume);
+      ytPlayerFundo.playVideo();
+    }
     return;
   }
 
   ytPlayerFundo = new YT.Player("youtube-player-fundo", {
     videoId: videoId,
     playerVars: {
-      autoplay: 1,
+      autoplay: silenciado ? 0 : 1,
       loop: 1,
       playlist: videoId,
       controls: 0,
@@ -245,14 +335,18 @@ function criarOuAtualizarPlayerYoutube(videoId) {
     },
     events: {
       onReady: function (e) {
-        if (silenciado) e.target.mute();
-        e.target.playVideo();
+        e.target.setVolume(volume);
+        if (silenciado) {
+          e.target.mute();
+        } else {
+          e.target.unMute();
+          e.target.playVideo();
+        }
       },
     },
   });
 }
 
-// Chamado automaticamente pelo script da API do YouTube quando esta carrega
 function onYouTubeIframeAPIReady() {
   if (tipoMusicaFundoAtual === "youtube" && youtubeIdPendente) {
     criarOuAtualizarPlayerYoutube(youtubeIdPendente);
@@ -266,27 +360,14 @@ function atualizarIconeMusicaFundo() {
 }
 
 function alternarMusicaFundo() {
-  const vaiTocar = estaSilenciado(); // se estava silenciado, este clique liga o som
-  localStorage.setItem(CHAVE_MUTE_MUSICA, vaiTocar ? "nao" : "sim");
-
-  const audio = document.getElementById("audio-player-fundo");
-
-  if (tipoMusicaFundoAtual === "upload" && audio) {
-    audio.muted = !vaiTocar;
-    if (vaiTocar) audio.play().catch(() => {});
-  } else if (tipoMusicaFundoAtual === "youtube" && ytPlayerFundo) {
-    if (vaiTocar) {
-      ytPlayerFundo.unMute();
-      ytPlayerFundo.playVideo();
-    } else {
-      ytPlayerFundo.mute();
-    }
+  if (estaSilenciado()) {
+    playMusicaFundo();
+  } else {
+    pauseMusicaFundo();
   }
-
-  atualizarIconeMusicaFundo();
 }
 
-// Arranque — carrega e tenta tocar a música de fundo para qualquer visitante
+// Arranque
 window.addEventListener("DOMContentLoaded", () => {
   carregarMusicaFundoSite();
 });

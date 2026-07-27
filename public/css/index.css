@@ -2042,3 +2042,57 @@ footer p {
     margin-bottom: 10px;
   }
 }
+.caixa-player-fundo {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #0d0d0d;
+  border: 1px solid #ff0033;
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+  box-shadow: 0 0 15px rgba(255, 0, 51, 0.3);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-controles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-player {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-player:hover {
+  background: #ff0033;
+  border-color: #ff0033;
+}
+
+#slider-volume-fundo {
+  width: 70px;
+  accent-color: #ff0033;
+  cursor: pointer;
+}

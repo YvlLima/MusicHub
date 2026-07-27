@@ -970,22 +970,60 @@
       <span id="toast-mensagem">LINK COPIADO COM SUCESSO</span>
     </div>
 
-    <!-- Player de Música de Fundo (invisível) -->
+    <!-- Player de Música de Fundo (Visível com controlos completos) -->
     <div
       id="youtube-player-fundo"
       style="position: absolute; width: 0; height: 0; overflow: hidden"
     ></div>
     <audio id="audio-player-fundo" loop style="display: none"></audio>
 
-    <button
-      id="btn-musica-fundo"
-      class="btn-musica-fundo"
-      onclick="alternarMusicaFundo()"
-      title="Música de Fundo"
+    <div
+      id="container-musica-fundo"
+      class="caixa-player-fundo"
       style="display: none"
     >
-      🔇
-    </button>
+      <div class="player-info">
+        <span id="icone-player-status">🎵</span>
+        <span id="nome-musica-atual">Música de Fundo</span>
+      </div>
+      <div class="player-controles">
+        <button
+          type="button"
+          class="btn-player"
+          onclick="unskipMusicaFundo()"
+          title="Anterior"
+        >
+          ⏮
+        </button>
+        <button
+          type="button"
+          class="btn-player"
+          id="btn-play-pause-fundo"
+          onclick="alternarMusicaFundo()"
+          title="Play/Pause"
+        >
+          ⏸
+        </button>
+        <button
+          type="button"
+          class="btn-player"
+          onclick="skipMusicaFundo()"
+          title="Seguinte"
+        >
+          ⏭
+        </button>
+        <input
+          type="range"
+          id="slider-volume-fundo"
+          min="0"
+          max="1"
+          step="0.05"
+          value="0.5"
+          oninput="definirVolumeMusicaFundo(this.value)"
+          title="Volume"
+        />
+      </div>
+    </div>
 
     <!-- Scripts JS -->
     <script src="js/config.js"></script>
