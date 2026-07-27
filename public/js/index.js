@@ -99,7 +99,36 @@ async function verificarEstadoServidor() {
 setInterval(verificarEstadoServidor, 5000);
 
 // ==========================================
-// 2. CONTEÚDO, LIKES E PESQUISA
+// 2. SISTEMA DE IDIOMAS (INTERNACIONALIZAÇÃO)
+// ==========================================
+function aplicarTraducoes(lang) {
+  if (!traducoes[lang]) lang = "pt";
+
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n");
+    if (traducoes[lang][chave]) {
+      el.innerText = traducoes[lang][chave];
+    }
+  });
+
+  const campoPesquisa = document.getElementById("campo-pesquisa");
+  if (campoPesquisa) {
+    campoPesquisa.placeholder = traducoes[lang].pesquisaPlaceholder;
+  }
+}
+
+function mudarIdioma(lang) {
+  if (!traducoes[lang]) lang = "pt";
+  localStorage.setItem("idioma_preferido", lang);
+
+  aplicarTraducoes(lang);
+
+  const select = document.getElementById("idioma-select");
+  if (select && select.value !== lang) select.value = lang;
+}
+
+// ==========================================
+// 3. CONTEÚDO, LIKES E PESQUISA
 // ==========================================
 function atualizarStatsHUD() {
   const totalArtistas =
@@ -117,14 +146,6 @@ function atualizarStatsHUD() {
 
   if (elArt) elArt.innerText = totalArtistas;
   if (elAlb) elAlb.innerText = totalAlbuns;
-
-  const elContagemTudo = document.getElementById("contagem-tudo");
-  const elContagemArtistas = document.getElementById("contagem-artistas");
-  const elContagemAlbuns = document.getElementById("contagem-albuns");
-
-  if (elContagemTudo) elContagemTudo.innerText = totalArtistas + totalAlbuns;
-  if (elContagemArtistas) elContagemArtistas.innerText = totalArtistas;
-  if (elContagemAlbuns) elContagemAlbuns.innerText = totalAlbuns;
 
   atualizarTopArtistaSuave();
 }
@@ -455,7 +476,7 @@ function confirmarAcao(
 }
 
 // ==========================================
-// 3. PAINEL DE ADMINISTRAÇÃO
+// 4. PAINEL DE ADMINISTRAÇÃO
 // ==========================================
 function verificarEstatutoAdmin() {
   const seccaoAdmin = document.getElementById("seccao-admin");
@@ -709,7 +730,7 @@ async function exportarDadosAdmin(formato) {
 }
 
 // ==========================================
-// 4. FILTROS, TAGS E RATINGS
+// 5. FILTROS, TAGS E RATINGS
 // ==========================================
 function filtrarCategoria(categoria, btn) {
   document
@@ -798,7 +819,7 @@ async function submeterRating(itemId, estrelas) {
 }
 
 // ==========================================
-// GESTÃO DE PERFIL E SEGURANÇA DE PASSWORD
+// 6. GESTÃO DE PERFIL E SEGURANÇA DE PASSWORD
 // ==========================================
 async function guardarPerfil(e) {
   e.preventDefault();
@@ -847,7 +868,7 @@ async function guardarPerfil(e) {
 }
 
 // ==========================================
-// CANDIDATURAS
+// 7. CANDIDATURAS E QUOTES
 // ==========================================
 let artistPhotoBase64 = "";
 let albumCoverBase64 = "";
@@ -1036,9 +1057,6 @@ function abrirPainelModeracaoCandidaturas() {
   window.location.href = "admin-submissions.html";
 }
 
-// ==========================================
-// SUGESTÕES DE QUOTES
-// ==========================================
 function abrirPainelModeracaoQuotes() {
   window.location.href = "admin-quotes.html";
 }
@@ -1319,12 +1337,12 @@ function renderizarGrelhasAprovadas() {
     let html = "";
     if (limiteArtistasIndex < todosArtistasAprovados.length) {
       html += `
-        <button type="button" class="btn-hud" onclick="verMaisArtistasIndex()">VER MAIS</button>
-        <button type="button" class="btn-hud" onclick="verTudoArtistasIndex()">VER TUDO</button>
+        <button type="button" class="btn-hud" data-i18n="btnVerMais" onclick="verMaisArtistasIndex()">VER MAIS</button>
+        <button type="button" class="btn-hud" data-i18n="btnVerTudo" onclick="verTudoArtistasIndex()">VER TUDO</button>
       `;
     }
     if (limiteArtistasIndex > 5) {
-      html += `<button type="button" class="btn-hud" onclick="verMenosArtistasIndex()">VER MENOS</button>`;
+      html += `<button type="button" class="btn-hud" data-i18n="btnVerMenos" onclick="verMenosArtistasIndex()">VER MENOS</button>`;
     }
     botoesArtistas.innerHTML = html;
   }
@@ -1340,15 +1358,18 @@ function renderizarGrelhasAprovadas() {
     let html = "";
     if (limiteAlbunsIndex < todosAlbunsAprovados.length) {
       html += `
-        <button type="button" class="btn-hud" onclick="verMaisAlbunsIndex()">VER MAIS</button>
-        <button type="button" class="btn-hud" onclick="verTudoAlbunsIndex()">VER TUDO</button>
+        <button type="button" class="btn-hud" data-i18n="btnVerMais" onclick="verMaisAlbunsIndex()">VER MAIS</button>
+        <button type="button" class="btn-hud" data-i18n="btnVerTudo" onclick="verTudoAlbunsIndex()">VER TUDO</button>
       `;
     }
     if (limiteAlbunsIndex > 5) {
-      html += `<button type="button" class="btn-hud" onclick="verMenosAlbunsIndex()">VER MENOS</button>`;
+      html += `<button type="button" class="btn-hud" data-i18n="btnVerMenos" onclick="verMenosAlbunsIndex()">VER MENOS</button>`;
     }
     botoesAlbuns.innerHTML = html;
   }
+
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  aplicarTraducoes(idiomaAtual);
 
   carregarLikesBD();
   if (typeof carregarRatingsBD === "function") carregarRatingsBD();
@@ -1428,6 +1449,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof verificarEstadoServidor === "function") verificarEstadoServidor();
   if (typeof atualizarRelogio === "function") atualizarRelogio();
   if (typeof verificarEstatutoAdmin === "function") verificarEstatutoAdmin();
+
+  // Inicializar Idioma Guardado
+  const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+  const select = document.getElementById("idioma-select");
+  if (select) select.value = idiomaSalvo;
+  mudarIdioma(idiomaSalvo);
 
   await carregarConteudoAprovado();
   if (typeof carregarQuotesAprovadasBD === "function")

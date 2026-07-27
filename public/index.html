@@ -51,6 +51,12 @@
           <span id="ponto-servidor" class="ponto-status offline"></span>
           <span id="texto-servidor" class="texto-status">OFFLINE</span>
         </div>
+        <div class="seletor-idioma">
+          <select id="idioma-select" onchange="mudarIdioma(this.value)">
+            <option value="pt">PT-PT</option>
+            <option value="en">ENGLISH</option>
+          </select>
+        </div>
 
         <div class="logo-container">
           <svg
@@ -92,19 +98,29 @@
           </svg>
         </div>
 
-        <h1 data-text="HUB PESSOAL">MUSIC HUB</h1>
+        <h1 data-text="HUB PESSOAL" data-i18n="tituloHub">MUSIC HUB</h1>
 
         <div id="relogio-hud">00:00:00</div>
 
         <nav>
-          <a href="#musica">Música</a>
-          <a href="comunidade.html">Comunidade</a>
-          <a href="#albuns">Álbuns</a>
+          <a href="#musica" data-i18n="navMusica">Música</a>
+          <a href="comunidade.html" data-i18n="navComunidade">Comunidade</a>
+          <a href="#albuns" data-i18n="navAlbuns">Álbuns</a>
         </nav>
 
         <div class="painel-controlo">
-          <button class="btn-hud" onclick="vibeAleatoria()">RANDOM VIBE</button>
-          <button class="btn-hud" onclick="abrirFormularioCandidatura()">
+          <button
+            class="btn-hud"
+            data-i18n="btnRandom"
+            onclick="vibeAleatoria()"
+          >
+            RANDOM VIBE
+          </button>
+          <button
+            class="btn-hud"
+            data-i18n="btnSubmeter"
+            onclick="abrirFormularioCandidatura()"
+          >
             SUBMETER ARTISTA/ÁLBUM
           </button>
           <button
@@ -123,8 +139,16 @@
           >
             APROVAR QUOTES
           </button>
-          <button class="btn-hud" onclick="abrirPerfil()">PERFIL</button>
-          <button class="btn-hud" onclick="terminarSessao()">LOGOUT</button>
+          <button class="btn-hud" data-i18n="btnPerfil" onclick="abrirPerfil()">
+            PERFIL
+          </button>
+          <button
+            class="btn-hud"
+            data-i18n="btnLogout"
+            onclick="terminarSessao()"
+          >
+            LOGOUT
+          </button>
         </div>
       </header>
 
@@ -133,17 +157,19 @@
         <section class="seccao-stats">
           <div class="hud-stats-box">
             <div class="stat-item">
-              <span class="stat-rotulo">ARTISTAS</span>
+              <span class="stat-rotulo" data-i18n="statArtistas">ARTISTAS</span>
               <span id="stat-artistas" class="stat-valor">0</span>
             </div>
             <div class="stat-divisor"></div>
             <div class="stat-item">
-              <span class="stat-rotulo">ÁLBUNS</span>
+              <span class="stat-rotulo" data-i18n="statAlbuns">ÁLBUNS</span>
               <span id="stat-albuns" class="stat-valor">0</span>
             </div>
             <div class="stat-divisor"></div>
             <div class="stat-item">
-              <span class="stat-rotulo">TOP ARTISTA</span>
+              <span class="stat-rotulo" data-i18n="statTopArtista"
+                >TOP ARTISTA</span
+              >
               <span id="stat-top-artista" class="stat-valor">—</span>
             </div>
           </div>
@@ -154,6 +180,7 @@
           <button
             type="button"
             class="btn-filtro ativo"
+            data-i18n="filtroTudo"
             onclick="filtrarCategoria('tudo', this)"
           >
             VER TUDO
@@ -161,6 +188,7 @@
           <button
             type="button"
             class="btn-filtro"
+            data-i18n="filtroArtistas"
             onclick="filtrarCategoria('musica', this)"
           >
             ARTISTAS
@@ -168,6 +196,7 @@
           <button
             type="button"
             class="btn-filtro"
+            data-i18n="filtroAlbuns"
             onclick="filtrarCategoria('albuns', this)"
           >
             ÁLBUNS
@@ -337,10 +366,18 @@
                 margin-top: 10px;
               "
             >
-              <button class="btn-quote" onclick="gerarQuote()">
+              <button
+                class="btn-quote"
+                data-i18n="btnGerarQuote"
+                onclick="gerarQuote()"
+              >
                 GERAR QUOTE
               </button>
-              <button class="btn-quote" onclick="abrirModalSugestaoQuote()">
+              <button
+                class="btn-quote"
+                data-i18n="btnSugerirQuote"
+                onclick="abrirModalSugestaoQuote()"
+              >
                 SUGERIR QUOTE
               </button>
             </div>
@@ -349,7 +386,7 @@
 
         <!-- SECÇÃO: MÚSICA -->
         <section id="musica" class="seccao">
-          <h2>Artistas</h2>
+          <h2 data-i18n="artistasTitulo">Artistas</h2>
           <div class="grelha">
             <!-- Artistas injetados via JS a partir da BD -->
           </div>
@@ -366,7 +403,7 @@
 
         <!-- SECÇÃO: ÁLBUNS FAVORITOS -->
         <section id="albuns" class="seccao">
-          <h2>Álbuns</h2>
+          <h2 data-i18n="albunsTitulo">Álbuns</h2>
           <div class="grelha">
             <!-- Álbuns injetados via JS a partir da BD -->
           </div>
@@ -786,6 +823,7 @@
 
     <!-- Scripts JS -->
     <script src="js/config.js"></script>
+    <script src="js/translations.js"></script>
     <script src="js/index.js"></script>
     <script src="js/login.js"></script>
     <script src="js/comunidade.js"></script>
