@@ -21,8 +21,10 @@ const SUPER_ADMIN = "YvlLima";
 app.set("trust proxy", 1);
 
 app.use(express.static("public"));
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ limit: "2mb", extended: true }));
+// Limite subido de 2mb para 15mb para caber ficheiros de música em base64
+// (upload em base64 pesa ~33% mais do que o ficheiro original)
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ limit: "15mb", extended: true }));
 
 // CORS configurado para permitir o teu frontend no Cloudflare Pages e ambiente local
 app.use(
@@ -154,6 +156,19 @@ async function initDB() {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS musica_fundo (
+        id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+        tipo VARCHAR(20) CHECK (tipo IN ('youtube', 'upload')),
+        youtube_id VARCHAR(50),
+        audio_data TEXT,
+        nome_ficheiro VARCHAR(255),
+        ativo BOOLEAN DEFAULT true,
+        atualizado_por VARCHAR(255),
+        atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log("✅ Tabelas e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
@@ -217,6 +232,21 @@ function verificarAdmin(req, res, next) {
 function validarImagemBase64(str) {
   if (!str || str === "imagens/pfp.png") return true;
   return /^data:image\/(png|jpeg|jpg|webp|gif);base64,/.test(str);
+}
+
+function validarAudioBase64(str) {
+  if (!str) return false;
+  return /^data:audio\/(mpeg|mp3|wav|wave|ogg|webm|x-m4a|mp4|aac);base64,/.test(
+    str,
+  );
+}
+
+function extrairYoutubeId(url) {
+  if (!url) return null;
+  const regex =
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
 }
 
 // ==========================================
@@ -1221,6 +1251,103 @@ app.get("/api/candidaturas/aprovadas", async (req, res) => {
 });
 
 // ==========================================
+// MÚSICA DE FUNDO DO SITE
+// ==========================================
+
+// Rota pública — devolve a música de fundo atual (se existir e estiver ativa)
+app.get("/api/musica-fundo", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT tipo, youtube_id, audio_data, nome_ficheiro FROM musica_fundo WHERE id = 1 AND ativo = true",
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ ativo: false });
+    }
+
+    res.json({ ativo: true, ...result.rows[0] });
+  } catch (err) {
+    console.error("Erro ao obter música de fundo:", err);
+    res.status(500).json({ erro: "Erro ao obter música de fundo." });
+  }
+});
+
+// Apenas admin/mod — define a música de fundo (link do YouTube ou upload de ficheiro)
+app.put(
+  "/api/admin/musica-fundo",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { tipo, youtube_url, audio_data, nome_ficheiro } = req.body;
+    const atualizado_por = req.user.username;
+
+    if (!tipo || !["youtube", "upload"].includes(tipo)) {
+      return res
+        .status(400)
+        .json({ erro: "Tipo inválido. Usa 'youtube' ou 'upload'." });
+    }
+
+    let youtube_id = null;
+    let audioData = null;
+    let nomeFicheiro = null;
+
+    if (tipo === "youtube") {
+      youtube_id = extrairYoutubeId(youtube_url);
+      if (!youtube_id) {
+        return res.status(400).json({ erro: "Link do YouTube inválido." });
+      }
+    } else {
+      if (!validarAudioBase64(audio_data)) {
+        return res.status(400).json({
+          erro: "Ficheiro de áudio inválido ou em falta. Formatos aceites: mp3, wav, ogg, webm, m4a.",
+        });
+      }
+      audioData = audio_data;
+      nomeFicheiro = nome_ficheiro || "musica.mp3";
+    }
+
+    try {
+      await pool.query(
+        `INSERT INTO musica_fundo (id, tipo, youtube_id, audio_data, nome_ficheiro, ativo, atualizado_por, atualizado_em)
+         VALUES (1, $1, $2, $3, $4, true, $5, CURRENT_TIMESTAMP)
+         ON CONFLICT (id) DO UPDATE SET
+           tipo = $1, youtube_id = $2, audio_data = $3, nome_ficheiro = $4,
+           ativo = true, atualizado_por = $5, atualizado_em = CURRENT_TIMESTAMP`,
+        [tipo, youtube_id, audioData, nomeFicheiro, atualizado_por],
+      );
+
+      await registarLog(
+        atualizado_por,
+        "DEFINIU MÚSICA DE FUNDO",
+        tipo === "youtube" ? `YouTube: ${youtube_id}` : nomeFicheiro,
+      );
+
+      res.json({ mensagem: "Música de fundo atualizada com sucesso!" });
+    } catch (err) {
+      console.error("Erro ao definir música de fundo:", err);
+      res.status(500).json({ erro: "Erro ao definir música de fundo." });
+    }
+  },
+);
+
+// Apenas admin/mod — remove a música de fundo atual
+app.delete(
+  "/api/admin/musica-fundo",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    try {
+      await pool.query("UPDATE musica_fundo SET ativo = false WHERE id = 1");
+      await registarLog(req.user.username, "REMOVEU MÚSICA DE FUNDO", "—");
+      res.json({ mensagem: "Música de fundo removida com sucesso." });
+    } catch (err) {
+      console.error("Erro ao remover música de fundo:", err);
+      res.status(500).json({ erro: "Erro ao remover música de fundo." });
+    }
+  },
+);
+
+// ==========================================
 // SUGESTÕES DE QUOTES
 // ==========================================
 
@@ -1378,6 +1505,29 @@ app.get("/api/quotes/aprovadas", async (req, res) => {
 // apagar ou promover a conta do Super Admin só por conhecer o URL.
 // Se precisares de reset/promover manualmente, faz isso diretamente na base
 // de dados (ex: painel do Render > Database > Query), nunca por uma rota pública.
+
+// ==========================================
+// ERROS DA API SEMPRE EM JSON (nunca HTML)
+// ==========================================
+// Qualquer rota /api/* que não exista cai aqui, em vez da página HTML padrão do Express
+app.use("/api", (req, res) => {
+  res.status(404).json({ erro: "Rota da API não encontrada." });
+});
+
+// Apanha erros como corpo do pedido demasiado grande (413) ou JSON inválido,
+// que por defeito o Express devolveria como página de erro em HTML
+app.use((err, req, res, next) => {
+  if (err.type === "entity.too.large" || err.status === 413) {
+    return res
+      .status(413)
+      .json({ erro: "O ficheiro enviado é demasiado grande." });
+  }
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ erro: "Pedido inválido." });
+  }
+  console.error("Erro não tratado:", err);
+  res.status(err.status || 500).json({ erro: "Erro interno do servidor." });
+});
 
 if (process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 3000;

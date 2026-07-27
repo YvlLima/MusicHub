@@ -1358,6 +1358,87 @@ footer p {
 }
 
 /* ==========================================
+   MÚSICA DE FUNDO DO SITE
+   ========================================== */
+.controles-musica-fundo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 30px auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 0, 51, 0.2);
+  border-radius: 6px;
+}
+
+.musica-fundo-estado {
+  color: #cccccc;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.nome-ficheiro-musica {
+  color: #ff0033;
+  font-size: 0.75rem;
+  margin-top: 6px;
+}
+
+#campo-musica-upload input[type="file"] {
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.acoes-musica-fundo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-perigo-outline {
+  border-color: #ff0033 !important;
+  color: #ff0033 !important;
+  background: transparent !important;
+}
+
+.btn-perigo-outline:hover {
+  background: #ff0033 !important;
+  color: #000000 !important;
+}
+
+.btn-musica-fundo {
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  width: 45px;
+  height: 45px;
+  background-color: #0d0d0d;
+  border: 1px solid #ff0033;
+  color: #ff0033;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.3);
+  z-index: 999;
+  transition: all 0.3s ease;
+  outline: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-musica-fundo:hover {
+  background-color: #ff0033;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(255, 0, 51, 0.8);
+  transform: translateY(-4px);
+}
+
+/* ==========================================
    10. LAYOUT COMPACTO DE CANDIDATURAS
    ========================================== */
 #container-candidaturas {

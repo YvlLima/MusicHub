@@ -528,6 +528,8 @@ function verificarEstatutoAdmin() {
       btnAdminCandidaturas.style.display = "inline-block";
     if (btnAdminQuotes) btnAdminQuotes.style.display = "inline-block";
     carregarUtilizadoresAdmin();
+    if (typeof carregarEstadoMusicaFundoAdmin === "function")
+      carregarEstadoMusicaFundoAdmin();
   } else {
     if (seccaoAdmin) seccaoAdmin.style.display = "none";
     if (btnAdminCandidaturas) btnAdminCandidaturas.style.display = "none";
