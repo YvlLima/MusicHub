@@ -2,19 +2,8 @@
 // MODERAÇÃO DE QUOTES SUGERIDAS
 // ==========================================
 
-let temporizadorToast;
-
-function mostrarToast(mensagem) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  document.getElementById("toast-mensagem").innerText = mensagem;
-  toast.classList.add("mostrar");
-
-  clearTimeout(temporizadorToast);
-  temporizadorToast = setTimeout(() => {
-    toast.classList.remove("mostrar");
-  }, 2500);
-}
+// NOTA: 'temporizadorToast' e 'mostrarToast' já são fornecidos globalmente por index.js.
+// Removemos a declaração duplicada de 'temporizadorToast' para evitar o SyntaxError.
 
 function confirmarAcao(
   mensagem,
