@@ -231,7 +231,25 @@
               </div>
 
               <div class="campo-perfil">
-                <label>NOVA PALAVRA-PASSE (OPCIONAL)</label>
+                <label>PALAVRA-PASSE ATUAL (OBRIGATÓRIA PARA ALTERAR)</label>
+                <div class="campo-pass">
+                  <input
+                    type="password"
+                    id="perfil-current-password"
+                    placeholder="Insere a atual para mudar"
+                  />
+                  <span
+                    class="toggle-pass"
+                    onclick="
+                      toggleVisibilidadePass('perfil-current-password', this)
+                    "
+                    >👁</span
+                  >
+                </div>
+              </div>
+
+              <div class="campo-perfil">
+                <label>NOVA PALAVRA-PASSE</label>
                 <div class="campo-pass">
                   <input
                     type="password"

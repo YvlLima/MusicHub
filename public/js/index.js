@@ -159,7 +159,6 @@ function filtrarCartoes() {
   const botoesArtistas = document.getElementById("botoes-grelha-artistas");
   const botoesAlbuns = document.getElementById("botoes-grelha-albuns");
 
-  // Campo vazio: volta ao comportamento normal (com paginação/VER MAIS)
   if (!termo) {
     if (typeof renderizarGrelhasAprovadas === "function") {
       renderizarGrelhasAprovadas();
@@ -167,8 +166,6 @@ function filtrarCartoes() {
     return;
   }
 
-  // Com pesquisa ativa: procura em TODOS os itens aprovados, mesmo os que
-  // ainda não foram mostrados via "VER MAIS"/"VER TUDO"
   const artistasFiltrados = (todosArtistasAprovados || []).filter((item) =>
     itemCorrespondePesquisa(item, termo, "artista"),
   );
@@ -187,7 +184,6 @@ function filtrarCartoes() {
       .join("");
   }
 
-  // Enquanto há pesquisa ativa não faz sentido mostrar VER MAIS/VER TUDO
   if (botoesArtistas) botoesArtistas.innerHTML = "";
   if (botoesAlbuns) botoesAlbuns.innerHTML = "";
 
@@ -802,6 +798,55 @@ async function submeterRating(itemId, estrelas) {
 }
 
 // ==========================================
+// GESTÃO DE PERFIL E SEGURANÇA DE PASSWORD
+// ==========================================
+async function guardarPerfil(e) {
+  e.preventDefault();
+
+  const username = document.getElementById("perfil-username").value.trim();
+  const email = document.getElementById("perfil-email").value.trim();
+  const currentPassword = document.getElementById("perfil-current-password")
+    ? document.getElementById("perfil-current-password").value
+    : "";
+  const newPassword = document.getElementById("perfil-password").value;
+
+  if (newPassword && !currentPassword) {
+    return mostrarToast("PRECISAS DE INSERIR A PALAVRA-PASSE ATUAL!");
+  }
+
+  const payload = {
+    username,
+    email,
+    currentPassword,
+    newPassword: newPassword || undefined,
+  };
+
+  try {
+    const resposta = await fetch(`${API_URL}/profile`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${tokenJWT}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const dados = await resposta.json();
+    if (!resposta.ok)
+      return mostrarToast(dados.erro || "ERRO AO GUARDAR PERFIL!");
+
+    mostrarToast("PERFIL ATUALIZADO COM SUCESSO!");
+
+    if (document.getElementById("perfil-current-password")) {
+      document.getElementById("perfil-current-password").value = "";
+    }
+    document.getElementById("perfil-password").value = "";
+  } catch (err) {
+    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+  }
+}
+
+// ==========================================
 // CANDIDATURAS
 // ==========================================
 let artistPhotoBase64 = "";
@@ -955,8 +1000,6 @@ async function submeterCandidatura(e) {
     };
   }
 
-  console.log("Payload da candidatura a enviar:", payload);
-
   try {
     const resposta = await fetch(`${API_URL}/candidaturas/submit`, {
       method: "POST",
@@ -1070,7 +1113,6 @@ async function submeterSugestaoQuote(e) {
   }
 }
 
-// Carrega quotes já aprovadas na BD e junta-as ao conjunto usado pelo gerador
 let quotesAprovadasBD = [];
 
 async function carregarQuotesAprovadasBD() {
@@ -1089,7 +1131,6 @@ async function carregarQuotesAprovadasBD() {
   }
 }
 
-// Detalhes da submissão no Modal
 async function abrirInfoItem(id) {
   try {
     const res = await fetch(`${API_URL}/candidaturas/aprovadas`);
@@ -1134,7 +1175,6 @@ function fecharModalInfoItem() {
   if (modal) modal.style.display = "none";
 }
 
-// Carregar e renderizar artistas e álbuns aprovados no index.html
 let todosArtistasAprovados = [];
 let todosAlbunsAprovados = [];
 let limiteArtistasIndex = 5;

@@ -9,6 +9,12 @@ const rateLimit = require("express-rate-limit");
 const app = express();
 const JWT_SECRET =
   process.env.JWT_SECRET || "chave_secreta_super_segura_opium_hub";
+if (!process.env.JWT_SECRET) {
+  console.warn(
+    "⚠️  AVISO DE SEGURANÇA: JWT_SECRET não está definido nas variáveis de ambiente! " +
+      "A usar uma chave de fallback insegura. Define JWT_SECRET no Render (Environment) o quanto antes.",
+  );
+}
 const SUPER_ADMIN = "YvlLima";
 
 // Necessário para o rate-limit funcionar corretamente no Render
@@ -368,7 +374,8 @@ app.get("/api/likes", async (req, res) => {
 });
 
 app.post("/api/like", autenticarToken, async (req, res) => {
-  const { username, item_id } = req.body;
+  const username = req.user.username; // vem do token, nunca do corpo do pedido
+  const { item_id } = req.body;
 
   if (!username || !item_id) {
     return res.status(400).json({ erro: "Dados incompletos." });
@@ -435,7 +442,8 @@ app.get("/api/my-following", autenticarToken, async (req, res) => {
 
 // Perfil
 app.put("/api/update-profile", autenticarToken, async (req, res) => {
-  const { currentUsername, newUsername, email, newPassword, pfp } = req.body;
+  const currentUsername = req.user.username; // vem do token, nunca do corpo do pedido
+  const { newUsername, email, newPassword, pfp } = req.body;
 
   if (!newUsername || !newUsername.trim()) {
     return res
@@ -1365,27 +1373,11 @@ app.get("/api/quotes/aprovadas", async (req, res) => {
 // ==========================================
 // ROTAS DE MANUTENÇÃO E UTILITÁRIAS
 // ==========================================
-app.get("/api/reset-admin", async (req, res) => {
-  try {
-    await pool.query("DELETE FROM utilizadores WHERE username = 'YvlLima'");
-    res.send(
-      "Conta YvlLima eliminada com sucesso. Podes registar novamente no site!",
-    );
-  } catch (err) {
-    res.status(500).send("Erro ao apagar utilizador: " + err.message);
-  }
-});
-
-app.get("/api/make-admin", async (req, res) => {
-  try {
-    await pool.query(
-      "UPDATE utilizadores SET is_admin = 1 WHERE username = 'YvlLima'",
-    );
-    res.send("YvlLima agora é Admin!");
-  } catch (err) {
-    res.status(500).send("Erro: " + err.message);
-  }
-});
+// As rotas /api/reset-admin e /api/make-admin foram REMOVIDAS por segurança:
+// eram públicas (sem autenticação) e permitiam a qualquer pessoa na internet
+// apagar ou promover a conta do Super Admin só por conhecer o URL.
+// Se precisares de reset/promover manualmente, faz isso diretamente na base
+// de dados (ex: painel do Render > Database > Query), nunca por uma rota pública.
 
 if (process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 3000;
