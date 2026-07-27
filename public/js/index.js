@@ -144,13 +144,57 @@ function atualizarTopArtistaSuave() {
 }
 
 function filtrarCartoes() {
-  let termo = document.getElementById("campo-pesquisa").value.toLowerCase();
-  let cartoes = document.querySelectorAll(".cartao");
+  const campo = document.getElementById("campo-pesquisa");
+  const termo = campo.value.toLowerCase().trim();
 
-  cartoes.forEach((cartao) => {
-    let texto = cartao.innerText.toLowerCase();
-    cartao.style.display = texto.includes(termo) ? "block" : "none";
-  });
+  const grelhaArtistas = document.querySelector("#musica .grelha");
+  const grelhaAlbuns = document.querySelector("#albuns .grelha");
+  const botoesArtistas = document.getElementById("botoes-grelha-artistas");
+  const botoesAlbuns = document.getElementById("botoes-grelha-albuns");
+
+  // Campo vazio: volta ao comportamento normal (com paginação/VER MAIS)
+  if (!termo) {
+    if (typeof renderizarGrelhasAprovadas === "function") {
+      renderizarGrelhasAprovadas();
+    }
+    return;
+  }
+
+  // Com pesquisa ativa: procura em TODOS os itens aprovados, mesmo os que
+  // ainda não foram mostrados via "VER MAIS"/"VER TUDO"
+  const artistasFiltrados = (todosArtistasAprovados || []).filter((item) =>
+    itemCorrespondePesquisa(item, termo, "artista"),
+  );
+  const albunsFiltrados = (todosAlbunsAprovados || []).filter((item) =>
+    itemCorrespondePesquisa(item, termo, "album"),
+  );
+
+  if (grelhaArtistas) {
+    grelhaArtistas.innerHTML = artistasFiltrados
+      .map((item) => construirCartaoArtista(item))
+      .join("");
+  }
+  if (grelhaAlbuns) {
+    grelhaAlbuns.innerHTML = albunsFiltrados
+      .map((item) => construirCartaoAlbum(item))
+      .join("");
+  }
+
+  // Enquanto há pesquisa ativa não faz sentido mostrar VER MAIS/VER TUDO
+  if (botoesArtistas) botoesArtistas.innerHTML = "";
+  if (botoesAlbuns) botoesAlbuns.innerHTML = "";
+
+  if (typeof carregarLikesBD === "function") carregarLikesBD();
+  if (typeof carregarRatingsBD === "function") carregarRatingsBD();
+}
+
+function itemCorrespondePesquisa(item, termo, tipo) {
+  const nomePrincipal = tipo === "album" ? item.album_title : item.artist_name;
+  const nomeArtista = tipo === "album" ? item.artist_name : "";
+  const generos = item.genre || "";
+
+  const alvo = `${nomePrincipal || ""} ${nomeArtista} ${generos}`.toLowerCase();
+  return alvo.includes(termo);
 }
 
 // Citações (Quotes)
@@ -315,7 +359,9 @@ async function carregarLikesBD() {
       for (const [itemId, total] of Object.entries(dados.contagem)) {
         const contador =
           document.getElementById(`count-like-${itemId}`) ||
-          document.querySelector(`button[onclick*='${itemId}'] .contador`);
+          document.querySelector(
+            `.cartao[data-candidatura="${itemId}"] .contador`,
+          );
         if (contador) {
           contador.innerText = total;
         }
@@ -326,7 +372,9 @@ async function carregarLikesBD() {
       dados.deuLike.forEach((itemId) => {
         const btn =
           document.getElementById(`btn-like-${itemId}`) ||
-          document.querySelector(`button[onclick*='${itemId}']`);
+          document.querySelector(
+            `.cartao[data-candidatura="${itemId}"] .btn-like`,
+          );
         if (btn) {
           btn.classList.add("liked");
         }
@@ -1238,24 +1286,5 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (typeof carregarRatingsBD === "function") {
     carregarRatingsBD();
-  }
-});
-
-// Easter Egg
-let sequencia = "";
-const codigo = "opium";
-
-document.addEventListener("keydown", (e) => {
-  if (!e || !e.key) return;
-
-  sequencia += e.key.toLowerCase();
-
-  if (sequencia.length > codigo.length) {
-    sequencia = sequencia.slice(-codigo.length);
-  }
-
-  if (sequencia === codigo) {
-    mostrarToast("MODO OPIUM ATIVADO");
-    document.body.classList.toggle("modo-matrix");
   }
 });

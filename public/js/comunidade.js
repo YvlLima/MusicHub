@@ -20,9 +20,11 @@ async function carregarCatalogoAprovados() {
     if (res.ok && dados.aprovados) {
       dados.aprovados.forEach((item) => {
         const idUnico = `cand_${item.id}`;
+        const ehAlbum = Boolean(item.album_title);
         cacheItensAprovados[idUnico] = {
-          nome: item.artist_name || item.album_title || "Item",
-          imagem: item.artist_photo || item.album_cover || "imagens/pfp.png",
+          nome: ehAlbum ? item.album_title : item.artist_name || "Item",
+          imagem: item.album_cover || item.artist_photo || "imagens/pfp.png",
+          tipo: ehAlbum ? "album" : "artista",
         };
       });
     }
@@ -33,7 +35,10 @@ async function carregarCatalogoAprovados() {
 
 function obterInfoMidia(id) {
   if (catalogoMidia[id]) {
-    return catalogoMidia[id];
+    return {
+      ...catalogoMidia[id],
+      tipo: String(id).startsWith("album_") ? "album" : "artista",
+    };
   }
   if (cacheItensAprovados[id]) {
     return cacheItensAprovados[id];
@@ -41,6 +46,7 @@ function obterInfoMidia(id) {
   return {
     nome: id,
     imagem: "imagens/pfp.png",
+    tipo: String(id).startsWith("album_") ? "album" : "artista",
   };
 }
 
@@ -324,8 +330,12 @@ function renderizarSecoesPerfilModal() {
   if (!dadosPerfilAtual) return;
 
   const idsLikes = dadosPerfilAtual.likes || [];
-  const albunsIds = idsLikes.filter((id) => String(id).startsWith("album_"));
-  const artistasIds = idsLikes.filter((id) => !String(id).startsWith("album_"));
+  const albunsIds = idsLikes.filter(
+    (id) => obterInfoMidia(id).tipo === "album",
+  );
+  const artistasIds = idsLikes.filter(
+    (id) => obterInfoMidia(id).tipo !== "album",
+  );
 
   const containerArtistas = document.getElementById("out-favoritos-artistas");
   const containerAlbuns = document.getElementById("out-favoritos-albuns");

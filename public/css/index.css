@@ -851,8 +851,8 @@ select#filtro-status option {
 }
 
 .grelha-favoritos {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   width: 100%;
 }
@@ -862,7 +862,8 @@ select#filtro-status option {
   border: 1px solid #222222;
   border-radius: 4px;
   padding: 8px;
-  width: 95px;
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -881,6 +882,7 @@ select#filtro-status option {
   font-size: 0.65rem;
   color: #ffffff;
   word-break: break-word;
+  text-transform: uppercase;
 }
 
 .acoes-perfil {
@@ -1531,6 +1533,10 @@ footer p {
 
 /* ---------- TABLET (≤768px) ---------- */
 @media (max-width: 768px) {
+  .grelha-favoritos {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
   body {
     padding: 20px 10px;
     overflow-x: hidden;
@@ -1705,6 +1711,10 @@ footer p {
 
 /* ---------- TELEMÓVEL (≤480px) ---------- */
 @media (max-width: 480px) {
+  .grelha-favoritos {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   body {
     padding: 16px 8px;
   }
@@ -1791,10 +1801,6 @@ footer p {
     flex-wrap: wrap;
     gap: 12px;
     padding: 12px;
-  }
-
-  .item-favorito {
-    width: 80px;
   }
 
   .caixa-modal-confirm {

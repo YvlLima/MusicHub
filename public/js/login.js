@@ -269,6 +269,120 @@ async function eliminarPropriaConta() {
   }
 }
 
+let todosArtistasFavoritosPerfil = [];
+let todosAlbunsFavoritosPerfil = [];
+let limiteArtistasFavoritosPerfil = 5;
+let limiteAlbunsFavoritosPerfil = 5;
+
+function construirItemFavorito(item) {
+  const eAlbum = item.tipo === "album";
+  const titulo = eAlbum ? item.album_title : item.artist_name;
+  const img = eAlbum
+    ? item.album_cover || "imagens/pfp.png"
+    : item.artist_photo || "imagens/pfp.png";
+
+  const itemDiv = document.createElement("div");
+  itemDiv.className = "item-favorito";
+  itemDiv.innerHTML = `
+    <img src="${img}" alt="${escapeHTML(titulo)}">
+    <span>${escapeHTML(titulo)}</span>
+  `;
+  return itemDiv;
+}
+
+function renderizarFavoritosPerfil() {
+  const containerArtistas = document.getElementById("lista-favoritos-artistas");
+  const containerAlbuns = document.getElementById("lista-favoritos-albuns");
+  const botoesArtistas = document.getElementById("botoes-favoritos-artistas");
+  const botoesAlbuns = document.getElementById("botoes-favoritos-albuns");
+
+  if (containerArtistas) {
+    containerArtistas.innerHTML = "";
+    if (todosArtistasFavoritosPerfil.length > 0) {
+      todosArtistasFavoritosPerfil
+        .slice(0, limiteArtistasFavoritosPerfil)
+        .forEach((item) => {
+          containerArtistas.appendChild(construirItemFavorito(item));
+        });
+    } else {
+      containerArtistas.innerHTML =
+        "<p style='color: #666; font-size: 0.8rem;'>Nenhum artista favorito.</p>";
+    }
+  }
+
+  if (botoesArtistas) {
+    let html = "";
+    if (limiteArtistasFavoritosPerfil < todosArtistasFavoritosPerfil.length) {
+      html += `
+        <button type="button" class="btn-hud" onclick="verMaisArtistasFavoritosPerfil()">VER MAIS</button>
+        <button type="button" class="btn-hud" onclick="verTudoArtistasFavoritosPerfil()">VER TUDO</button>
+      `;
+    }
+    if (limiteArtistasFavoritosPerfil > 5) {
+      html += `<button type="button" class="btn-hud" onclick="verMenosArtistasFavoritosPerfil()">VER MENOS</button>`;
+    }
+    botoesArtistas.innerHTML = html;
+  }
+
+  if (containerAlbuns) {
+    containerAlbuns.innerHTML = "";
+    if (todosAlbunsFavoritosPerfil.length > 0) {
+      todosAlbunsFavoritosPerfil
+        .slice(0, limiteAlbunsFavoritosPerfil)
+        .forEach((item) => {
+          containerAlbuns.appendChild(construirItemFavorito(item));
+        });
+    } else {
+      containerAlbuns.innerHTML =
+        "<p style='color: #666; font-size: 0.8rem;'>Nenhum álbum favorito.</p>";
+    }
+  }
+
+  if (botoesAlbuns) {
+    let html = "";
+    if (limiteAlbunsFavoritosPerfil < todosAlbunsFavoritosPerfil.length) {
+      html += `
+        <button type="button" class="btn-hud" onclick="verMaisAlbunsFavoritosPerfil()">VER MAIS</button>
+        <button type="button" class="btn-hud" onclick="verTudoAlbunsFavoritosPerfil()">VER TUDO</button>
+      `;
+    }
+    if (limiteAlbunsFavoritosPerfil > 5) {
+      html += `<button type="button" class="btn-hud" onclick="verMenosAlbunsFavoritosPerfil()">VER MENOS</button>`;
+    }
+    botoesAlbuns.innerHTML = html;
+  }
+}
+
+function verMaisArtistasFavoritosPerfil() {
+  limiteArtistasFavoritosPerfil += 5;
+  renderizarFavoritosPerfil();
+}
+
+function verTudoArtistasFavoritosPerfil() {
+  limiteArtistasFavoritosPerfil = todosArtistasFavoritosPerfil.length;
+  renderizarFavoritosPerfil();
+}
+
+function verMenosArtistasFavoritosPerfil() {
+  limiteArtistasFavoritosPerfil = 5;
+  renderizarFavoritosPerfil();
+}
+
+function verMaisAlbunsFavoritosPerfil() {
+  limiteAlbunsFavoritosPerfil += 5;
+  renderizarFavoritosPerfil();
+}
+
+function verTudoAlbunsFavoritosPerfil() {
+  limiteAlbunsFavoritosPerfil = todosAlbunsFavoritosPerfil.length;
+  renderizarFavoritosPerfil();
+}
+
+function verMenosAlbunsFavoritosPerfil() {
+  limiteAlbunsFavoritosPerfil = 5;
+  renderizarFavoritosPerfil();
+}
+
 async function carregarFavoritosPerfil() {
   const containerArtistas = document.getElementById("lista-favoritos-artistas");
   const containerAlbuns = document.getElementById("lista-favoritos-albuns");
@@ -287,11 +401,10 @@ async function carregarFavoritosPerfil() {
     const resAprovados = await fetch(`${API_URL}/candidaturas/aprovadas`);
     const dadosAprovados = await resAprovados.json();
 
-    containerArtistas.innerHTML = "";
-    containerAlbuns.innerHTML = "";
-
-    let temArtistas = false;
-    let temAlbuns = false;
+    todosArtistasFavoritosPerfil = [];
+    todosAlbunsFavoritosPerfil = [];
+    limiteArtistasFavoritosPerfil = 5;
+    limiteAlbunsFavoritosPerfil = 5;
 
     if (resAprovados.ok && dadosAprovados.aprovados) {
       dadosLikes.deuLike.forEach((itemId) => {
@@ -304,38 +417,16 @@ async function carregarFavoritosPerfil() {
         );
 
         if (itemInfo) {
-          const eAlbum = itemInfo.tipo === "album";
-          const titulo = eAlbum ? itemInfo.album_title : itemInfo.artist_name;
-          const img = eAlbum
-            ? itemInfo.album_cover || "imagens/pfp.png"
-            : itemInfo.artist_photo || "imagens/pfp.png";
-
-          const itemDiv = document.createElement("div");
-          itemDiv.className = "item-favorito";
-          itemDiv.innerHTML = `
-            <img src="${img}" alt="${escapeHTML(titulo)}">
-            <span>${escapeHTML(titulo)}</span>
-          `;
-
-          if (eAlbum) {
-            containerAlbuns.appendChild(itemDiv);
-            temAlbuns = true;
+          if (itemInfo.tipo === "album") {
+            todosAlbunsFavoritosPerfil.push(itemInfo);
           } else {
-            containerArtistas.appendChild(itemDiv);
-            temArtistas = true;
+            todosArtistasFavoritosPerfil.push(itemInfo);
           }
         }
       });
     }
 
-    if (!temArtistas) {
-      containerArtistas.innerHTML =
-        "<p style='color: #666; font-size: 0.8rem;'>Nenhum artista favorito.</p>";
-    }
-    if (!temAlbuns) {
-      containerAlbuns.innerHTML =
-        "<p style='color: #666; font-size: 0.8rem;'>Nenhum álbum favorito.</p>";
-    }
+    renderizarFavoritosPerfil();
   } catch (err) {
     console.error("Erro ao carregar favoritos no perfil:", err);
   }

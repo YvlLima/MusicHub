@@ -365,6 +365,7 @@ h1 {
   width: 100%;
   font-weight: bold;
   line-height: 1.25;
+  text-transform: uppercase;
 }
 
 /* Linha dos botões VER MAIS/VER TUDO ocupa a largura toda do grid */
