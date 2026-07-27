@@ -22,7 +22,6 @@
           user = null;
         }
 
-        // Validar token, utilizador e estatuto de admin
         if (
           !token ||
           token === "undefined" ||
@@ -45,6 +44,13 @@
 
     <div id="hub-principal">
       <header>
+        <div class="seletor-idioma">
+          <select id="idioma-select" onchange="mudarIdioma(this.value)">
+            <option value="pt">PT-PT</option>
+            <option value="en">ENGLISH</option>
+          </select>
+        </div>
+
         <div class="logo-container">
           <svg
             class="logo-header"
@@ -68,34 +74,55 @@
           </svg>
         </div>
 
-        <h1 data-text="MODERAÇÃO">PAINEL DE MODERAÇÃO</h1>
+        <h1 data-text="MODERAÇÃO" data-i18n="modPainelTitulo">
+          PAINEL DE MODERAÇÃO
+        </h1>
 
         <nav>
-          <a href="index.html">← VOLTAR AO HUB</a>
+          <a href="index.html" data-i18n="modVoltarHub">← VOLTAR AO HUB</a>
         </nav>
 
         <div class="painel-controlo">
-          <button class="btn-hud" onclick="carregarCandidaturas()">
+          <button
+            class="btn-hud"
+            data-i18n="adminBtnAtualizar"
+            onclick="carregarCandidaturas()"
+          >
             🔄 ATUALIZAR
           </button>
-          <button class="btn-hud" onclick="terminarSessao()">LOGOUT</button>
+          <button
+            class="btn-hud"
+            data-i18n="btnLogout"
+            onclick="terminarSessao()"
+          >
+            LOGOUT
+          </button>
         </div>
       </header>
 
       <main>
         <section class="seccao">
-          <h2>Candidaturas de Artistas/Álbuns</h2>
+          <h2 data-i18n="modSubmissoesTitulo">
+            Candidaturas de Artistas/Álbuns
+          </h2>
 
           <div class="controles-admin">
             <select id="filtro-status" onchange="carregarCandidaturas()">
-              <option value="pendente">⏳ PENDENTES</option>
-              <option value="todas">📋 TODAS</option>
-              <option value="aprovado">✓ APROVADAS</option>
-              <option value="rejeitado">✗ REJEITADAS</option>
+              <option value="pendente" data-i18n="modFiltroPendente">
+                ⏳ PENDENTES
+              </option>
+              <option value="todas" data-i18n="modFiltroTodas">📋 TODAS</option>
+              <option value="aprovado" data-i18n="modFiltroAprovado">
+                ✓ APROVADAS
+              </option>
+              <option value="rejeitado" data-i18n="modFiltroRejeitado">
+                ✗ REJEITADAS
+              </option>
             </select>
             <button
               type="button"
               class="btn-hud"
+              data-i18n="modBtnRecarregar"
               onclick="carregarCandidaturas()"
             >
               🔄 RECARREGAR
@@ -103,7 +130,10 @@
           </div>
 
           <div id="container-candidaturas" class="container-candidaturas">
-            <p style="text-align: center; color: #888">
+            <p
+              style="text-align: center; color: #888"
+              data-i18n="modCarregando"
+            >
               A carregar candidaturas...
             </p>
           </div>
@@ -113,11 +143,12 @@
       <!-- Modal para Rejeitar com Motivo -->
       <div id="modal-rejeicao" class="modal-overlay">
         <div class="caixa-modal-confirm">
-          <h3>MOTIVO DA REJEIÇÃO</h3>
+          <h3 data-i18n="modModalRejeicaoTitulo">MOTIVO DA REJEIÇÃO</h3>
 
           <div class="campo-modal">
             <textarea
               id="motivo-rejeicao"
+              data-i18n-placeholder="modPlaceholderMotivo"
               placeholder="Descreve o motivo da rejeição..."
               rows="4"
             ></textarea>
@@ -127,6 +158,7 @@
             <button
               type="button"
               class="btn-hud-modal"
+              data-i18n="subBtnCancelar"
               onclick="fecharModalRejeicao()"
             >
               CANCELAR
@@ -134,6 +166,7 @@
             <button
               type="button"
               class="btn-hud-modal btn-perigo"
+              data-i18n="modBtnRejeitar"
               onclick="confirmarRejeicao()"
             >
               REJEITAR
@@ -148,7 +181,9 @@
           class="caixa-modal-confirm"
           style="max-width: 600px; max-height: 80vh; overflow-y: auto"
         >
-          <h3 id="historico-titulo">HISTÓRICO DE CANDIDATURA</h3>
+          <h3 id="historico-titulo" data-i18n="modHistoricoTitulo">
+            HISTÓRICO DE CANDIDATURA
+          </h3>
 
           <div id="historico-corpo" style="text-align: left; margin-top: 20px">
             <!-- Conteúdo dinâmico aqui -->
@@ -158,6 +193,7 @@
             <button
               type="button"
               class="btn-hud-modal"
+              data-i18n="adminBtnExportarJson"
               onclick="fecharModalHistorico()"
             >
               FECHAR
@@ -167,7 +203,16 @@
       </div>
 
       <footer>
-        <p>© 2026 - MUSIC HUB - PAINEL DE MODERAÇÃO</p>
+        <p>© 2026 - MUSIC HUB</p>
+        <div class="redes-sociais">
+          <a
+            href="https://guns.lol/yvllima36"
+            target="_blank"
+            class="botao-redes"
+          >
+            MADE BY
+          </a>
+        </div>
       </footer>
 
       <button id="btn-topo" onclick="voltarAoTopo()">↑</button>
@@ -180,7 +225,19 @@
     </div>
 
     <!-- Scripts JS -->
+    <script src="js/translations.js"></script>
+    <script src="js/index.js"></script>
     <script src="js/login.js"></script>
     <script src="js/admin-submissions.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+        const select = document.getElementById("idioma-select");
+        if (select) select.value = idiomaSalvo;
+        if (typeof aplicarTraducoes === "function") {
+          aplicarTraducoes(idiomaSalvo);
+        }
+      });
+    </script>
   </body>
 </html>

@@ -41,6 +41,13 @@
 
     <div id="hub-principal">
       <header>
+        <div class="seletor-idioma">
+          <select id="idioma-select" onchange="mudarIdioma(this.value)">
+            <option value="pt">PT-PT</option>
+            <option value="en">ENGLISH</option>
+          </select>
+        </div>
+
         <div class="logo-container">
           <svg
             class="logo-header"
@@ -64,13 +71,23 @@
           </svg>
         </div>
 
-        <h1 data-text="MODERAÇÃO DE QUOTES">MODERAÇÃO DE QUOTES</h1>
+        <h1 data-text="MODERAÇÃO DE QUOTES" data-i18n="quotesPainelTitulo">
+          MODERAÇÃO DE QUOTES
+        </h1>
 
         <div class="painel-controlo">
-          <button class="btn-hud" onclick="window.location.href = 'index.html'">
+          <button
+            class="btn-hud"
+            data-i18n="quotesVoltarHub"
+            onclick="window.location.href = 'index.html'"
+          >
             VOLTAR AO HUB
           </button>
-          <button class="btn-hud" onclick="carregarQuotesPendentes()">
+          <button
+            class="btn-hud"
+            data-i18n="adminBtnAtualizar"
+            onclick="carregarQuotesPendentes()"
+          >
             🔄 ATUALIZAR
           </button>
         </div>
@@ -78,23 +95,25 @@
 
       <main>
         <section class="seccao">
-          <h2>QUOTES SUGERIDAS PENDENTES</h2>
+          <h2 data-i18n="quotesSecaoTitulo">QUOTES SUGERIDAS PENDENTES</h2>
 
           <div class="stats-admin-container">
             <div class="card-stat">
               <span class="stat-num" id="stat-total-pendentes">0</span>
-              <span class="stat-label">PENDENTES</span>
+              <span class="stat-label" data-i18n="quotesStatPendentes"
+                >PENDENTES</span
+              >
             </div>
           </div>
 
           <table class="tabela-admin tabela-quotes">
             <thead>
               <tr>
-                <th>QUOTE</th>
-                <th>ARTISTA</th>
-                <th>SUGERIDA POR</th>
-                <th>DATA</th>
-                <th>AÇÕES</th>
+                <th data-i18n="quotesTabelaQuote">QUOTE</th>
+                <th data-i18n="quotesTabelaArtista">ARTISTA</th>
+                <th data-i18n="quotesTabelaCom">SUGERIDA POR</th>
+                <th data-i18n="quotesTabelaData">DATA</th>
+                <th data-i18n="quotesTabelaAcoes">AÇÕES</th>
               </tr>
             </thead>
             <tbody id="lista-quotes-pendentes-body">
@@ -105,7 +124,16 @@
       </main>
 
       <footer>
-        <p>© 2026 - HUB PESSOAL</p>
+        <p>© 2026 - MUSIC HUB</p>
+        <div class="redes-sociais">
+          <a
+            href="https://guns.lol/yvllima36"
+            target="_blank"
+            class="botao-redes"
+          >
+            MADE BY
+          </a>
+        </div>
       </footer>
     </div>
 
@@ -116,7 +144,12 @@
         <p id="modal-confirm-texto">Tens a certeza que queres prosseguir?</p>
 
         <div class="acoes-modal-confirm">
-          <button type="button" id="btn-modal-cancelar" class="btn-hud-modal">
+          <button
+            type="button"
+            id="btn-modal-cancelar"
+            class="btn-hud-modal"
+            data-i18n="subBtnCancelar"
+          >
             CANCELAR
           </button>
           <button
@@ -137,6 +170,18 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/translations.js"></script>
+    <script src="js/index.js"></script>
     <script src="js/admin-quotes.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+        const select = document.getElementById("idioma-select");
+        if (select) select.value = idiomaSalvo;
+        if (typeof aplicarTraducoes === "function") {
+          aplicarTraducoes(idiomaSalvo);
+        }
+      });
+    </script>
   </body>
 </html>

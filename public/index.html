@@ -207,7 +207,7 @@
 
         <!-- SECÇÃO: PERFIL DE UTILIZADOR -->
         <section id="seccao-perfil" class="seccao" style="display: none">
-          <h2>DEFINIÇÕES DE PERFIL</h2>
+          <h2 data-i18n="perfilTitulo">DEFINIÇÕES DE PERFIL</h2>
 
           <div class="caixa-perfil">
             <div class="perfil-topo">
@@ -227,6 +227,7 @@
                 <button
                   type="button"
                   class="btn-quote"
+                  data-i18n="perfilMudarFoto"
                   onclick="document.getElementById('input-pfp').click()"
                 >
                   MUDAR FOTO
@@ -236,24 +237,30 @@
               <div class="stats-sociais-perfil">
                 <div class="stat-item">
                   <span id="total-seguidores" class="num-stat">0</span>
-                  <span class="label-stat">SEGUIDORES</span>
+                  <span class="label-stat" data-i18n="perfilSeguidores"
+                    >SEGUIDORES</span
+                  >
                 </div>
                 <div class="stat-divisor"></div>
                 <div class="stat-item">
                   <span id="total-seguindo" class="num-stat">0</span>
-                  <span class="label-stat">A SEGUIR</span>
+                  <span class="label-stat" data-i18n="perfilASeguir"
+                    >A SEGUIR</span
+                  >
                 </div>
               </div>
             </div>
 
             <form id="form-perfil" onsubmit="guardarPerfil(event)">
               <div class="campo-perfil">
-                <label>NOME DE UTILIZADOR</label>
+                <label data-i18n="perfilLabelUsername"
+                  >NOME DE UTILIZADOR</label
+                >
                 <input type="text" id="perfil-username" />
               </div>
 
               <div class="campo-perfil">
-                <label>EMAIL</label>
+                <label data-i18n="perfilLabelEmail">EMAIL</label>
                 <input
                   type="email"
                   id="perfil-email"
@@ -262,11 +269,14 @@
               </div>
 
               <div class="campo-perfil">
-                <label>PALAVRA-PASSE ATUAL (OPCIONAL)</label>
+                <label data-i18n="perfilLabelPassAtual"
+                  >PALAVRA-PASSE ATUAL (OPCIONAL)</label
+                >
                 <div class="campo-pass">
                   <input
                     type="password"
                     id="perfil-current-password"
+                    data-i18n-placeholder="perfilPlaceholderPassAtual"
                     placeholder="Insere a atual para mudar"
                   />
                   <span
@@ -280,11 +290,14 @@
               </div>
 
               <div class="campo-perfil">
-                <label>NOVA PALAVRA-PASSE (OPCIONAL)</label>
+                <label data-i18n="perfilLabelPassNova"
+                  >NOVA PALAVRA-PASSE (OPCIONAL)</label
+                >
                 <div class="campo-pass">
                   <input
                     type="password"
                     id="perfil-password"
+                    data-i18n-placeholder="perfilPlaceholderPassNova"
                     placeholder="Deixar em branco para manter"
                   />
                   <span
@@ -296,7 +309,7 @@
               </div>
 
               <div class="seccao-favoritos-perfil">
-                <h3>ARTISTAS FAVORITOS</h3>
+                <h3 data-i18n="perfilArtistasFavoritos">ARTISTAS FAVORITOS</h3>
                 <div
                   id="lista-favoritos-artistas"
                   class="grelha-favoritos"
@@ -311,7 +324,7 @@
                   "
                 ></div>
 
-                <h3>ÁLBUNS FAVORITOS</h3>
+                <h3 data-i18n="perfilAlbunsFavoritos">ÁLBUNS FAVORITOS</h3>
                 <div id="lista-favoritos-albuns" class="grelha-favoritos"></div>
                 <div
                   id="botoes-favoritos-albuns"
@@ -325,17 +338,27 @@
               </div>
 
               <div class="acoes-perfil">
-                <button type="submit" class="btn-hud btn-principal">
+                <button
+                  type="submit"
+                  class="btn-hud btn-principal"
+                  data-i18n="perfilBtnGuardar"
+                >
                   GUARDAR ALTERAÇÕES
                 </button>
                 <button
                   type="button"
                   class="btn-hud btn-perigo"
+                  data-i18n="perfilBtnEliminarConta"
                   onclick="eliminarPropriaConta()"
                 >
                   ELIMINAR MINHA CONTA
                 </button>
-                <button type="button" class="btn-hud" onclick="fecharPerfil()">
+                <button
+                  type="button"
+                  class="btn-hud"
+                  data-i18n="perfilBtnVoltar"
+                  onclick="fecharPerfil()"
+                >
                   VOLTAR
                 </button>
               </div>
@@ -762,35 +785,38 @@
         <!-- Modal de Sugestão de Quote -->
         <div id="modal-sugestao-quote" class="modal-overlay">
           <div class="caixa-modal-confirm" style="max-width: 600px">
-            <h3>SUGERIR QUOTE</h3>
+            <h3 data-i18n="modalSugestaoQuoteTitulo">SUGERIR QUOTE</h3>
 
             <form
               id="form-sugestao-quote"
               onsubmit="submeterSugestaoQuote(event)"
             >
               <div class="campo-modal">
-                <label>TEXTO DA QUOTE *</label>
+                <label data-i18n="sugQuoteTextoLabel">TEXTO DA QUOTE *</label>
                 <textarea
                   id="quote-sugestao-texto"
+                  data-i18n-placeholder="sugQuotePlaceholderTexto"
                   placeholder='Ex: "Should&apos;ve known this shit was not real when it started"'
                   rows="3"
                 ></textarea>
               </div>
 
               <div class="campo-modal">
-                <label>ARTISTA *</label>
+                <label data-i18n="sugQuoteArtistaLabel">ARTISTA *</label>
                 <input
                   type="text"
                   id="quote-sugestao-artista"
+                  data-i18n-placeholder="sugQuotePlaceholderArtista"
                   placeholder="Ex: Playboi Carti"
                 />
               </div>
 
               <div class="campo-modal">
-                <label>MÚSICA *</label>
+                <label data-i18n="sugQuoteMusicaLabel">MÚSICA *</label>
                 <input
                   type="text"
                   id="quote-sugestao-musica"
+                  data-i18n-placeholder="sugQuotePlaceholderMusica"
                   placeholder="Ex: Over"
                 />
               </div>
@@ -799,11 +825,16 @@
                 <button
                   type="button"
                   class="btn-hud-modal"
+                  data-i18n="subBtnCancelar"
                   onclick="fecharModalSugestaoQuote()"
                 >
                   CANCELAR
                 </button>
-                <button type="submit" class="btn-hud-modal btn-perigo">
+                <button
+                  type="submit"
+                  class="btn-hud-modal btn-perigo"
+                  data-i18n="sugQuoteBtnSubmeter"
+                >
                   SUBMETER QUOTE
                 </button>
               </div>

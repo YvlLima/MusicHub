@@ -35,8 +35,11 @@ function terminarSessao() {
 
 async function carregarCandidaturas() {
   const tokenJWT = localStorage.getItem("token_jwt");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   if (!tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    mostrarToast(t.modToastAutenticar || "AUTENTICA-TE PRIMEIRO!");
     return;
   }
 
@@ -54,23 +57,28 @@ async function carregarCandidaturas() {
     const dados = await resposta.json();
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO CARREGAR CANDIDATURAS!");
+      mostrarToast(
+        dados.erro ||
+          t.modToastErroCarregar ||
+          "ERRO AO CARREGAR CANDIDATURAS!",
+      );
       return;
     }
 
     renderizarCandidaturas(dados.candidaturas);
   } catch (err) {
     console.error("Erro ao carregar candidaturas:", err);
-    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+    mostrarToast(t.modToastErroLigacao || "ERRO DE LIGAÇÃO AO SERVIDOR!");
   }
 }
 
 function renderizarCandidaturas(candidaturas) {
   const container = document.getElementById("container-candidaturas");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
 
   if (!candidaturas || candidaturas.length === 0) {
-    container.innerHTML =
-      '<p style="text-align: center; color: #888; padding: 40px;">Nenhuma candidatura encontrada.</p>';
+    container.innerHTML = `<p style="text-align: center; color: #888; padding: 40px;">${t.modNenhumaEncontrada || "Nenhuma candidatura encontrada."}</p>`;
     return;
   }
 
@@ -80,6 +88,9 @@ function renderizarCandidaturas(candidaturas) {
 }
 
 function criarCartaoCandidatura(cand) {
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   const statusEmoji = { pendente: "⏳", aprovado: "✓", rejeitado: "✗" };
   const statusColor = {
     pendente: "#ff9900",
@@ -90,17 +101,30 @@ function criarCartaoCandidatura(cand) {
   const emoji = statusEmoji[cand.status] || "❓";
   const cor = statusColor[cand.status] || "#888888";
   const dataSubmissao = new Date(cand.submitted_date).toLocaleDateString(
-    "pt-PT",
+    idiomaAtual === "en" ? "en-US" : "pt-PT",
   );
+
+  let statusTraduzido = cand.status.toUpperCase();
+  if (cand.status === "pendente")
+    statusTraduzido = t.modStatusPendente || "PENDENTE";
+  else if (cand.status === "aprovado")
+    statusTraduzido = t.modStatusAprovado || "APROVADO";
+  else if (cand.status === "rejeitado")
+    statusTraduzido = t.modStatusRejeitado || "REJEITADO";
+
+  let tipoTraduzido =
+    cand.tipo === "artista"
+      ? t.modTipoArtista || "👤 ARTISTA"
+      : t.modTipoAlbum || "💿 ÁLBUM";
 
   let botoesAcao = "";
   if (cand.status === "pendente") {
     botoesAcao = `
-      <button class="btn-aprovar" onclick="aprovarCandidatura(${cand.id})">✓ APROVAR</button>
-      <button class="btn-rejeitar" onclick="abrirModalRejeicao(${cand.id})">✗ REJEITAR</button>
+      <button class="btn-aprovar" onclick="aprovarCandidatura(${cand.id})">${t.modBtnAprovar || "✓ APROVAR"}</button>
+      <button class="btn-rejeitar" onclick="abrirModalRejeicao(${cand.id})">${t.modBtnRejeitarLista || "✗ REJEITAR"}</button>
     `;
   }
-  botoesAcao += `<button class="btn-historico" onclick="carregarHistoricoCandidatura(${cand.id})">📜 HISTÓRICO</button>`;
+  botoesAcao += `<button class="btn-historico" onclick="carregarHistoricoCandidatura(${cand.id})">${t.modBtnHistorico || "📜 HISTÓRICO"}</button>`;
 
   const imagem =
     cand.tipo === "artista" && cand.artist_photo
@@ -109,18 +133,18 @@ function criarCartaoCandidatura(cand) {
   const imagemMostra =
     imagem && imagem.startsWith("data:image")
       ? `<img src="${imagem}" alt="Capa" class="capa-album-admin" />`
-      : '<div class="capa-album-placeholder">SEM FOTO</div>';
+      : `<div class="capa-album-placeholder">${idiomaAtual === "en" ? "NO PHOTO" : "SEM FOTO"}</div>`;
 
   let infoAdicional = "";
   if (cand.tipo === "artista") {
     infoAdicional = `
-      ${cand.artist_birthdate ? `<span><strong>NASCIMENTO:</strong> ${new Date(cand.artist_birthdate).toLocaleDateString("pt-PT")}</span>` : ""}
-      ${cand.profile_links ? `<span><strong>LINK:</strong> <a href="${escapeHTML(cand.profile_links)}" target="_blank" style="color: #ff0033;">Abrir</a></span>` : ""}
+      ${cand.artist_birthdate ? `<span><strong>${t.modLabelNascimento || "NASCIMENTO:"}</strong> ${new Date(cand.artist_birthdate).toLocaleDateString(idiomaAtual === "en" ? "en-US" : "pt-PT")}</span>` : ""}
+      ${cand.profile_links ? `<span><strong>${t.modLabelLink || "LINK:"}</strong> <a href="${escapeHTML(cand.profile_links)}" target="_blank" style="color: #ff0033;">${t.modLabelAbrir || "Abrir"}</a></span>` : ""}
     `;
   } else {
     infoAdicional = `
-      ${cand.album_date ? `<span><strong>DATA:</strong> ${new Date(cand.album_date).toLocaleDateString("pt-PT")}</span>` : ""}
-      ${cand.album_link ? `<span><strong>LINK:</strong> <a href="${escapeHTML(cand.album_link)}" target="_blank" style="color: #ff0033;">Abrir</a></span>` : ""}
+      ${cand.album_date ? `<span><strong>${t.modLabelData || "DATA:"}</strong> ${new Date(cand.album_date).toLocaleDateString(idiomaAtual === "en" ? "en-US" : "pt-PT")}</span>` : ""}
+      ${cand.album_link ? `<span><strong>${t.modLabelLink || "LINK:"}</strong> <a href="${escapeHTML(cand.album_link)}" target="_blank" style="color: #ff0033;">${t.modLabelAbrir || "Abrir"}</a></span>` : ""}
     `;
   }
 
@@ -128,9 +152,9 @@ function criarCartaoCandidatura(cand) {
     <div class="cartao-candidatura">
       <div class="cabecalho-cartao">
         <div class="info-status">
-          <span style="color: ${cor};">${emoji} ${cand.status.toUpperCase()}</span>
-          <span style="color: #0066ff;">${cand.tipo === "artista" ? "👤 ARTISTA" : "💿 ÁLBUM"}</span>
-          <span class="data-submissao">Submetido em ${dataSubmissao} por <strong>${escapeHTML(cand.submitted_by)}</strong></span>
+          <span style="color: ${cor};">${emoji} ${statusTraduzido}</span>
+          <span style="color: #0066ff;">${tipoTraduzido}</span>
+          <span class="data-submissao">${t.modLabelSubmetidoPor || "Submetido em"} ${dataSubmissao} ${t.modLabelPor || "por"} <strong>${escapeHTML(cand.submitted_by)}</strong></span>
         </div>
       </div>
 
@@ -141,7 +165,7 @@ function criarCartaoCandidatura(cand) {
           <h3>${escapeHTML(cand.artist_name)} ${cand.album_title ? `- ${escapeHTML(cand.album_title)}` : ""}</h3>
 
           <div class="info-candidatura">
-            ${cand.genre ? `<span><strong>GÉNERO:</strong> ${escapeHTML(cand.genre)}</span>` : ""}
+            ${cand.genre ? `<span><strong>${t.modLabelGenero || "GÉNERO:"}</strong> ${escapeHTML(cand.genre)}</span>` : ""}
             ${infoAdicional}
           </div>
 
@@ -176,9 +200,11 @@ function fecharModalRejeicao() {
 
 async function confirmarRejeicao() {
   const motivo = document.getElementById("motivo-rejeicao").value.trim();
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
 
   if (!motivo) {
-    mostrarToast("DESCREVE O MOTIVO DA REJEIÇÃO!");
+    mostrarToast(t.modToastDescreverMotivo || "DESCREVE O MOTIVO DA REJEIÇÃO!");
     return;
   }
 
@@ -188,8 +214,11 @@ async function confirmarRejeicao() {
 
 async function aprovarCandidatura(candidaturaId) {
   const tokenJWT = localStorage.getItem("token_jwt");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   if (!tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    mostrarToast(t.modToastAutenticar || "AUTENTICA-TE PRIMEIRO!");
     return;
   }
 
@@ -208,22 +237,27 @@ async function aprovarCandidatura(candidaturaId) {
     const dados = await resposta.json();
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO APROVAR!");
+      mostrarToast(dados.erro || t.modToastErroAprovar || "ERRO AO APROVAR!");
       return;
     }
 
-    mostrarToast("✓ CANDIDATURA APROVADA COM SUCESSO!");
+    mostrarToast(
+      t.modToastAprovadoSucesso || "✓ CANDIDATURA APROVADA COM SUCESSO!",
+    );
     carregarCandidaturas();
   } catch (err) {
     console.error("Erro ao aprovar:", err);
-    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+    mostrarToast(t.modToastErroLigacao || "ERRO DE LIGAÇÃO AO SERVIDOR!");
   }
 }
 
 async function rejeitarCandidatura(candidaturaId, motivo) {
   const tokenJWT = localStorage.getItem("token_jwt");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   if (!tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    mostrarToast(t.modToastAutenticar || "AUTENTICA-TE PRIMEIRO!");
     return;
   }
 
@@ -245,15 +279,15 @@ async function rejeitarCandidatura(candidaturaId, motivo) {
     const dados = await resposta.json();
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO REJEITAR!");
+      mostrarToast(dados.erro || t.modToastErroRejeitar || "ERRO AO REJEITAR!");
       return;
     }
 
-    mostrarToast("✗ CANDIDATURA REJEITADA!");
+    mostrarToast(t.modToastRejeitadoSucesso || "✗ CANDIDATURA REJEITADA!");
     carregarCandidaturas();
   } catch (err) {
     console.error("Erro ao rejeitar:", err);
-    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+    mostrarToast(t.modToastErroLigacao || "ERRO DE LIGAÇÃO AO SERVIDOR!");
   }
 }
 
@@ -263,8 +297,11 @@ async function rejeitarCandidatura(candidaturaId, motivo) {
 
 async function carregarHistoricoCandidatura(candidaturaId) {
   const tokenJWT = localStorage.getItem("token_jwt");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   if (!tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    mostrarToast(t.modToastAutenticar || "AUTENTICA-TE PRIMEIRO!");
     return;
   }
 
@@ -282,14 +319,16 @@ async function carregarHistoricoCandidatura(candidaturaId) {
     const dados = await resposta.json();
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO CARREGAR HISTÓRICO!");
+      mostrarToast(
+        dados.erro || t.modToastErroHistorico || "ERRO AO CARREGAR HISTÓRICO!",
+      );
       return;
     }
 
     exibirModalHistorico(dados.candidatura, dados.historico);
   } catch (err) {
     console.error("Erro ao carregar histórico:", err);
-    mostrarToast("ERRO DE LIGAÇÃO AO SERVIDOR!");
+    mostrarToast(t.modToastErroLigacao || "ERRO DE LIGAÇÃO AO SERVIDOR!");
   }
 }
 
@@ -297,42 +336,63 @@ function exibirModalHistorico(candidatura, historico) {
   const modal = document.getElementById("modal-historico");
   const titulo = document.getElementById("historico-titulo");
   const corpo = document.getElementById("historico-corpo");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
 
   titulo.innerHTML = `${escapeHTML(candidatura.artist_name)} - ${escapeHTML(candidatura.album_title)}`;
 
+  let statusTraduzido = candidatura.status.toUpperCase();
+  if (candidatura.status === "pendente")
+    statusTraduzido = t.modStatusPendente || "PENDENTE";
+  else if (candidatura.status === "aprovado")
+    statusTraduzido = t.modStatusAprovado || "APROVADO";
+  else if (candidatura.status === "rejeitado")
+    statusTraduzido = t.modStatusRejeitado || "REJEITADO";
+
   let html = `
     <div class="info-candidatura-historico">
-      <p><strong>STATUS:</strong> <span style="color: ${getCorStatus(candidatura.status)}">${candidatura.status.toUpperCase()}</span></p>
-      <p><strong>SUBMETIDA POR:</strong> ${escapeHTML(candidatura.submitted_by)}</p>
-      <p><strong>DATA SUBMISSÃO:</strong> ${new Date(candidatura.submitted_date).toLocaleDateString("pt-PT")}</p>
+      <p><strong>${t.modLabelStatus || "STATUS:"}</strong> <span style="color: ${getCorStatus(candidatura.status)}">${statusTraduzido}</span></p>
+      <p><strong>${t.modLabelSubmetidaPorModal || "SUBMETIDA POR:"}</strong> ${escapeHTML(candidatura.submitted_by)}</p>
+      <p><strong>${t.modLabelDataSubmissao || "DATA SUBMISSÃO:"}</strong> ${new Date(candidatura.submitted_date).toLocaleDateString(idiomaAtual === "en" ? "en-US" : "pt-PT")}</p>
     </div>
 
     <h4 style="margin-top: 20px; margin-bottom: 15px; color: #ff0033; border-bottom: 1px solid #333333; padding-bottom: 10px;">
-      HISTÓRICO DE AÇÕES
+      ${t.modHistoricoAcoesTitulo || "HISTÓRICO DE AÇÕES"}
     </h4>
   `;
 
   if (!historico || historico.length === 0) {
-    html +=
-      '<p style="text-align: center; color: #888; padding: 20px;">Sem histórico de ações ainda.</p>';
+    html += `<p style="text-align: center; color: #888; padding: 20px;">${t.modSemHistorico || "Sem histórico de ações ainda."}</p>`;
   } else {
     historico.forEach((acao) => {
       const data = new Date(acao.data_acao);
-      const dataFormatada = data.toLocaleDateString("pt-PT");
-      const horaFormatada = data.toLocaleTimeString("pt-PT");
+      const dataFormatada = data.toLocaleDateString(
+        idiomaAtual === "en" ? "en-US" : "pt-PT",
+      );
+      const horaFormatada = data.toLocaleTimeString(
+        idiomaAtual === "en" ? "en-US" : "pt-PT",
+      );
 
       const corAcao = acao.acao === "APROVADO" ? "#00ff00" : "#ff0033";
       const emojAcao = acao.acao === "APROVADO" ? "✓" : "✗";
+      const acaoTraduzida =
+        acao.acao === "APROVADO"
+          ? idiomaAtual === "en"
+            ? "APPROVED"
+            : "APROVADO"
+          : idiomaAtual === "en"
+            ? "REJECTED"
+            : "REJEITADO";
 
       html += `
         <div class="entrada-historico">
           <div class="entrada-cabecalho">
-            <span class="entrada-acao" style="color: ${corAcao};">${emojAcao} ${acao.acao}</span>
+            <span class="entrada-acao" style="color: ${corAcao};">${emojAcao} ${acaoTraduzida}</span>
             <span class="entrada-data">${dataFormatada} ${horaFormatada}</span>
           </div>
           <div class="entrada-corpo">
-            <p><strong>REALIZADO POR:</strong> ${escapeHTML(acao.realizado_por)}</p>
-            ${acao.motivo ? `<p><strong>MOTIVO:</strong> ${escapeHTML(acao.motivo)}</p>` : ""}
+            <p><strong>${t.modLabelRealizadoPor || "REALIZADO POR:"}</strong> ${escapeHTML(acao.realizado_por)}</p>
+            ${acao.motivo ? `<p><strong>${t.modLabelMotivo || "MOTIVO:"}</strong> ${escapeHTML(acao.motivo)}</p>` : ""}
           </div>
         </div>
       `;
@@ -361,5 +421,9 @@ function getCorStatus(status) {
 // ARRANQUE DA PÁGINA
 // ==========================================
 window.addEventListener("DOMContentLoaded", () => {
+  const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+  if (typeof aplicarTraducoes === "function") {
+    aplicarTraducoes(idiomaSalvo);
+  }
   carregarCandidaturas();
 });

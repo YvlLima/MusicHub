@@ -104,6 +104,18 @@ setInterval(verificarEstadoServidor, 5000);
 function aplicarTraducoes(lang) {
   if (!traducoes[lang]) lang = "pt";
 
+  // Atribuir data-i18n automático a botões dinâmicos de paginação detetados no DOM
+  document.querySelectorAll("button").forEach((btn) => {
+    const textoOriginal = (btn.innerText || "").trim().toUpperCase();
+    if (textoOriginal === "VER MAIS" || textoOriginal === "SHOW MORE") {
+      btn.setAttribute("data-i18n", "btnVerMais");
+    } else if (textoOriginal === "VER TUDO" || textoOriginal === "SHOW ALL") {
+      btn.setAttribute("data-i18n", "btnVerTudo");
+    } else if (textoOriginal === "VER MENOS" || textoOriginal === "SHOW LESS") {
+      btn.setAttribute("data-i18n", "btnVerMenos");
+    }
+  });
+
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const chave = el.getAttribute("data-i18n");
     if (traducoes[lang][chave]) {
@@ -339,7 +351,12 @@ function vibeAleatoria() {
 
 // Sistema de Likes
 async function darLike(btn, id) {
-  if (!utilizadorDados || !tokenJWT) {
+  if (
+    typeof utilizadorDados === "undefined" ||
+    !utilizadorDados ||
+    typeof tokenJWT === "undefined" ||
+    !tokenJWT
+  ) {
     return mostrarToast("PRECISAS DE ESTAR AUTENTICADO!");
   }
 
@@ -501,7 +518,11 @@ function verificarEstatutoAdmin() {
   );
   const btnAdminQuotes = document.getElementById("btn-admin-quotes");
 
-  if (utilizadorDados && utilizadorDados.is_admin > 0) {
+  if (
+    typeof utilizadorDados !== "undefined" &&
+    utilizadorDados &&
+    utilizadorDados.is_admin > 0
+  ) {
     if (seccaoAdmin) seccaoAdmin.style.display = "block";
     if (btnAdminCandidaturas)
       btnAdminCandidaturas.style.display = "inline-block";
@@ -515,7 +536,7 @@ function verificarEstatutoAdmin() {
 }
 
 async function carregarUtilizadoresAdmin() {
-  if (!tokenJWT) return;
+  if (typeof tokenJWT === "undefined" || !tokenJWT) return;
 
   if (typeof carregarStatsEGlags === "function") {
     carregarStatsEGlags();
@@ -542,14 +563,19 @@ async function carregarUtilizadoresAdmin() {
       const eAdmin = user.username === "YvlLima";
       const eMod = user.is_admin === 2;
       const eProprioUser =
-        utilizadorDados && user.username === utilizadorDados.username;
+        typeof utilizadorDados !== "undefined" &&
+        utilizadorDados &&
+        user.username === utilizadorDados.username;
 
       let cargoHTML = `<span class="badge-user">USER</span>`;
       if (eAdmin) cargoHTML = `<span class="badge-admin">ADMIN</span>`;
       else if (eMod) cargoHTML = `<span class="badge-mod">MOD</span>`;
 
       const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
-      const t = traducoes[idiomaAtual] || traducoes["pt"];
+      const t =
+        typeof traducoes !== "undefined"
+          ? traducoes[idiomaAtual] || traducoes["pt"]
+          : {};
 
       let promoverBtnHTML = `—`;
       if (!eAdmin && !eProprioUser) {
@@ -677,7 +703,7 @@ function filtrarUtilizadores() {
 }
 
 async function carregarStatsEGlags() {
-  if (!tokenJWT) return;
+  if (typeof tokenJWT === "undefined" || !tokenJWT) return;
 
   try {
     const resposta = await fetch(`${API_URL}/admin/stats`, {
@@ -702,7 +728,6 @@ async function carregarStatsEGlags() {
         const tr = document.createElement("tr");
         const dataFormatada = new Date(log.data).toLocaleString("pt-PT");
 
-        // Mapeia a ação da base de dados para a chave de tradução correspondente
         let chaveAcao = "";
         const acaoUpper = (log.acao || "").toUpperCase();
         if (acaoUpper.includes("SUGERIU QUOTE")) chaveAcao = "logSugeriurQuote";
@@ -716,12 +741,10 @@ async function carregarStatsEGlags() {
           chaveAcao = "logComecouSeguir";
 
         const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+        const t =
+          typeof traducoes !== "undefined" ? traducoes[idiomaAtual] : null;
         const acaoTraduzida =
-          chaveAcao &&
-          traducoes[idiomaAtual] &&
-          traducoes[idiomaAtual][chaveAcao]
-            ? traducoes[idiomaAtual][chaveAcao]
-            : log.acao;
+          chaveAcao && t && t[chaveAcao] ? t[chaveAcao] : log.acao;
 
         tr.innerHTML = `
           <td>${dataFormatada}</td>
@@ -738,7 +761,7 @@ async function carregarStatsEGlags() {
 }
 
 async function exportarDadosAdmin(formato) {
-  if (!tokenJWT) return;
+  if (typeof tokenJWT === "undefined" || !tokenJWT) return;
 
   try {
     const resposta = await fetch(`${API_URL}/admin/export?format=${formato}`, {
@@ -835,7 +858,12 @@ async function carregarRatingsBD() {
 }
 
 async function submeterRating(itemId, estrelas) {
-  if (!utilizadorDados || !tokenJWT) {
+  if (
+    typeof utilizadorDados === "undefined" ||
+    !utilizadorDados ||
+    typeof tokenJWT === "undefined" ||
+    !tokenJWT
+  ) {
     return mostrarToast("PRECISAS DE ESTAR AUTENTICADO!");
   }
 
@@ -862,6 +890,23 @@ async function submeterRating(itemId, estrelas) {
 // ==========================================
 // 6. GESTÃO DE PERFIL E SEGURANÇA DE PASSWORD
 // ==========================================
+function abrirPerfil() {
+  const seccaoPerfil = document.getElementById("seccao-perfil");
+  if (seccaoPerfil) seccaoPerfil.style.display = "block";
+
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  if (typeof aplicarTraducoes === "function") {
+    aplicarTraducoes(idiomaAtual);
+  }
+
+  if (typeof carregarDadosSociaisPerfil === "function") {
+    carregarDadosSociaisPerfil();
+  }
+  if (typeof carregarFavoritosPerfil === "function") {
+    carregarFavoritosPerfil();
+  }
+}
+
 async function guardarPerfil(e) {
   e.preventDefault();
 
@@ -916,7 +961,12 @@ let albumCoverBase64 = "";
 let tipoCandidaturaSelecionado = "artista";
 
 function abrirFormularioCandidatura() {
-  if (!utilizadorDados || !tokenJWT) {
+  if (
+    typeof utilizadorDados === "undefined" ||
+    !utilizadorDados ||
+    typeof tokenJWT === "undefined" ||
+    !tokenJWT
+  ) {
     mostrarToast("AUTENTICA-TE PRIMEIRO!");
     return;
   }
@@ -988,9 +1038,17 @@ async function submeterCandidatura(e) {
   e.preventDefault();
 
   const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
-  const t = traducoes[idiomaAtual] || traducoes["pt"];
+  const t =
+    typeof traducoes !== "undefined"
+      ? traducoes[idiomaAtual] || traducoes["pt"]
+      : {};
 
-  if (!utilizadorDados || !tokenJWT) {
+  if (
+    typeof utilizadorDados === "undefined" ||
+    !utilizadorDados ||
+    typeof tokenJWT === "undefined" ||
+    !tokenJWT
+  ) {
     mostrarToast(
       idiomaAtual === "en" ? "PLEASE LOG IN FIRST!" : "AUTENTICA-TE PRIMEIRO!",
     );
@@ -1130,13 +1188,24 @@ function abrirPainelModeracaoQuotes() {
 }
 
 function abrirModalSugestaoQuote() {
-  if (!utilizadorDados || !tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+  if (
+    typeof utilizadorDados === "undefined" ||
+    !utilizadorDados ||
+    typeof tokenJWT === "undefined" ||
+    !tokenJWT
+  ) {
+    const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+    mostrarToast(
+      idiomaAtual === "en" ? "PLEASE LOG IN FIRST!" : "AUTENTICA-TE PRIMEIRO!",
+    );
     return;
   }
 
   document.getElementById("form-sugestao-quote").reset();
   document.getElementById("modal-sugestao-quote").style.display = "flex";
+
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  aplicarTraducoes(idiomaAtual);
 }
 
 function fecharModalSugestaoQuote() {
@@ -1146,8 +1215,21 @@ function fecharModalSugestaoQuote() {
 async function submeterSugestaoQuote(e) {
   e.preventDefault();
 
-  if (!utilizadorDados || !tokenJWT) {
-    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t =
+    typeof traducoes !== "undefined"
+      ? traducoes[idiomaAtual] || traducoes["pt"]
+      : {};
+
+  if (
+    typeof utilizadorDados === "undefined" ||
+    !utilizadorDados ||
+    typeof tokenJWT === "undefined" ||
+    !tokenJWT
+  ) {
+    mostrarToast(
+      idiomaAtual === "en" ? "PLEASE LOG IN FIRST!" : "AUTENTICA-TE PRIMEIRO!",
+    );
     return;
   }
 
@@ -1157,9 +1239,14 @@ async function submeterSugestaoQuote(e) {
     .value.trim();
   const musica = document.getElementById("quote-sugestao-musica").value.trim();
 
-  if (!texto) return mostrarToast("PREENCHE O TEXTO DA QUOTE!");
-  if (!artista) return mostrarToast("PREENCHE O ARTISTA!");
-  if (!musica) return mostrarToast("PREENCHE A MÚSICA!");
+  if (!texto)
+    return mostrarToast(
+      t.toastPreencherTextoQuote || "PREENCHE O TEXTO DA QUOTE!",
+    );
+  if (!artista)
+    return mostrarToast(t.toastPreencherArtistaQuote || "PREENCHE O ARTISTA!");
+  if (!musica)
+    return mostrarToast(t.toastPreencherMusicaQuote || "PREENCHE A MÚSICA!");
 
   const payload = {
     texto: texto.startsWith('"') ? texto : `"${texto}"`,
@@ -1191,7 +1278,9 @@ async function submeterSugestaoQuote(e) {
       return mostrarToast(dados.erro || `ERRO! (status ${resposta.status})`);
     }
 
-    mostrarToast("✓ QUOTE SUBMETIDA PARA APROVAÇÃO!");
+    mostrarToast(
+      t.toastQuoteSubmetidaSucesso || "✓ QUOTE SUBMETIDA PARA APROVAÇÃO!",
+    );
     fecharModalSugestaoQuote();
   } catch (err) {
     console.error("Erro ao submeter quote:", err);

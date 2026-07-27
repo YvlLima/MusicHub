@@ -1,6 +1,5 @@
 // ==========================================
 // MODERAÇÃO DE QUOTES SUGERIDAS
-// (Página separada do painel de candidaturas de artistas/álbuns)
 // ==========================================
 
 let temporizadorToast;
@@ -99,6 +98,8 @@ function obterTokenEUtilizador() {
 
 async function carregarQuotesPendentes() {
   const { token } = obterTokenEUtilizador();
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
   if (!token) return;
 
   try {
@@ -115,7 +116,11 @@ async function carregarQuotesPendentes() {
     }
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO CARREGAR QUOTES PENDENTES!");
+      mostrarToast(
+        dados.erro ||
+          t.quotesToastErroCarregar ||
+          "ERRO AO CARREGAR QUOTES PENDENTES!",
+      );
       return;
     }
 
@@ -129,30 +134,34 @@ async function carregarQuotesPendentes() {
 function renderizarQuotesPendentes(lista) {
   const corpo = document.getElementById("lista-quotes-pendentes-body");
   const statTotal = document.getElementById("stat-total-pendentes");
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
 
   if (statTotal) statTotal.innerText = lista.length;
   if (!corpo) return;
 
   if (lista.length === 0) {
-    corpo.innerHTML = `<tr><td colspan="5" style="text-align:center; opacity:0.6;">Sem quotes pendentes de momento.</td></tr>`;
+    corpo.innerHTML = `<tr><td colspan="5" style="text-align:center; opacity:0.6;">${t.quotesSemPendentes || "Sem quotes pendentes de momento."}</td></tr>`;
     return;
   }
 
   corpo.innerHTML = lista
     .map((q) => {
       const dataSubmissao = q.submitted_date
-        ? new Date(q.submitted_date).toLocaleDateString("pt-PT")
+        ? new Date(q.submitted_date).toLocaleDateString(
+            idiomaAtual === "en" ? "en-US" : "pt-PT",
+          )
         : "—";
 
       return `
         <tr>
           <td data-label="Quote">${escapeHTML(q.texto)}<br><span style="opacity:0.6; font-size:0.8em;">${escapeHTML(q.autor || "")}</span></td>
           <td data-label="Artista">${escapeHTML(q.artista)}</td>
-          <td data-label="Sugerida por">${escapeHTML(q.submitted_by || "Anónimo")}</td>
+          <td data-label="Sugerida por">${escapeHTML(q.submitted_by || (idiomaAtual === "en" ? "Anonymous" : "Anónimo"))}</td>
           <td data-label="Data">${dataSubmissao}</td>
           <td data-label="Ações" class="col-acoes-quote">
-            <button type="button" class="btn-hud" onclick="aprovarQuote(${q.id})">✓ APROVAR</button>
-            <button type="button" class="btn-hud btn-perigo" onclick="rejeitarQuote(${q.id})">✕ REJEITAR</button>
+            <button type="button" class="btn-hud" onclick="aprovarQuote(${q.id})">${t.quotesBtnAprovar || "✓ APROVAR"}</button>
+            <button type="button" class="btn-hud btn-perigo" onclick="rejeitarQuote(${q.id})">${t.quotesBtnRejeitar || "✕ REJEITAR"}</button>
           </td>
         </tr>
       `;
@@ -161,10 +170,14 @@ function renderizarQuotesPendentes(lista) {
 }
 
 async function aprovarQuote(id) {
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   const confirmado = await confirmarAcao(
-    "Tens a certeza que queres aprovar esta quote? Ela vai aparecer no gerador de quotes do Hub.",
-    "APROVAR QUOTE",
-    "APROVAR",
+    t.quotesConfirmarAprovarTexto ||
+      "Tens a certeza que queres aprovar esta quote?",
+    t.quotesConfirmarAprovarTitulo || "APROVAR QUOTE",
+    t.quotesBtnAprovar ? t.quotesBtnAprovar.replace("✓ ", "") : "APROVAR",
     "btn-perigo",
   );
   if (!confirmado) return;
@@ -180,11 +193,13 @@ async function aprovarQuote(id) {
     const dados = await resposta.json().catch(() => ({}));
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO APROVAR QUOTE!");
+      mostrarToast(
+        dados.erro || t.quotesToastErroAprovar || "ERRO AO APROVAR QUOTE!",
+      );
       return;
     }
 
-    mostrarToast("✓ QUOTE APROVADA!");
+    mostrarToast(t.quotesToastAprovada || "✓ QUOTE APROVADA!");
     carregarQuotesPendentes();
   } catch (err) {
     console.error("Erro ao aprovar quote:", err);
@@ -193,10 +208,14 @@ async function aprovarQuote(id) {
 }
 
 async function rejeitarQuote(id) {
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[idiomaAtual] || traducoes["pt"];
+
   const confirmado = await confirmarAcao(
-    "Tens a certeza que queres rejeitar esta quote? Esta ação não pode ser desfeita.",
-    "REJEITAR QUOTE",
-    "REJEITAR",
+    t.quotesConfirmarRejeitarTexto ||
+      "Tens a certeza que queres rejeitar esta quote?",
+    t.quotesConfirmarRejeitarTitulo || "REJEITAR QUOTE",
+    t.quotesBtnRejeitar ? t.quotesBtnRejeitar.replace("✕ ", "") : "REJEITAR",
     "btn-perigo",
   );
   if (!confirmado) return;
@@ -206,17 +225,19 @@ async function rejeitarQuote(id) {
   try {
     const resposta = await fetch(`${API_URL}/quotes/${id}/reject`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer` + ` ${token}` },
     });
 
     const dados = await resposta.json().catch(() => ({}));
 
     if (!resposta.ok) {
-      mostrarToast(dados.erro || "ERRO AO REJEITAR QUOTE!");
+      mostrarToast(
+        dados.erro || t.quotesToastErroRejeitar || "ERRO AO REJEITAR QUOTE!",
+      );
       return;
     }
 
-    mostrarToast("QUOTE REJEITADA.");
+    mostrarToast(t.quotesToastRejeitada || "QUOTE REJEITADA.");
     carregarQuotesPendentes();
   } catch (err) {
     console.error("Erro ao rejeitar quote:", err);
@@ -225,5 +246,9 @@ async function rejeitarQuote(id) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+  if (typeof aplicarTraducoes === "function") {
+    aplicarTraducoes(idiomaSalvo);
+  }
   carregarQuotesPendentes();
 });
