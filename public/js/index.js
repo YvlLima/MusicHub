@@ -102,8 +102,15 @@ setInterval(verificarEstadoServidor, 5000);
 // 2. CONTEÚDO, LIKES E PESQUISA
 // ==========================================
 function atualizarStatsHUD() {
-  const totalArtistas = document.querySelectorAll("#musica .cartao").length;
-  const totalAlbuns = document.querySelectorAll("#albuns .cartao").length;
+  const totalArtistas =
+    typeof todosArtistasAprovados !== "undefined" &&
+    todosArtistasAprovados.length
+      ? todosArtistasAprovados.length
+      : document.querySelectorAll("#musica .cartao").length;
+  const totalAlbuns =
+    typeof todosAlbunsAprovados !== "undefined" && todosAlbunsAprovados.length
+      ? todosAlbunsAprovados.length
+      : document.querySelectorAll("#albuns .cartao").length;
 
   const elArt = document.getElementById("stat-artistas");
   const elAlb = document.getElementById("stat-albuns");
@@ -255,18 +262,22 @@ function gerarQuote() {
 
   if (!elementoTexto || !elementoAutor) return;
 
-  if (quotesUsadas.length === quotes.length) quotesUsadas = [];
+  const poolQuotes = quotes.concat(quotesAprovadasBD);
 
-  let disponiveis = quotes.filter(
+  if (quotesUsadas.length >= poolQuotes.length) quotesUsadas = [];
+
+  let disponiveis = poolQuotes.filter(
     (q, index) => !quotesUsadas.includes(index) && q.artista !== ultimoArtista,
   );
   if (disponiveis.length === 0)
-    disponiveis = quotes.filter((q, index) => !quotesUsadas.includes(index));
+    disponiveis = poolQuotes.filter(
+      (q, index) => !quotesUsadas.includes(index),
+    );
 
   const indiceSorteado = Math.floor(Math.random() * disponiveis.length);
   const quoteEscolhida = disponiveis[indiceSorteado];
 
-  quotesUsadas.push(quotes.findIndex((q) => q === quoteEscolhida));
+  quotesUsadas.push(poolQuotes.findIndex((q) => q === quoteEscolhida));
   ultimoArtista = quoteEscolhida.artista;
 
   escreverTextoTypewriter(quoteEscolhida.texto, elementoTexto);
@@ -455,15 +466,18 @@ function verificarEstatutoAdmin() {
   const btnAdminCandidaturas = document.getElementById(
     "btn-admin-candidaturas",
   );
+  const btnAdminQuotes = document.getElementById("btn-admin-quotes");
 
   if (utilizadorDados && utilizadorDados.is_admin > 0) {
     if (seccaoAdmin) seccaoAdmin.style.display = "block";
     if (btnAdminCandidaturas)
       btnAdminCandidaturas.style.display = "inline-block";
+    if (btnAdminQuotes) btnAdminQuotes.style.display = "inline-block";
     carregarUtilizadoresAdmin();
   } else {
     if (seccaoAdmin) seccaoAdmin.style.display = "none";
     if (btnAdminCandidaturas) btnAdminCandidaturas.style.display = "none";
+    if (btnAdminQuotes) btnAdminQuotes.style.display = "none";
   }
 }
 
@@ -979,6 +993,102 @@ function abrirPainelModeracaoCandidaturas() {
   window.location.href = "admin-submissions.html";
 }
 
+// ==========================================
+// SUGESTÕES DE QUOTES
+// ==========================================
+function abrirPainelModeracaoQuotes() {
+  window.location.href = "admin-quotes.html";
+}
+
+function abrirModalSugestaoQuote() {
+  if (!utilizadorDados || !tokenJWT) {
+    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    return;
+  }
+
+  document.getElementById("form-sugestao-quote").reset();
+  document.getElementById("modal-sugestao-quote").style.display = "flex";
+}
+
+function fecharModalSugestaoQuote() {
+  document.getElementById("modal-sugestao-quote").style.display = "none";
+}
+
+async function submeterSugestaoQuote(e) {
+  e.preventDefault();
+
+  if (!utilizadorDados || !tokenJWT) {
+    mostrarToast("AUTENTICA-TE PRIMEIRO!");
+    return;
+  }
+
+  const texto = document.getElementById("quote-sugestao-texto").value.trim();
+  const artista = document
+    .getElementById("quote-sugestao-artista")
+    .value.trim();
+  const musica = document.getElementById("quote-sugestao-musica").value.trim();
+
+  if (!texto) return mostrarToast("PREENCHE O TEXTO DA QUOTE!");
+  if (!artista) return mostrarToast("PREENCHE O ARTISTA!");
+  if (!musica) return mostrarToast("PREENCHE A MÚSICA!");
+
+  const payload = {
+    texto: texto.startsWith('"') ? texto : `"${texto}"`,
+    artista,
+    autor: `— ${artista.toUpperCase()} - ${musica.toUpperCase()}`,
+  };
+
+  try {
+    const resposta = await fetch(`${API_URL}/quotes/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${tokenJWT}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let dados;
+    try {
+      dados = await resposta.json();
+    } catch (parseErr) {
+      console.error("Erro ao interpretar resposta do servidor:", parseErr);
+      mostrarToast("RESPOSTA INVÁLIDA DO SERVIDOR! Vê a consola (F12).");
+      return;
+    }
+
+    if (!resposta.ok) {
+      console.error("Erro ao submeter quote:", dados);
+      return mostrarToast(dados.erro || `ERRO! (status ${resposta.status})`);
+    }
+
+    mostrarToast("✓ QUOTE SUBMETIDA PARA APROVAÇÃO!");
+    fecharModalSugestaoQuote();
+  } catch (err) {
+    console.error("Erro ao submeter quote:", err);
+    mostrarToast(`ERRO DE LIGAÇÃO: ${err.message || err}`);
+  }
+}
+
+// Carrega quotes já aprovadas na BD e junta-as ao conjunto usado pelo gerador
+let quotesAprovadasBD = [];
+
+async function carregarQuotesAprovadasBD() {
+  try {
+    const resposta = await fetch(`${API_URL}/quotes/aprovadas`);
+    if (!resposta.ok) return;
+
+    const dados = await resposta.json();
+    quotesAprovadasBD = (dados.aprovadas || []).map((q) => ({
+      texto: q.texto,
+      autor: q.autor,
+      artista: q.artista,
+    }));
+  } catch (err) {
+    console.error("Erro ao carregar quotes aprovadas:", err);
+  }
+}
+
 // Detalhes da submissão no Modal
 async function abrirInfoItem(id) {
   try {
@@ -1280,6 +1390,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof verificarEstatutoAdmin === "function") verificarEstatutoAdmin();
 
   await carregarConteudoAprovado();
+  if (typeof carregarQuotesAprovadasBD === "function")
+    await carregarQuotesAprovadasBD();
 
   carregarLikesBD();
   reiniciarTemporizador();

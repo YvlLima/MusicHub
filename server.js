@@ -133,6 +133,21 @@ async function initDB() {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quotes (
+        id SERIAL PRIMARY KEY,
+        texto TEXT NOT NULL,
+        autor VARCHAR(255) NOT NULL,
+        artista VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'pendente',
+        submitted_by VARCHAR(255) NOT NULL,
+        submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reviewed_by VARCHAR(255),
+        reviewed_date TIMESTAMP,
+        rejection_reason TEXT
+      );
+    `);
+
     console.log("✅ Tabelas e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
@@ -1194,6 +1209,156 @@ app.get("/api/candidaturas/aprovadas", async (req, res) => {
   } catch (err) {
     console.error("Erro ao obter candidaturas aprovadas:", err);
     res.status(500).json({ erro: "Erro ao carregar conteúdo aprovado." });
+  }
+});
+
+// ==========================================
+// SUGESTÕES DE QUOTES
+// ==========================================
+
+// Utilizador autenticado sugere uma quote
+app.post("/api/quotes/submit", autenticarToken, async (req, res) => {
+  const { texto, autor, artista } = req.body;
+  const submitted_by = req.user.username;
+
+  if (!texto || !autor || !artista) {
+    return res
+      .status(400)
+      .json({ erro: "Texto, autor e artista são obrigatórios." });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO quotes (texto, autor, artista, status, submitted_by)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, texto, artista, status, submitted_date`,
+      [texto, autor, artista, "pendente", submitted_by],
+    );
+
+    await registarLog(submitted_by, "SUGERIU QUOTE", artista);
+
+    res.json({
+      mensagem: "Quote submetida com sucesso!",
+      quote: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Erro ao submeter quote:", err);
+    res.status(500).json({ erro: "Erro ao processar a submissão da quote." });
+  }
+});
+
+// Apenas admin — lista quotes pendentes de revisão
+app.get("/api/quotes", autenticarToken, verificarAdmin, async (req, res) => {
+  const status = req.query.status || "pendente";
+
+  try {
+    let query =
+      "SELECT id, texto, autor, artista, status, submitted_by, submitted_date, reviewed_by, reviewed_date, rejection_reason FROM quotes";
+    let params = [];
+
+    if (status && status !== "todas") {
+      query += " WHERE status = $1";
+      params = [status];
+    }
+
+    query += " ORDER BY submitted_date ASC";
+
+    const result = await pool.query(query, params);
+
+    res.json({
+      total: result.rows.length,
+      quotes: result.rows,
+    });
+  } catch (err) {
+    console.error("Erro ao listar quotes:", err);
+    res.status(500).json({ erro: "Erro ao obter quotes." });
+  }
+});
+
+// Apenas admin — aprova uma quote
+app.put(
+  "/api/quotes/:id/approve",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const reviewed_by = req.user.username;
+
+    try {
+      const quoteRes = await pool.query("SELECT * FROM quotes WHERE id = $1", [
+        id,
+      ]);
+
+      if (quoteRes.rows.length === 0) {
+        return res.status(404).json({ erro: "Quote não encontrada." });
+      }
+
+      await pool.query(
+        "UPDATE quotes SET status = $1, reviewed_by = $2, reviewed_date = CURRENT_TIMESTAMP WHERE id = $3",
+        ["aprovado", reviewed_by, id],
+      );
+
+      await registarLog(reviewed_by, "APROVOU QUOTE", quoteRes.rows[0].artista);
+
+      res.json({ mensagem: "Quote aprovada com sucesso!" });
+    } catch (err) {
+      console.error("Erro ao aprovar quote:", err);
+      res.status(500).json({ erro: "Erro ao aprovar quote." });
+    }
+  },
+);
+
+// Apenas admin — rejeita uma quote
+app.put(
+  "/api/quotes/:id/reject",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { rejection_reason } = req.body;
+    const reviewed_by = req.user.username;
+
+    try {
+      const quoteRes = await pool.query("SELECT * FROM quotes WHERE id = $1", [
+        id,
+      ]);
+
+      if (quoteRes.rows.length === 0) {
+        return res.status(404).json({ erro: "Quote não encontrada." });
+      }
+
+      await pool.query(
+        "UPDATE quotes SET status = $1, reviewed_by = $2, reviewed_date = CURRENT_TIMESTAMP, rejection_reason = $3 WHERE id = $4",
+        ["rejeitado", reviewed_by, rejection_reason || null, id],
+      );
+
+      await registarLog(
+        reviewed_by,
+        "REJEITOU QUOTE",
+        quoteRes.rows[0].artista,
+      );
+
+      res.json({ mensagem: "Quote rejeitada com sucesso." });
+    } catch (err) {
+      console.error("Erro ao rejeitar quote:", err);
+      res.status(500).json({ erro: "Erro ao rejeitar quote." });
+    }
+  },
+);
+
+// Rota pública — quotes aprovadas, para alimentar o gerador de quotes do Hub
+app.get("/api/quotes/aprovadas", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, texto, autor, artista
+       FROM quotes
+       WHERE status = 'aprovado'
+       ORDER BY reviewed_date DESC`,
+    );
+    res.json({ aprovadas: result.rows });
+  } catch (err) {
+    console.error("Erro ao obter quotes aprovadas:", err);
+    res.status(500).json({ erro: "Erro ao carregar quotes aprovadas." });
   }
 });
 

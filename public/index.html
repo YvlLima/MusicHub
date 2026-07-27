@@ -115,6 +115,14 @@
           >
             APROVAR CANDIDATURAS
           </button>
+          <button
+            class="btn-hud"
+            id="btn-admin-quotes"
+            style="display: none"
+            onclick="abrirPainelModeracaoQuotes()"
+          >
+            APROVAR QUOTES
+          </button>
           <button class="btn-hud" onclick="abrirPerfil()">PERFIL</button>
           <button class="btn-hud" onclick="terminarSessao()">LOGOUT</button>
         </div>
@@ -302,9 +310,22 @@
               "Should've known this shit was not real when it started"
             </p>
             <span id="autor-quote">— PLAYBOI CARTI - OVER</span>
-            <button class="btn-quote" onclick="gerarQuote()">
-              GERAR QUOTE
-            </button>
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-top: 10px;
+              "
+            >
+              <button class="btn-quote" onclick="gerarQuote()">
+                GERAR QUOTE
+              </button>
+              <button class="btn-quote" onclick="abrirModalSugestaoQuote()">
+                SUGERIR QUOTE
+              </button>
+            </div>
           </div>
         </section>
 
@@ -644,6 +665,58 @@
                 CONFIRMAR
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- Modal de Sugestão de Quote -->
+        <div id="modal-sugestao-quote" class="modal-overlay">
+          <div class="caixa-modal-confirm" style="max-width: 600px">
+            <h3>SUGERIR QUOTE</h3>
+
+            <form
+              id="form-sugestao-quote"
+              onsubmit="submeterSugestaoQuote(event)"
+            >
+              <div class="campo-modal">
+                <label>TEXTO DA QUOTE *</label>
+                <textarea
+                  id="quote-sugestao-texto"
+                  placeholder='Ex: "Should&apos;ve known this shit was not real when it started"'
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <div class="campo-modal">
+                <label>ARTISTA *</label>
+                <input
+                  type="text"
+                  id="quote-sugestao-artista"
+                  placeholder="Ex: Playboi Carti"
+                />
+              </div>
+
+              <div class="campo-modal">
+                <label>MÚSICA *</label>
+                <input
+                  type="text"
+                  id="quote-sugestao-musica"
+                  placeholder="Ex: Over"
+                />
+              </div>
+
+              <div class="acoes-modal-confirm">
+                <button
+                  type="button"
+                  class="btn-hud-modal"
+                  onclick="fecharModalSugestaoQuote()"
+                >
+                  CANCELAR
+                </button>
+                <button type="submit" class="btn-hud-modal btn-perigo">
+                  SUBMETER QUOTE
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
