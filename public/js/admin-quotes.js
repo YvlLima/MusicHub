@@ -146,11 +146,11 @@ function renderizarQuotesPendentes(lista) {
 
       return `
         <tr>
-          <td>${escapeHTML(q.texto)}<br><span style="opacity:0.6; font-size:0.8em;">${escapeHTML(q.autor || "")}</span></td>
-          <td>${escapeHTML(q.artista)}</td>
-          <td>${escapeHTML(q.submitted_by || "Anónimo")}</td>
-          <td>${dataSubmissao}</td>
-          <td>
+          <td data-label="Quote">${escapeHTML(q.texto)}<br><span style="opacity:0.6; font-size:0.8em;">${escapeHTML(q.autor || "")}</span></td>
+          <td data-label="Artista">${escapeHTML(q.artista)}</td>
+          <td data-label="Sugerida por">${escapeHTML(q.submitted_by || "Anónimo")}</td>
+          <td data-label="Data">${dataSubmissao}</td>
+          <td data-label="Ações" class="col-acoes-quote">
             <button type="button" class="btn-hud" onclick="aprovarQuote(${q.id})">✓ APROVAR</button>
             <button type="button" class="btn-hud btn-perigo" onclick="rejeitarQuote(${q.id})">✕ REJEITAR</button>
           </td>

@@ -1,0 +1,101 @@
+/* ==========================================
+   MODERAÇÃO DE QUOTES — responsivo para telemóvel
+   Em ecrãs pequenos a tabela deixa de ter scroll horizontal
+   e passa a mostrar cada quote como um cartão empilhado,
+   com botões grandes e fáceis de tocar.
+   ========================================== */
+
+.tabela-quotes .col-acoes-quote {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .tabela-quotes,
+  .tabela-quotes thead,
+  .tabela-quotes tbody,
+  .tabela-quotes th,
+  .tabela-quotes td,
+  .tabela-quotes tr {
+    display: block;
+  }
+
+  .tabela-quotes {
+    min-width: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .tabela-quotes thead {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+  }
+
+  .tabela-quotes tbody tr {
+    margin-bottom: 16px;
+    background-color: #080808;
+    border: 1px solid #1a1a1a;
+    border-radius: 8px;
+    padding: 6px 0;
+  }
+
+  .tabela-quotes td {
+    position: relative;
+    padding: 10px 12px 10px 42%;
+    border-bottom: 1px solid #1a1a1a;
+    white-space: normal;
+    word-break: break-word;
+    min-height: 20px;
+  }
+
+  .tabela-quotes td:last-child {
+    border-bottom: none;
+  }
+
+  .tabela-quotes td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    width: 38%;
+    color: #ff0033;
+    font-weight: bold;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* A célula de ações fica destacada: sem label, botões grandes e empilhados */
+  .tabela-quotes td.col-acoes-quote {
+    padding: 12px;
+  }
+
+  .tabela-quotes td.col-acoes-quote::before {
+    content: none;
+  }
+
+  .tabela-quotes .col-acoes-quote {
+    flex-direction: column;
+  }
+
+  .tabela-quotes .col-acoes-quote button {
+    width: 100%;
+    padding: 14px 10px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabela-quotes td {
+    padding-left: 46%;
+    font-size: 0.8rem;
+  }
+
+  .tabela-quotes td::before {
+    width: 42%;
+    font-size: 0.65rem;
+  }
+}
