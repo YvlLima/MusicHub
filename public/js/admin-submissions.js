@@ -2,23 +2,13 @@
 // ESTADO GLOBAL
 // ==========================================
 let candidaturaEmRejeicao = null;
-let temporizadorToast;
+
+// NOTA: 'temporizadorToast' e 'mostrarToast' já são fornecidos globalmente pelo index.js.
+// Removemos a declaração duplicada de 'temporizadorToast' e a função 'mostrarToast' duplicada para evitar o erro de identificador já declarado.
 
 // ==========================================
 // UTILITÁRIOS
 // ==========================================
-function mostrarToast(mensagem) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  document.getElementById("toast-mensagem").innerText = mensagem;
-  toast.classList.add("mostrar");
-
-  clearTimeout(temporizadorToast);
-  temporizadorToast = setTimeout(() => {
-    toast.classList.remove("mostrar");
-  }, 2500);
-}
-
 function voltarAoTopo() {
   window.scrollTo(0, 0);
 }
