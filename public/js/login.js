@@ -164,7 +164,7 @@ function alternarModoRecuperar(e) {
 
 function enviarEmailResetCodigo(destinoEmail, nomeUtilizador, codigo) {
   if (!destinoEmail || typeof emailjs === "undefined") return Promise.resolve();
-  return emailjs.send("service_wwb9l28", "template_xo1r5qk", {
+  return emailjs.send("service_wwb9l28", "template_b05m25i", {
     to_name: nomeUtilizador,
     email: destinoEmail,
     codigo,
@@ -266,7 +266,9 @@ async function pedirCodigoRecuperacao() {
   }
 
   if (!validarRequisitosPassword(newPassword)) {
-    return mostrarToast("PASS FRACA! MIN 8 CHARS, 1 MAIÚS, 1 MINÚS, 1 NUM, 1 ESP.");
+    return mostrarToast(
+      "PASS FRACA! MIN 8 CHARS, 1 MAIÚS, 1 MINÚS, 1 NUM, 1 ESP.",
+    );
   }
 
   try {

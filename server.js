@@ -248,7 +248,7 @@ async function enviarEmailReset(destinoEmail, nomeUtilizador, codigo) {
   const templateId =
     process.env.EMAILJS_TEMPLATE_RESET ||
     process.env.EMAILJS_TEMPLATE_ID ||
-    "template_xo1r5qk";
+    "template_b05m25i";
   const publicKey = process.env.EMAILJS_PUBLIC_KEY || "qILWc7fZNcdCMEaqj";
   const privateKey = process.env.EMAILJS_PRIVATE_KEY;
 
@@ -508,13 +508,14 @@ app.post("/api/verify-reset-code", resetLimiter, async (req, res) => {
     const reset = resetRes.rows[0];
 
     if (new Date(reset.expires_at) < new Date()) {
-      await pool.query("DELETE FROM password_resets WHERE id = $1", [
-        reset.id,
-      ]);
+      await pool.query("DELETE FROM password_resets WHERE id = $1", [reset.id]);
       return res.status(400).json({ erro: "CÓDIGO EXPIRADO! PEDE UM NOVO." });
     }
 
-    const codigoValido = await bcrypt.compare(String(code).trim(), reset.code_hash);
+    const codigoValido = await bcrypt.compare(
+      String(code).trim(),
+      reset.code_hash,
+    );
     if (!codigoValido) {
       return res.status(400).json({ erro: "CÓDIGO INCORRETO!" });
     }
