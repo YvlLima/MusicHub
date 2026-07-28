@@ -103,7 +103,7 @@ function aplicarModoRecuperar(mostrarCodigo = false) {
   document.getElementById("btn-submit-auth").innerText = mostrarCodigo
     ? t.loginBtnConfirmar
     : t.loginBtnEnviarCodigo;
-  document.getElementById("texto-troca-auth").innerText = t.loginLembrouste;
+  document.getElementById("texto-troca-auth").innerText = t.loginLembrar;
   document.getElementById("link-troca-auth").innerText = t.loginEntrarLink;
 
   document.getElementById("campo-registo-pfp").style.display = "none";
