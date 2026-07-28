@@ -13,46 +13,163 @@ let tokenJWT =
   localStorage.getItem("token") ||
   "";
 let modoAuth = "login";
+let resetAguardaCodigo = false;
+let resetDados = { username: "", email: "" };
+
+function aplicarModoLogin() {
+  modoAuth = "login";
+  resetAguardaCodigo = false;
+  resetDados = { username: "", email: "" };
+
+  document.getElementById("titulo-auth").innerText = "ENTRAR NO HUB";
+  document.getElementById("btn-submit-auth").innerText = "ENTRAR";
+  document.getElementById("texto-troca-auth").innerText =
+    "Ainda não tens conta?";
+  document.getElementById("link-troca-auth").innerText = "Registar";
+
+  document.getElementById("campo-registo-pfp").style.display = "none";
+  document.getElementById("auth-email").style.display = "none";
+  document.getElementById("container-confirm-pass").style.display = "none";
+  document.getElementById("reset-codigo").style.display = "none";
+  document.getElementById("link-recuperar-pass").style.display = "block";
+
+  document.getElementById("auth-email").required = false;
+  document.getElementById("auth-confirm-password").required = false;
+  document.getElementById("reset-codigo").required = false;
+  document.getElementById("auth-password").required = true;
+  document.getElementById("auth-password").placeholder = "PALAVRA-PASSE";
+  document.getElementById("auth-password").style.display = "block";
+  document
+    .getElementById("auth-password")
+    .closest(".campo-pass").style.display = "block";
+
+  document.getElementById("auth-username").readOnly = false;
+  document.getElementById("auth-email").readOnly = false;
+  document.getElementById("auth-password").readOnly = false;
+
+  const info = document.getElementById("auth-info");
+  if (info) info.remove();
+}
+
+function aplicarModoRegisto() {
+  modoAuth = "register";
+  resetAguardaCodigo = false;
+  resetDados = { username: "", email: "" };
+
+  document.getElementById("titulo-auth").innerText = "CRIAR CONTA";
+  document.getElementById("btn-submit-auth").innerText = "REGISTAR";
+  document.getElementById("texto-troca-auth").innerText = "Já tens conta?";
+  document.getElementById("link-troca-auth").innerText = "Entrar";
+
+  document.getElementById("campo-registo-pfp").style.display = "block";
+  document.getElementById("auth-email").style.display = "block";
+  document.getElementById("container-confirm-pass").style.display = "block";
+  document.getElementById("reset-codigo").style.display = "none";
+  document.getElementById("link-recuperar-pass").style.display = "none";
+
+  document.getElementById("auth-email").required = true;
+  document.getElementById("auth-confirm-password").required = true;
+  document.getElementById("reset-codigo").required = false;
+  document.getElementById("auth-password").required = true;
+  document.getElementById("auth-password").placeholder = "PALAVRA-PASSE";
+  document.getElementById("auth-password").style.display = "block";
+  document
+    .getElementById("auth-password")
+    .closest(".campo-pass").style.display = "block";
+
+  document.getElementById("auth-username").readOnly = false;
+  document.getElementById("auth-email").readOnly = false;
+  document.getElementById("auth-password").readOnly = false;
+
+  const info = document.getElementById("auth-info");
+  if (info) info.remove();
+}
+
+function aplicarModoRecuperar(mostrarCodigo = false) {
+  modoAuth = "recover";
+  resetAguardaCodigo = mostrarCodigo;
+
+  document.getElementById("titulo-auth").innerText = mostrarCodigo
+    ? "CONFIRMAR CÓDIGO"
+    : "RECUPERAR PASSWORD";
+  document.getElementById("btn-submit-auth").innerText = mostrarCodigo
+    ? "CONFIRMAR"
+    : "ENVIAR CÓDIGO";
+  document.getElementById("texto-troca-auth").innerText = "Lembrouste-te?";
+  document.getElementById("link-troca-auth").innerText = "Entrar";
+
+  document.getElementById("campo-registo-pfp").style.display = "none";
+  document.getElementById("auth-email").style.display = mostrarCodigo
+    ? "none"
+    : "block";
+  document.getElementById("container-confirm-pass").style.display =
+    mostrarCodigo ? "none" : "block";
+  document.getElementById("reset-codigo").style.display = mostrarCodigo
+    ? "block"
+    : "none";
+  document.getElementById("link-recuperar-pass").style.display = "none";
+
+  document.getElementById("auth-email").required = !mostrarCodigo;
+  document.getElementById("auth-confirm-password").required = !mostrarCodigo;
+  document.getElementById("reset-codigo").required = mostrarCodigo;
+  document.getElementById("auth-password").required = !mostrarCodigo;
+  document.getElementById("auth-password").placeholder = mostrarCodigo
+    ? "PALAVRA-PASSE"
+    : "NOVA PALAVRA-PASSE";
+
+  document.getElementById("auth-username").readOnly = mostrarCodigo;
+  document.getElementById("auth-email").readOnly = mostrarCodigo;
+  document.getElementById("auth-password").readOnly = mostrarCodigo;
+  document.getElementById("auth-password").style.display = mostrarCodigo
+    ? "none"
+    : "block";
+  document
+    .getElementById("auth-password")
+    .closest(".campo-pass").style.display = mostrarCodigo ? "none" : "block";
+
+  let info = document.getElementById("auth-info");
+  if (mostrarCodigo) {
+    if (!info) {
+      info = document.createElement("p");
+      info.id = "auth-info";
+      info.className = "auth-info";
+      document
+        .getElementById("form-auth")
+        .insertBefore(info, document.getElementById("reset-codigo"));
+    }
+    info.innerText = `Enviamos um código para ${resetDados.email}. Insere-o abaixo para confirmar a nova password.`;
+  } else if (info) {
+    info.remove();
+  }
+}
 
 // ==========================================
 // CONTROLO DE INTERFACE DA AUTENTICAÇÃO
 // ==========================================
 function alternarModoAuth(e) {
   e.preventDefault();
-  const titulo = document.getElementById("titulo-auth");
-  const btn = document.getElementById("btn-submit-auth");
-  const texto = document.getElementById("texto-troca-auth");
-  const link = document.getElementById("link-troca-auth");
-
-  const campoPfp = document.getElementById("campo-registo-pfp");
-  const campoEmail = document.getElementById("auth-email");
-  const campoConfirmPass = document.getElementById("container-confirm-pass");
 
   if (modoAuth === "login") {
-    modoAuth = "register";
-    titulo.innerText = "CRIAR CONTA";
-    btn.innerText = "REGISTAR";
-    texto.innerText = "Já tens conta?";
-    link.innerText = "Entrar";
-
-    campoPfp.style.display = "block";
-    campoEmail.style.display = "block";
-    campoConfirmPass.style.display = "block";
-    campoEmail.required = true;
-    document.getElementById("auth-confirm-password").required = true;
+    aplicarModoRegisto();
   } else {
-    modoAuth = "login";
-    titulo.innerText = "ENTRAR NO HUB";
-    btn.innerText = "ENTRAR";
-    texto.innerText = "Ainda não tens conta?";
-    link.innerText = "Registar";
-
-    campoPfp.style.display = "none";
-    campoEmail.style.display = "none";
-    campoConfirmPass.style.display = "none";
-    campoEmail.required = false;
-    document.getElementById("auth-confirm-password").required = false;
+    aplicarModoLogin();
   }
+}
+
+function alternarModoRecuperar(e) {
+  e.preventDefault();
+  aplicarModoRecuperar(false);
+  document.getElementById("form-auth").reset();
+}
+
+function enviarEmailResetCodigo(destinoEmail, nomeUtilizador, codigo) {
+  if (!destinoEmail || typeof emailjs === "undefined") return Promise.resolve();
+  return emailjs.send("service_wwb9l28", "template_xo1r5qk", {
+    to_name: nomeUtilizador,
+    email: destinoEmail,
+    codigo,
+    message: `O teu código de recuperação de password é: ${codigo}. Válido por 15 minutos.`,
+  });
 }
 
 function carregarPFPRegisto(e) {
@@ -76,6 +193,12 @@ function carregarPFPRegisto(e) {
 // ==========================================
 async function processarAuth(e) {
   e.preventDefault();
+
+  if (modoAuth === "recover") {
+    if (resetAguardaCodigo) return confirmarCodigoRecuperacao();
+    return pedirCodigoRecuperacao();
+  }
+
   const user = document.getElementById("auth-username").value.trim();
   const pass = document.getElementById("auth-password").value.trim();
 
@@ -121,6 +244,84 @@ async function processarAuth(e) {
     }
 
     iniciarHub();
+  } catch (err) {
+    mostrarToast("SERVIDOR OFFLINE OU BLOQUEADO!");
+  }
+}
+
+async function pedirCodigoRecuperacao() {
+  const username = document.getElementById("auth-username").value.trim();
+  const email = document.getElementById("auth-email").value.trim();
+  const newPassword = document.getElementById("auth-password").value.trim();
+  const confirmPassword = document
+    .getElementById("auth-confirm-password")
+    .value.trim();
+
+  if (!username || !email || !newPassword || !confirmPassword) {
+    return mostrarToast("PREENCHE TODOS OS CAMPOS!");
+  }
+
+  if (newPassword !== confirmPassword) {
+    return mostrarToast("AS PASSWORDS NÃO COINCIDEM!");
+  }
+
+  if (!validarRequisitosPassword(newPassword)) {
+    return mostrarToast("PASS FRACA! MIN 8 CHARS, 1 MAIÚS, 1 MINÚS, 1 NUM, 1 ESP.");
+  }
+
+  try {
+    const resposta = await fetch(`${API_URL}/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, newPassword }),
+    });
+
+    const dados = await resposta.json();
+    if (!resposta.ok) return mostrarToast(dados.erro || "ERRO!");
+
+    if (!dados.emailEnviado && dados.codigo) {
+      try {
+        await enviarEmailResetCodigo(dados.email, dados.username, dados.codigo);
+      } catch (err) {
+        console.error("Erro ao enviar email de reset:", err);
+      }
+    }
+
+    resetDados = { username: dados.username, email: dados.email };
+    document.getElementById("auth-username").value = dados.username;
+    document.getElementById("auth-email").value = dados.email;
+    document.getElementById("reset-codigo").value = "";
+    aplicarModoRecuperar(true);
+    mostrarToast(dados.mensagem || "CÓDIGO ENVIADO PARA O TEU E-MAIL!");
+  } catch (err) {
+    mostrarToast("SERVIDOR OFFLINE OU BLOQUEADO!");
+  }
+}
+
+async function confirmarCodigoRecuperacao() {
+  const code = document.getElementById("reset-codigo").value.trim();
+
+  if (!/^\d{6}$/.test(code)) {
+    return mostrarToast("INSERE UM CÓDIGO VÁLIDO DE 6 DÍGITOS!");
+  }
+
+  try {
+    const resposta = await fetch(`${API_URL}/verify-reset-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: resetDados.username,
+        email: resetDados.email,
+        code,
+      }),
+    });
+
+    const dados = await resposta.json();
+    if (!resposta.ok) return mostrarToast(dados.erro || "ERRO!");
+
+    mostrarToast(dados.mensagem || "PASSWORD ALTERADA COM SUCESSO!");
+    document.getElementById("form-auth").reset();
+    aplicarModoLogin();
   } catch (err) {
     mostrarToast("SERVIDOR OFFLINE OU BLOQUEADO!");
   }

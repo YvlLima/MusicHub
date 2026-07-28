@@ -140,6 +140,24 @@
   text-shadow: 0 0 8px #ff0033;
 }
 
+#link-recuperar-pass {
+  margin-top: -8px;
+}
+
+#reset-codigo {
+  letter-spacing: 6px;
+  font-size: 1.1rem !important;
+}
+
+.auth-info {
+  font-size: 0.72rem;
+  color: #666666;
+  text-align: center;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  margin: 0;
+}
+
 /* Registo - Foto de Perfil */
 .registo-pfp-box {
   margin-bottom: 10px;

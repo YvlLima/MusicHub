@@ -108,7 +108,7 @@
             >
           </div>
 
-          <!-- Confirmar Palavra-Passe (Registo) -->
+          <!-- Confirmar Palavra-Passe (Registo / Recuperação) -->
           <div
             class="campo-pass"
             id="container-confirm-pass"
@@ -126,10 +126,28 @@
             >
           </div>
 
+          <!-- Código de verificação (Recuperação) -->
+          <input
+            type="text"
+            id="reset-codigo"
+            placeholder="CÓDIGO DE 6 DÍGITOS"
+            maxlength="6"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            style="display: none"
+            autocomplete="one-time-code"
+          />
+
           <button type="submit" class="btn-auth" id="btn-submit-auth">
             ENTRAR
           </button>
         </form>
+
+        <p class="troca-auth" id="link-recuperar-pass">
+          <a href="#" onclick="alternarModoRecuperar(event)"
+            >Esqueceste a password?</a
+          >
+        </p>
 
         <p class="troca-auth">
           <span id="texto-troca-auth">Ainda não tens conta?</span>

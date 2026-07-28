@@ -56,3 +56,13 @@ CREATE TABLE IF NOT EXISTS candidaturas (
     reviewed_date TIMESTAMP,
     rejection_reason TEXT
 );
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    code_hash TEXT NOT NULL,
+    new_password_hash TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

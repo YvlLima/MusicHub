@@ -156,6 +156,18 @@ async function initDB() {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        code_hash TEXT NOT NULL,
+        new_password_hash TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log("✅ Tabelas e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
@@ -219,6 +231,52 @@ function verificarAdmin(req, res, next) {
 function validarImagemBase64(str) {
   if (!str || str === "imagens/pfp.png") return true;
   return /^data:image\/(png|jpeg|jpg|webp|gif);base64,/.test(str);
+}
+
+function validarRequisitosPassword(pass) {
+  const regex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#])[A-Za-z\d@$!%*?&._\-#]{8,}$/;
+  return regex.test(pass);
+}
+
+function gerarCodigoReset() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function enviarEmailReset(destinoEmail, nomeUtilizador, codigo) {
+  const serviceId = process.env.EMAILJS_SERVICE_ID || "service_wwb9l28";
+  const templateId =
+    process.env.EMAILJS_TEMPLATE_RESET ||
+    process.env.EMAILJS_TEMPLATE_ID ||
+    "template_xo1r5qk";
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY || "qILWc7fZNcdCMEaqj";
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  const payload = {
+    service_id: serviceId,
+    template_id: templateId,
+    user_id: publicKey,
+    template_params: {
+      to_name: nomeUtilizador,
+      email: destinoEmail,
+      codigo,
+      message: `O teu código de recuperação de password é: ${codigo}. Válido por 15 minutos.`,
+    },
+  };
+
+  if (privateKey) payload.accessToken = privateKey;
+
+  try {
+    const res = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Erro ao enviar email de reset:", err);
+    return false;
+  }
 }
 
 // ==========================================
@@ -346,6 +404,134 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ erro: "Utilizador ou e-mail já existe." });
     }
     res.status(500).json({ erro: "Erro interno no servidor." });
+  }
+});
+
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { erro: "DEMASIADOS PEDIDOS. TENTA NOVAMENTE MAIS TARDE." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Pedido de recuperação de password
+app.post("/api/forgot-password", resetLimiter, async (req, res) => {
+  const { username, email, newPassword } = req.body;
+
+  if (!username || !email || !newPassword) {
+    return res.status(400).json({ erro: "PREENCHE TODOS OS CAMPOS!" });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ erro: "FORMATO DE E-MAIL INVÁLIDO." });
+  }
+
+  if (!validarRequisitosPassword(newPassword)) {
+    return res.status(400).json({
+      erro: "PASS FRACA! MIN 8 CHARS, 1 MAIÚS, 1 MINÚS, 1 NUM, 1 ESP.",
+    });
+  }
+
+  try {
+    const userRes = await pool.query(
+      "SELECT id, username, email FROM utilizadores WHERE username = $1 AND LOWER(email) = LOWER($2)",
+      [username.trim(), email.trim()],
+    );
+
+    if (userRes.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ erro: "UTILIZADOR OU E-MAIL NÃO COINCIDEM!" });
+    }
+
+    const user = userRes.rows[0];
+    const codigo = gerarCodigoReset();
+    const codeHash = await bcrypt.hash(codigo, 10);
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await pool.query(
+      "DELETE FROM password_resets WHERE username = $1 OR email = $2",
+      [user.username, user.email],
+    );
+
+    await pool.query(
+      "INSERT INTO password_resets (username, email, code_hash, new_password_hash, expires_at) VALUES ($1, $2, $3, $4, $5)",
+      [user.username, user.email, codeHash, newPasswordHash, expiresAt],
+    );
+
+    const emailEnviado = await enviarEmailReset(
+      user.email,
+      user.username,
+      codigo,
+    );
+
+    res.json({
+      mensagem: emailEnviado
+        ? "CÓDIGO ENVIADO PARA O TEU E-MAIL!"
+        : "PEDIDO VALIDADO! VERIFICA O TEU E-MAIL.",
+      emailEnviado,
+      email: user.email,
+      username: user.username,
+      ...(emailEnviado ? {} : { codigo }),
+    });
+  } catch (err) {
+    console.error("Erro no pedido de reset:", err);
+    res.status(500).json({ erro: "ERRO INTERNO NO SERVIDOR!" });
+  }
+});
+
+// Confirmar código e alterar password
+app.post("/api/verify-reset-code", resetLimiter, async (req, res) => {
+  const { username, email, code } = req.body;
+
+  if (!username || !email || !code) {
+    return res.status(400).json({ erro: "PREENCHE TODOS OS CAMPOS!" });
+  }
+
+  try {
+    const resetRes = await pool.query(
+      `SELECT * FROM password_resets
+       WHERE username = $1 AND LOWER(email) = LOWER($2)
+       ORDER BY created_at DESC LIMIT 1`,
+      [username.trim(), email.trim()],
+    );
+
+    if (resetRes.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ erro: "NENHUM PEDIDO DE RECUPERAÇÃO ENCONTRADO!" });
+    }
+
+    const reset = resetRes.rows[0];
+
+    if (new Date(reset.expires_at) < new Date()) {
+      await pool.query("DELETE FROM password_resets WHERE id = $1", [
+        reset.id,
+      ]);
+      return res.status(400).json({ erro: "CÓDIGO EXPIRADO! PEDE UM NOVO." });
+    }
+
+    const codigoValido = await bcrypt.compare(String(code).trim(), reset.code_hash);
+    if (!codigoValido) {
+      return res.status(400).json({ erro: "CÓDIGO INCORRETO!" });
+    }
+
+    await pool.query(
+      "UPDATE utilizadores SET password_hash = $1, tentativas_falhadas = 0 WHERE username = $2",
+      [reset.new_password_hash, reset.username],
+    );
+
+    await pool.query("DELETE FROM password_resets WHERE username = $1", [
+      reset.username,
+    ]);
+
+    res.json({ mensagem: "PASSWORD ALTERADA COM SUCESSO!" });
+  } catch (err) {
+    console.error("Erro ao verificar código de reset:", err);
+    res.status(500).json({ erro: "ERRO INTERNO NO SERVIDOR!" });
   }
 });
 
