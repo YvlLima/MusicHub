@@ -245,10 +245,7 @@ function gerarCodigoReset() {
 
 async function enviarEmailReset(destinoEmail, nomeUtilizador, codigo) {
   const serviceId = process.env.EMAILJS_SERVICE_ID || "service_wwb9l28";
-  const templateId =
-    process.env.EMAILJS_TEMPLATE_RESET ||
-    process.env.EMAILJS_TEMPLATE_ID ||
-    "template_b05m25i";
+  const templateId = "template_b05m25i"; // Atualizado para o ID correto
   const publicKey = process.env.EMAILJS_PUBLIC_KEY || "qILWc7fZNcdCMEaqj";
   const privateKey = process.env.EMAILJS_PRIVATE_KEY;
 
