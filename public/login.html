@@ -20,6 +20,14 @@
     </script>
   </head>
   <body>
+    <!-- SELETOR DE IDIOMA -->
+    <div class="seletor-idioma">
+      <select id="idioma-select" onchange="mudarIdiomaLogin(this.value)">
+        <option value="pt">PT-PT</option>
+        <option value="en">ENGLISH</option>
+      </select>
+    </div>
+
     <!-- PÁGINA DE AUTENTICAÇÃO (LOGIN / REGISTO) -->
     <section id="seccao-auth">
       <div class="caixa-auth">
@@ -46,7 +54,7 @@
           </svg>
         </div>
 
-        <h2 id="titulo-auth">ENTRAR NO HUB</h2>
+        <h2 id="titulo-auth" data-i18n="loginTitulo">ENTRAR NO HUB</h2>
 
         <form id="form-auth" onsubmit="processarAuth(event)">
           <!-- Foto de Perfil no Registo -->
@@ -71,6 +79,7 @@
             <button
               type="button"
               class="btn-quote"
+              data-i18n="loginMudarFoto"
               onclick="document.getElementById('input-registo-pfp').click()"
             >
               MUDAR FOTO
@@ -81,6 +90,7 @@
           <input
             type="text"
             id="auth-username"
+            data-i18n-placeholder="loginPlaceholderUsername"
             placeholder="NOME DE UTILIZADOR"
             required
           />
@@ -89,6 +99,7 @@
           <input
             type="email"
             id="auth-email"
+            data-i18n-placeholder="loginPlaceholderEmail"
             placeholder="E-MAIL"
             style="display: none"
           />
@@ -98,6 +109,7 @@
             <input
               type="password"
               id="auth-password"
+              data-i18n-placeholder="loginPlaceholderPass"
               placeholder="PALAVRA-PASSE"
               required
             />
@@ -117,6 +129,7 @@
             <input
               type="password"
               id="auth-confirm-password"
+              data-i18n-placeholder="loginPlaceholderConfirmPass"
               placeholder="CONFIRMAR PALAVRA-PASSE"
             />
             <span
@@ -130,6 +143,7 @@
           <input
             type="text"
             id="reset-codigo"
+            data-i18n-placeholder="loginPlaceholderCodigo"
             placeholder="CÓDIGO DE 6 DÍGITOS"
             maxlength="6"
             inputmode="numeric"
@@ -138,20 +152,34 @@
             autocomplete="one-time-code"
           />
 
-          <button type="submit" class="btn-auth" id="btn-submit-auth">
+          <button
+            type="submit"
+            class="btn-auth"
+            id="btn-submit-auth"
+            data-i18n="loginBtnEntrar"
+          >
             ENTRAR
           </button>
         </form>
 
         <p class="troca-auth" id="link-recuperar-pass">
-          <a href="#" onclick="alternarModoRecuperar(event)"
+          <a
+            href="#"
+            onclick="alternarModoRecuperar(event)"
+            data-i18n="loginEsqueceuPass"
             >Esqueceste a password?</a
           >
         </p>
 
         <p class="troca-auth">
-          <span id="texto-troca-auth">Ainda não tens conta?</span>
-          <a href="#" onclick="alternarModoAuth(event)" id="link-troca-auth"
+          <span id="texto-troca-auth" data-i18n="loginNaoTemConta"
+            >Ainda não tens conta?</span
+          >
+          <a
+            href="#"
+            onclick="alternarModoAuth(event)"
+            id="link-troca-auth"
+            data-i18n="loginRegistarLink"
             >Registar</a
           >
         </p>
@@ -166,18 +194,41 @@
 
     <!-- Scripts JS -->
     <script src="js/config.js"></script>
+    <script src="js/translations.js"></script>
     <script src="js/index.js"></script>
     <script src="js/login.js"></script>
 
     <script>
+      function mudarIdiomaLogin(lang) {
+        localStorage.setItem("idioma_preferido", lang);
+
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const chave = el.getAttribute("data-i18n");
+          if (traducoes[lang] && traducoes[lang][chave]) {
+            el.innerText = traducoes[lang][chave];
+          }
+        });
+
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          const chave = el.getAttribute("data-i18n-placeholder");
+          if (traducoes[lang] && traducoes[lang][chave]) {
+            el.placeholder = traducoes[lang][chave];
+          }
+        });
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const token = localStorage.getItem("token_jwt");
         const user = localStorage.getItem("utilizador_ativo");
 
-        // Só redireciona se AMBOS existirem e forem válidos
         if (token && token !== "undefined" && user && user !== "undefined") {
           window.location.replace("index.html");
         }
+
+        const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
+        const select = document.getElementById("idioma-select");
+        if (select) select.value = idiomaSalvo;
+        mudarIdiomaLogin(idiomaSalvo);
       });
     </script>
   </body>

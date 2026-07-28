@@ -21,11 +21,13 @@ function aplicarModoLogin() {
   resetAguardaCodigo = false;
   resetDados = { username: "", email: "" };
 
-  document.getElementById("titulo-auth").innerText = "ENTRAR NO HUB";
-  document.getElementById("btn-submit-auth").innerText = "ENTRAR";
-  document.getElementById("texto-troca-auth").innerText =
-    "Ainda não tens conta?";
-  document.getElementById("link-troca-auth").innerText = "Registar";
+  const lang = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[lang] || traducoes["pt"];
+
+  document.getElementById("titulo-auth").innerText = t.loginTitulo;
+  document.getElementById("btn-submit-auth").innerText = t.loginBtnEntrar;
+  document.getElementById("texto-troca-auth").innerText = t.loginNaoTemConta;
+  document.getElementById("link-troca-auth").innerText = t.loginRegistarLink;
 
   document.getElementById("campo-registo-pfp").style.display = "none";
   document.getElementById("auth-email").style.display = "none";
@@ -37,7 +39,7 @@ function aplicarModoLogin() {
   document.getElementById("auth-confirm-password").required = false;
   document.getElementById("reset-codigo").required = false;
   document.getElementById("auth-password").required = true;
-  document.getElementById("auth-password").placeholder = "PALAVRA-PASSE";
+  document.getElementById("auth-password").placeholder = t.loginPlaceholderPass;
   document.getElementById("auth-password").style.display = "block";
   document
     .getElementById("auth-password")
@@ -56,10 +58,13 @@ function aplicarModoRegisto() {
   resetAguardaCodigo = false;
   resetDados = { username: "", email: "" };
 
-  document.getElementById("titulo-auth").innerText = "CRIAR CONTA";
-  document.getElementById("btn-submit-auth").innerText = "REGISTAR";
-  document.getElementById("texto-troca-auth").innerText = "Já tens conta?";
-  document.getElementById("link-troca-auth").innerText = "Entrar";
+  const lang = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[lang] || traducoes["pt"];
+
+  document.getElementById("titulo-auth").innerText = t.loginCriarConta;
+  document.getElementById("btn-submit-auth").innerText = t.loginBtnRegistar;
+  document.getElementById("texto-troca-auth").innerText = t.loginTemConta;
+  document.getElementById("link-troca-auth").innerText = t.loginEntrarLink;
 
   document.getElementById("campo-registo-pfp").style.display = "block";
   document.getElementById("auth-email").style.display = "block";
@@ -71,7 +76,7 @@ function aplicarModoRegisto() {
   document.getElementById("auth-confirm-password").required = true;
   document.getElementById("reset-codigo").required = false;
   document.getElementById("auth-password").required = true;
-  document.getElementById("auth-password").placeholder = "PALAVRA-PASSE";
+  document.getElementById("auth-password").placeholder = t.loginPlaceholderPass;
   document.getElementById("auth-password").style.display = "block";
   document
     .getElementById("auth-password")
@@ -89,14 +94,17 @@ function aplicarModoRecuperar(mostrarCodigo = false) {
   modoAuth = "recover";
   resetAguardaCodigo = mostrarCodigo;
 
+  const lang = localStorage.getItem("idioma_preferido") || "pt";
+  const t = traducoes[lang] || traducoes["pt"];
+
   document.getElementById("titulo-auth").innerText = mostrarCodigo
-    ? "CONFIRMAR CÓDIGO"
-    : "RECUPERAR PASSWORD";
+    ? t.loginConfirmarCodigo
+    : t.loginRecuperarPass;
   document.getElementById("btn-submit-auth").innerText = mostrarCodigo
-    ? "CONFIRMAR"
-    : "ENVIAR CÓDIGO";
-  document.getElementById("texto-troca-auth").innerText = "Lembrouste-te?";
-  document.getElementById("link-troca-auth").innerText = "Entrar";
+    ? t.loginBtnConfirmar
+    : t.loginBtnEnviarCodigo;
+  document.getElementById("texto-troca-auth").innerText = t.loginLembrouste;
+  document.getElementById("link-troca-auth").innerText = t.loginEntrarLink;
 
   document.getElementById("campo-registo-pfp").style.display = "none";
   document.getElementById("auth-email").style.display = mostrarCodigo
@@ -114,8 +122,8 @@ function aplicarModoRecuperar(mostrarCodigo = false) {
   document.getElementById("reset-codigo").required = mostrarCodigo;
   document.getElementById("auth-password").required = !mostrarCodigo;
   document.getElementById("auth-password").placeholder = mostrarCodigo
-    ? "PALAVRA-PASSE"
-    : "NOVA PALAVRA-PASSE";
+    ? t.loginPlaceholderPass
+    : t.loginPlaceholderNovaPass;
 
   document.getElementById("auth-username").readOnly = mostrarCodigo;
   document.getElementById("auth-email").readOnly = mostrarCodigo;
@@ -137,7 +145,10 @@ function aplicarModoRecuperar(mostrarCodigo = false) {
         .getElementById("form-auth")
         .insertBefore(info, document.getElementById("reset-codigo"));
     }
-    info.innerText = `Enviamos um código para ${resetDados.email}. Insere-o abaixo para confirmar a nova password.`;
+    info.innerText =
+      lang === "en"
+        ? `We sent a code to ${resetDados.email}. Enter it below to confirm the new password.`
+        : `Enviamos um código para ${resetDados.email}. Insere-o abaixo para confirmar a nova password.`;
   } else if (info) {
     info.remove();
   }
