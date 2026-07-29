@@ -5,20 +5,39 @@ const bcrypt = require("bcrypt");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
+const crypto = require("crypto");
 
 const app = express();
+
 const JWT_SECRET =
-  process.env.JWT_SECRET || "chave_secreta_super_segura_opium_hub";
-if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? (() => {
+        throw new Error(
+          "FATAL: JWT_SECRET não está configurado nas variáveis de ambiente!",
+        );
+      })()
+    : crypto.randomBytes(64).toString("hex"));
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV !== "production") {
   console.warn(
-    "⚠️  AVISO DE SEGURANÇA: JWT_SECRET não está definido nas variáveis de ambiente! " +
-      "A usar uma chave de fallback insegura. Define JWT_SECRET no Render (Environment) o quanto antes.",
+    "⚠️  AVISO DE SEGURANÇA: JWT_SECRET não foi definido no ambiente local. " +
+      "Foi gerada uma chave secreta dinâmica de 64 bytes para este arranque.",
   );
 }
 const SUPER_ADMIN = "YvlLima";
 
 // Necessário para o rate-limit funcionar corretamente no Render
 app.set("trust proxy", 1);
+
+// Security Headers HTTP
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
 
 app.use(express.static("public"));
 // Limite subido de 2mb para 15mb para caber ficheiros de música em base64
@@ -222,8 +241,17 @@ function autenticarToken(req, res, next) {
 }
 
 function verificarAdmin(req, res, next) {
-  if (!req.user || !req.user.is_admin) {
-    return res.status(403).json({ erro: "Acesso restrito!" });
+  if (!req.user || req.user.is_admin !== 1) {
+    return res.status(403).json({ erro: "Acesso restrito a Administradores!" });
+  }
+  next();
+}
+
+function verificarModOuAdmin(req, res, next) {
+  if (!req.user || (req.user.is_admin !== 1 && req.user.is_admin !== 2)) {
+    return res
+      .status(403)
+      .json({ erro: "Acesso restrito a Moderadores e Administradores!" });
   }
   next();
 }
@@ -240,14 +268,21 @@ function validarRequisitosPassword(pass) {
 }
 
 function gerarCodigoReset() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 1000000));
 }
 
 async function enviarEmailReset(destinoEmail, nomeUtilizador, codigo) {
-  const serviceId = process.env.EMAILJS_SERVICE_ID || "service_wwb9l28";
-  const templateId = "template_b05m25i"; // Atualizado para o ID correto
-  const publicKey = process.env.EMAILJS_PUBLIC_KEY || "qILWc7fZNcdCMEaqj";
+  const serviceId = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_TEMPLATE_ID || "template_b05m25i";
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
   const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  if (!serviceId || !publicKey) {
+    console.warn(
+      "⚠️ EmailJS não configurado (EMAILJS_SERVICE_ID ou EMAILJS_PUBLIC_KEY em falta).",
+    );
+    return false;
+  }
 
   const payload = {
     service_id: serviceId,
@@ -361,8 +396,16 @@ app.post("/api/login", loginLimiter, async (req, res) => {
   }
 });
 
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10,
+  message: { erro: "DEMASIADOS REGISTOS. TENTA NOVAMENTE MAIS TARDE." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Registo
-app.post("/api/register", async (req, res) => {
+app.post("/api/register", registerLimiter, async (req, res) => {
   const { username, email, password, pfp } = req.body;
 
   if (!username || !email || !password) {
