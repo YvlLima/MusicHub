@@ -816,24 +816,18 @@ function filtrarCategoria(categoria, btn) {
 
   const seccaoMusica = document.getElementById("musica");
   const seccaoAlbuns = document.getElementById("albuns");
-  const seccaoPlaylists = document.getElementById("playlists");
+
+  if (!seccaoMusica || !seccaoAlbuns) return;
 
   if (categoria === "tudo") {
-    if (seccaoMusica) seccaoMusica.style.display = "block";
-    if (seccaoAlbuns) seccaoAlbuns.style.display = "block";
-    if (seccaoPlaylists) seccaoPlaylists.style.display = "block";
+    seccaoMusica.style.display = "block";
+    seccaoAlbuns.style.display = "block";
   } else if (categoria === "musica") {
-    if (seccaoMusica) seccaoMusica.style.display = "block";
-    if (seccaoAlbuns) seccaoAlbuns.style.display = "none";
-    if (seccaoPlaylists) seccaoPlaylists.style.display = "none";
+    seccaoMusica.style.display = "block";
+    seccaoAlbuns.style.display = "none";
   } else if (categoria === "albuns") {
-    if (seccaoMusica) seccaoMusica.style.display = "none";
-    if (seccaoAlbuns) seccaoAlbuns.style.display = "block";
-    if (seccaoPlaylists) seccaoPlaylists.style.display = "none";
-  } else if (categoria === "playlists") {
-    if (seccaoMusica) seccaoMusica.style.display = "none";
-    if (seccaoAlbuns) seccaoAlbuns.style.display = "none";
-    if (seccaoPlaylists) seccaoPlaylists.style.display = "block";
+    seccaoMusica.style.display = "none";
+    seccaoAlbuns.style.display = "block";
   }
 }
 
