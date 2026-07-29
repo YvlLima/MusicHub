@@ -817,6 +817,84 @@ app.get(
   },
 );
 
+// Obter logs com filtros
+app.get(
+  "/api/admin/logs",
+  autenticarToken,
+  verificarModOuAdmin,
+  async (req, res) => {
+    const { acao, search } = req.query;
+
+    try {
+      let query = "SELECT * FROM logs";
+      let params = [];
+      let conditions = [];
+
+      if (acao && acao !== "todas") {
+        params.push(acao);
+        conditions.push(`acao = $${params.length}`);
+      }
+
+      if (search && search.trim()) {
+        params.push(`%${search.trim()}%`);
+        conditions.push(`(autor ILIKE $${params.length} OR alvo ILIKE $${params.length})`);
+      }
+
+      if (conditions.length > 0) {
+        query += " WHERE " + conditions.join(" AND ");
+      }
+
+      query += " ORDER BY id DESC LIMIT 100";
+
+      const result = await pool.query(query, params);
+      res.json({ logs: result.rows });
+    } catch (err) {
+      console.error("Erro ao obter logs:", err);
+      res.status(500).json({ erro: "Erro ao obter logs." });
+    }
+  },
+);
+
+// Eliminar um log individual por ID
+app.delete(
+  "/api/admin/logs/:id",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      await pool.query("DELETE FROM logs WHERE id = $1", [id]);
+      res.json({ mensagem: "Log eliminado com sucesso!" });
+    } catch (err) {
+      console.error("Erro ao eliminar log:", err);
+      res.status(500).json({ erro: "Erro ao eliminar log." });
+    }
+  },
+);
+
+// Limpar logs (todos ou filtrados por acao)
+app.delete(
+  "/api/admin/logs-clear",
+  autenticarToken,
+  verificarAdmin,
+  async (req, res) => {
+    const { acao } = req.query;
+
+    try {
+      if (acao && acao !== "todas") {
+        await pool.query("DELETE FROM logs WHERE acao = $1", [acao]);
+      } else {
+        await pool.query("DELETE FROM logs");
+      }
+      res.json({ mensagem: "Logs eliminados com sucesso!" });
+    } catch (err) {
+      console.error("Erro ao limpar logs:", err);
+      res.status(500).json({ erro: "Erro ao limpar logs." });
+    }
+  },
+);
+
 app.get(
   "/api/admin/export",
   autenticarToken,

@@ -718,57 +718,134 @@ async function carregarStatsEGlags() {
     if (elTotalMods) elTotalMods.innerText = dados.stats.totalMods;
     if (elTotalLikes) elTotalLikes.innerText = dados.stats.totalLikes;
 
-    const tbodyLogs = document.getElementById("lista-logs-body");
-    if (tbodyLogs) {
-      tbodyLogs.innerHTML = "";
-      dados.logs.forEach((log) => {
-        const tr = document.createElement("tr");
-        const dataFormatada = new Date(log.data).toLocaleString("pt-PT");
-
-        let chaveAcao = "";
-        const acaoUpper = (log.acao || "").toUpperCase();
-        if (acaoUpper.includes("SUGERIU QUOTE")) chaveAcao = "logSugeriurQuote";
-        else if (acaoUpper.includes("APROVOU QUOTE"))
-          chaveAcao = "logAprovouQuote";
-        else if (acaoUpper.includes("ELIMINOU CONTA"))
-          chaveAcao = "logEliminouConta";
-        else if (acaoUpper.includes("DEIXOU DE SEGUIR"))
-          chaveAcao = "logDeixouSeguir";
-        else if (acaoUpper.includes("COMEÇOU A SEGUIR"))
-          chaveAcao = "logComecouSeguir";
-        else if (acaoUpper.includes("UPLOAD MÚSICA"))
-          chaveAcao = "logUploadMusica";
-        else if (acaoUpper.includes("AVALIOU")) chaveAcao = "logAvaliou";
-        else if (acaoUpper.includes("REJEITOU CANDIDATURA"))
-          chaveAcao = "logRejeitouCandidatura";
-        else if (
-          acaoUpper.includes("SUBMETE ÁLBUM") ||
-          acaoUpper.includes("SUBMETEU ÁLBUM")
-        )
-          chaveAcao = "logSubmeteuAlbum";
-        else if (
-          acaoUpper.includes("SUBMETE ARTISTA") ||
-          acaoUpper.includes("SUBMETEU ARTISTA")
-        )
-          chaveAcao = "logSubmeteuArtista";
-
-        const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
-        const t =
-          typeof traducoes !== "undefined" ? traducoes[idiomaAtual] : null;
-        const acaoTraduzida =
-          chaveAcao && t && t[chaveAcao] ? t[chaveAcao] : log.acao;
-
-        tr.innerHTML = `
-          <td>${dataFormatada}</td>
-          <td>${log.autor}</td>
-          <td><span style="color: #ff0033;">${acaoTraduzida}</span></td>
-          <td>${log.alvo}</td>
-        `;
-        tbodyLogs.appendChild(tr);
-      });
-    }
+    await carregarLogsAdmin();
   } catch (err) {
     console.error("Erro ao carregar estatísticas:", err);
+  }
+}
+
+async function carregarLogsAdmin() {
+  if (typeof tokenJWT === "undefined" || !tokenJWT) return;
+
+  const selectAcao = document.getElementById("filtro-acao-log");
+  const inputSearch = document.getElementById("pesquisa-log-admin");
+  const tbodyLogs = document.getElementById("lista-logs-body");
+
+  if (!tbodyLogs) return;
+
+  const acao = selectAcao ? selectAcao.value : "todas";
+  const search = inputSearch ? inputSearch.value.trim() : "";
+
+  try {
+    const res = await fetch(
+      `${API_URL}/admin/logs?acao=${encodeURIComponent(acao)}&search=${encodeURIComponent(search)}`,
+      {
+        headers: { Authorization: `Bearer ${tokenJWT}` },
+      },
+    );
+    const dados = await res.json();
+    if (!res.ok) return;
+
+    tbodyLogs.innerHTML = "";
+
+    const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+    const t = typeof traducoes !== "undefined" ? traducoes[idiomaAtual] : null;
+
+    if (!dados.logs || dados.logs.length === 0) {
+      const msgVazia = t ? t.adminLogsSemRegistos || "Nenhum log registado." : "Nenhum log registado.";
+      tbodyLogs.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;">${msgVazia}</td></tr>`;
+      return;
+    }
+
+    dados.logs.forEach((log) => {
+      const tr = document.createElement("tr");
+      const dataFormatada = new Date(log.data).toLocaleString("pt-PT");
+
+      let chaveAcao = "";
+      const acaoUpper = (log.acao || "").toUpperCase();
+      if (acaoUpper.includes("SUGERIU QUOTE")) chaveAcao = "logSugeriurQuote";
+      else if (acaoUpper.includes("APROVOU QUOTE")) chaveAcao = "logAprovouQuote";
+      else if (acaoUpper.includes("ELIMINOU CONTA")) chaveAcao = "logEliminouConta";
+      else if (acaoUpper.includes("DEIXOU DE SEGUIR")) chaveAcao = "logDeixouSeguir";
+      else if (acaoUpper.includes("COMEÇOU A SEGUIR")) chaveAcao = "logComecouSeguir";
+      else if (acaoUpper.includes("UPLOAD MÚSICA")) chaveAcao = "logUploadMusica";
+      else if (acaoUpper.includes("AVALIOU")) chaveAcao = "logAvaliou";
+      else if (acaoUpper.includes("REJEITOU CANDIDATURA")) chaveAcao = "logRejeitouCandidatura";
+      else if (acaoUpper.includes("SUBMETE ÁLBUM") || acaoUpper.includes("SUBMETEU ÁLBUM")) chaveAcao = "logSubmeteuAlbum";
+      else if (acaoUpper.includes("SUBMETE ARTISTA") || acaoUpper.includes("SUBMETEU ARTISTA")) chaveAcao = "logSubmeteuArtista";
+
+      const acaoTraduzida = chaveAcao && t && t[chaveAcao] ? t[chaveAcao] : log.acao;
+
+      tr.innerHTML = `
+        <td>${dataFormatada}</td>
+        <td>${escapeHTML(log.autor)}</td>
+        <td><span style="color: #ff0033;">${escapeHTML(acaoTraduzida)}</span></td>
+        <td>${escapeHTML(log.alvo)}</td>
+        <td>
+          <button type="button" class="btn-eliminar" onclick="eliminarLogIndividual(${log.id})">❌</button>
+        </td>
+      `;
+      tbodyLogs.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar logs:", err);
+  }
+}
+
+async function eliminarLogIndividual(logId) {
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = typeof traducoes !== "undefined" ? traducoes[idiomaAtual] : null;
+
+  const confirmado = await mostrarConfirmacaoHUD(
+    t ? t.modalConfirmacaoTexto || "Tens a certeza que queres prosseguir?" : "Tens a certeza que queres prosseguir?",
+    t ? t.adminLogsConfirmLimparTitulo || "APAGAR LOGS" : "APAGAR LOGS",
+  );
+  if (!confirmado) return;
+
+  try {
+    const res = await fetch(`${API_URL}/admin/logs/${logId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${tokenJWT}` },
+    });
+    const dados = await res.json();
+    if (res.ok) {
+      mostrarToast(t ? t.adminLogsToastApagadoUm || "LOG ELIMINADO COM SUCESSO!" : "LOG ELIMINADO COM SUCESSO!");
+      carregarLogsAdmin();
+    } else {
+      mostrarToast(dados.erro || "ERRO AO ELIMINAR LOG!");
+    }
+  } catch (err) {
+    mostrarToast("ERRO DE LIGAÇÃO!");
+  }
+}
+
+async function limparLogsAdmin() {
+  const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
+  const t = typeof traducoes !== "undefined" ? traducoes[idiomaAtual] : null;
+
+  const selectAcao = document.getElementById("filtro-acao-log");
+  const acao = selectAcao ? selectAcao.value : "todas";
+
+  const confirmado = await mostrarConfirmacaoHUD(
+    t ? t.adminLogsConfirmLimparTexto || "Tens a certeza que queres apagar os logs selecionados?" : "Tens a certeza que queres apagar os logs selecionados?",
+    t ? t.adminLogsConfirmLimparTitulo || "APAGAR LOGS" : "APAGAR LOGS",
+  );
+  if (!confirmado) return;
+
+  try {
+    const res = await fetch(`${API_URL}/admin/logs-clear?acao=${encodeURIComponent(acao)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${tokenJWT}` },
+    });
+    const dados = await res.json();
+    if (res.ok) {
+      mostrarToast(t ? t.adminLogsToastApagados || "LOGS APAGADOS COM SUCESSO!" : "LOGS APAGADOS COM SUCESSO!");
+      carregarLogsAdmin();
+    } else {
+      mostrarToast(dados.erro || "ERRO AO LIMPAR LOGS!");
+    }
+  } catch (err) {
+    mostrarToast("ERRO DE LIGAÇÃO!");
   }
 }
 

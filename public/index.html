@@ -516,7 +516,43 @@
             <tbody id="lista-utilizadores-body"></tbody>
           </table>
 
-          <h3 data-i18n="adminLogsTitulo">LOG DE ATIVIDADES</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 35px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 data-i18n="adminLogsTitulo" style="margin: 0;">LOG DE ATIVIDADES</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+              <select id="filtro-acao-log" onchange="carregarLogsAdmin()" style="background-color: #0d0d0d; color: #ffffff; border: 1px solid #ff0033; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; outline: none; cursor: pointer;">
+                <option value="todas" data-i18n="adminLogsFiltroTodas">📋 TODAS AS AÇÕES</option>
+                <option value="SUGERIU QUOTE">SUGERIU QUOTE</option>
+                <option value="APROVOU QUOTE">APROVOU QUOTE</option>
+                <option value="SUBMETE ARTISTA">SUBMETEU ARTISTA</option>
+                <option value="SUBMETE ÁLBUM">SUBMETEU ÁLBUM</option>
+                <option value="APROVOU CANDIDATURA">APROVOU CANDIDATURA</option>
+                <option value="REJEITOU CANDIDATURA">REJEITOU CANDIDATURA</option>
+                <option value="COMEÇOU A SEGUIR">COMEÇOU A SEGUIR</option>
+                <option value="DEIXOU DE SEGUIR">DEIXOU DE SEGUIR</option>
+                <option value="ELIMINOU CONTA">ELIMINOU CONTA</option>
+                <option value="PROMOVEU A MOD">PROMOVEU A MOD</option>
+                <option value="REMOVEU CARGO">REMOVEU CARGO</option>
+              </select>
+              <input
+                type="text"
+                id="pesquisa-log-admin"
+                data-i18n-placeholder="adminLogsPesquisaPlaceholder"
+                placeholder="🔍 Pesquisar autor ou alvo..."
+                onkeyup="carregarLogsAdmin()"
+                style="background: #050505; border: 1px solid #333333; color: #ffffff; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; outline: none;"
+              />
+              <button
+                type="button"
+                class="btn-hud btn-perigo"
+                data-i18n="adminLogsBtnLimpar"
+                style="padding: 6px 12px; font-size: 0.75rem;"
+                onclick="limparLogsAdmin()"
+              >
+                🗑 APAGAR LOGS
+              </button>
+            </div>
+          </div>
+
           <table class="tabela-admin">
             <thead>
               <tr>
@@ -524,6 +560,7 @@
                 <th data-i18n="adminLogsAutor">AUTOR</th>
                 <th data-i18n="adminLogsAcao">AÇÃO</th>
                 <th data-i18n="adminLogsAlvo">ALVO</th>
+                <th data-i18n="adminTabelaAcoes">AÇÕES</th>
               </tr>
             </thead>
             <tbody id="lista-logs-body"></tbody>
