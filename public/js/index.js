@@ -1411,6 +1411,7 @@ function construirCartaoArtista(item) {
           <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
             ♥ <span id="count-like-${idUnico}" class="contador">0</span>
           </button>
+          <button class="btn-share" onclick="abrirModalAddPlaylist('${idUnico}')">+ PLAYLIST</button>
           ${item.profile_links ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.profile_links)}')">SHARE</button>` : ""}
         </div>
       </div>
@@ -1468,6 +1469,7 @@ function construirCartaoAlbum(item) {
           <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
             ♥ <span id="count-like-${idUnico}" class="contador">0</span>
           </button>
+          <button class="btn-share" onclick="abrirModalAddPlaylist('${idUnico}')">+ PLAYLIST</button>
           ${item.album_link ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.album_link)}')">SHARE</button>` : ""}
         </div>
       </div>
@@ -1636,3 +1638,127 @@ window.addEventListener("DOMContentLoaded", async () => {
     carregarRatingsBD();
   }
 });
+
+// ==========================================
+// 8. GESTÃO DE PLAYLISTS (FRONTEND)
+// ==========================================
+let itemIdParaPlaylist = null;
+
+function abrirModalCriarPlaylist() {
+  const modal = document.getElementById("modal-criar-playlist");
+  if (modal) modal.style.display = "flex";
+}
+
+function fecharModalCriarPlaylist() {
+  const modal = document.getElementById("modal-criar-playlist");
+  if (modal) modal.style.display = "none";
+}
+
+async function guardarNovaPlaylist(event) {
+  event.preventDefault();
+  const nome = document.getElementById("playlist-nome").value;
+  const descricao = document.getElementById("playlist-descricao").value;
+  const privada = document.getElementById("playlist-privada").checked;
+  const token = localStorage.getItem("token_jwt");
+
+  if (!token) {
+    mostrarToast("DEVES ESTAR AUTENTICADO!");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/playlists`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ nome, descricao, privada }),
+    });
+
+    const dados = await res.json();
+    if (res.ok) {
+      mostrarToast("PLAYLIST CRIADA COM SUCESSO!");
+      fecharModalCriarPlaylist();
+      document.getElementById("form-criar-playlist").reset();
+    } else {
+      mostrarToast(dados.erro || "ERRO AO CRIAR PLAYLIST");
+    }
+  } catch (err) {
+    mostrarToast("ERRO AO COMUNICAR COM O SERVIDOR");
+  }
+}
+
+async function abrirModalAddPlaylist(itemId) {
+  itemIdParaPlaylist = itemId;
+  const modal = document.getElementById("modal-add-playlist");
+  const container = document.getElementById("lista-playlists-disponiveis");
+  if (!modal || !container) return;
+
+  container.innerHTML = "<p>A carregar playlists...</p>";
+  modal.style.display = "flex";
+
+  const token = localStorage.getItem("token_jwt");
+  try {
+    const res = await fetch(`${API_URL}/playlists`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const dados = await res.json();
+
+    if (res.ok && dados.playlists && dados.playlists.length > 0) {
+      container.innerHTML = dados.playlists
+        .map(
+          (p) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,0,51,0.2);">
+            <div>
+              <strong>${escapeHTML(p.nome)}</strong>
+              <div style="font-size: 0.75rem; color: #888;">${p.total_faixas} faixas • ${p.privada ? "Privada" : "Pública"}</div>
+            </div>
+            <button class="btn-hud" style="padding: 4px 10px; font-size: 0.75rem;" onclick="adicionarItemAPlaylist(${p.id}, '${itemId}')">+ ADICIONAR</button>
+          </div>
+        `,
+        )
+        .join("");
+    } else {
+      container.innerHTML =
+        "<p>Nenhuma playlist encontrada. Cria uma primeiro!</p>";
+    }
+  } catch (err) {
+    container.innerHTML = "<p>Erro ao carregar playlists.</p>";
+  }
+}
+
+function fecharModalAddPlaylist() {
+  const modal = document.getElementById("modal-add-playlist");
+  if (modal) modal.style.display = "none";
+  itemIdParaPlaylist = null;
+}
+
+async function adicionarItemAPlaylist(playlistId, itemId) {
+  const token = localStorage.getItem("token_jwt");
+  if (!token) {
+    mostrarToast("FAZ LOGIN PARA ADICIONAR À PLAYLIST!");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/playlists/${playlistId}/tracks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ item_id: itemId }),
+    });
+
+    const dados = await res.json();
+    if (res.ok) {
+      mostrarToast("FAIXA ADICIONADA COM SUCESSO!");
+      fecharModalAddPlaylist();
+    } else {
+      mostrarToast(dados.erro || "ERRO AO ADICIONAR");
+    }
+  } catch (err) {
+    mostrarToast("ERRO DE CONEXÃO");
+  }
+}

@@ -96,3 +96,22 @@ CREATE TABLE IF NOT EXISTS password_resets (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS playlists (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    descricao TEXT,
+    capa TEXT DEFAULT 'imagens/pfp.png',
+    criado_por VARCHAR(255) NOT NULL,
+    privada INT DEFAULT 0,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS playlist_faixas (
+    id SERIAL PRIMARY KEY,
+    playlist_id INT NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+    item_id VARCHAR(255) NOT NULL,
+    ordem INT DEFAULT 0,
+    adicionado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(playlist_id, item_id)
+);
