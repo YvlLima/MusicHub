@@ -845,7 +845,7 @@
         <!-- Modal de Informação do Item -->
         <div id="modal-info-item" class="modal-overlay">
           <div class="caixa-modal-confirm">
-            <h3 id="info-item-titulo">DETALHES DA SUBMISSÃO</h3>
+            <h3 id="info-item-titulo" data-i18n="detalhesSubmissaoTitulo">DETALHES DA SUBMISSÃO</h3>
             <div
               id="info-item-conteudo"
               style="
@@ -859,7 +859,7 @@
             >
               <!-- Conteúdo inserido via JS -->
             </div>
-            <button class="btn-hud-modal" onclick="fecharModalInfoItem()">
+            <button class="btn-hud-modal" data-i18n="btnFechar" onclick="fecharModalInfoItem()">
               FECHAR
             </button>
           </div>
@@ -868,11 +868,11 @@
         <!-- Modal de Confirmação HUD (Substitui confirm do browser) -->
         <div id="modal-confirmacao" class="modal-overlay">
           <div class="caixa-modal-confirm" style="max-width: 420px; text-align: center;">
-            <h3 id="confirm-titulo" style="color: #ff0033; letter-spacing: 2px; margin-bottom: 15px;">CONFIRMAÇÃO</h3>
+            <h3 id="confirm-titulo" style="color: #ff0033; letter-spacing: 2px; margin-bottom: 15px;" data-i18n="modalConfirmacaoTitulo">CONFIRMAÇÃO</h3>
             <p id="confirm-mensagem" style="margin: 20px 0; font-size: 0.95rem; color: #e0e0e0; line-height: 1.5;"></p>
             <div class="acoes-modal-confirm" style="justify-content: center; gap: 15px; margin-top: 25px;">
-              <button type="button" class="btn-hud-modal" id="confirm-btn-cancelar">CANCELAR</button>
-              <button type="button" class="btn-hud-modal btn-perigo" id="confirm-btn-ok">CONFIRMAR</button>
+              <button type="button" class="btn-hud-modal" id="confirm-btn-cancelar" data-i18n="subBtnCancelar">CANCELAR</button>
+              <button type="button" class="btn-hud-modal btn-perigo" id="confirm-btn-ok" data-i18n="btnConfirmar">CONFIRMAR</button>
             </div>
           </div>
         </div>
