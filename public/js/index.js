@@ -1774,6 +1774,35 @@ async function adicionarItemAPlaylist(playlistId, itemId) {
   }
 }
 
+function mostrarConfirmacaoHUD(mensagem, titulo = "CONFIRMAÇÃO HUD") {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("modal-confirmacao");
+    const elTitulo = document.getElementById("confirm-titulo");
+    const elMensagem = document.getElementById("confirm-mensagem");
+    const btnOk = document.getElementById("confirm-btn-ok");
+    const btnCancelar = document.getElementById("confirm-btn-cancelar");
+
+    if (!modal || !btnOk || !btnCancelar) {
+      resolve(confirm(mensagem));
+      return;
+    }
+
+    if (elTitulo) elTitulo.innerText = titulo;
+    if (elMensagem) elMensagem.innerText = mensagem;
+    modal.style.display = "flex";
+
+    const fechar = (resultado) => {
+      modal.style.display = "none";
+      btnOk.onclick = null;
+      btnCancelar.onclick = null;
+      resolve(resultado);
+    };
+
+    btnOk.onclick = () => fechar(true);
+    btnCancelar.onclick = () => fechar(false);
+  });
+}
+
 async function carregarPlaylists() {
   const container = document.getElementById("grelha-playlists");
   if (!container) return;
@@ -1801,23 +1830,27 @@ async function carregarPlaylists() {
               <div class="top-cartao">
                 <div class="status-indicator"><span class="ponto-pisca"></span> PLAYLIST</div>
                 <div class="acoes-cartao">
-                  ${podeEliminar ? `<button class="btn-share" onclick="eliminarPlaylist(${p.id})">🗑 ELIMINAR</button>` : ""}
+                  ${podeEliminar ? `<button class="btn-share" style="color: #ff0033; border-color: #ff0033;" onclick="eliminarPlaylist(${p.id})">🗑 ELIMINAR</button>` : ""}
                 </div>
               </div>
-              <img class="imagem-cartao" src="${p.capa || "imagens/pfp.png"}" alt="${escapeHTML(p.nome)}" />
+              <img class="imagem-cartao" src="${p.capa || "imagens/pfp.png"}" alt="${escapeHTML(p.nome)}" style="object-fit: cover;" />
               <h3>${escapeHTML(p.nome)}</h3>
-              <p style="font-size: 0.8rem; color: #aaa;">Por: ${escapeHTML(p.criado_por)} • ${p.privada ? "🔒 Privada" : "🌐 Pública"}</p>
-              ${p.descricao ? `<p style="font-size: 0.85rem; margin-top: 5px;">${escapeHTML(p.descricao)}</p>` : ""}
-              <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.8rem; color: #ff0033; font-weight: bold;">${p.total_faixas || 0} FAIXAS</span>
+              <p style="font-size: 0.8rem; color: #aaa; margin: 4px 0;">Por: <strong style="color: #ffffff;">${escapeHTML(p.criado_por)}</strong> • ${p.privada ? "🔒 Privada" : "🌐 Pública"}</p>
+              ${p.descricao ? `<p style="font-size: 0.85rem; color: #cccccc; margin-top: 6px;">${escapeHTML(p.descricao)}</p>` : ""}
+              <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,0,51,0.2); padding-top: 10px;">
+                <span style="font-size: 0.85rem; color: #ff0033; font-weight: bold; letter-spacing: 1px;">${p.total_faixas || 0} FAIXAS</span>
               </div>
             </div>
           `;
         })
         .join("");
     } else {
-      container.innerHTML =
-        "<p style='grid-column: 1/-1; text-align: center; color: #888;'>Nenhuma playlist encontrada. Cria a primeira no botão acima!</p>";
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 35px 20px; background: rgba(255,0,51,0.04); border: 1px dashed rgba(255,0,51,0.3); border-radius: 8px; margin: 10px 0;">
+          <p style="font-size: 1.1rem; color: #ff0033; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px;">NENHUMA PLAYLIST ENCONTRADA</p>
+          <p style="font-size: 0.85rem; color: #cccccc;">Cria a tua primeira playlist no botão <strong style="color: #ffffff;">+ CRIAR PLAYLIST</strong> acima!</p>
+        </div>
+      `;
     }
   } catch (err) {
     container.innerHTML =
@@ -1826,7 +1859,12 @@ async function carregarPlaylists() {
 }
 
 async function eliminarPlaylist(playlistId) {
-  if (!confirm("Tens a certeza que queres eliminar esta playlist?")) return;
+  const confirmado = await mostrarConfirmacaoHUD(
+    "Tens a certeza que queres eliminar esta playlist?",
+    "ELIMINAR PLAYLIST",
+  );
+  if (!confirmado) return;
+
   const token = localStorage.getItem("token_jwt");
   if (!token) return;
 

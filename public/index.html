@@ -926,6 +926,18 @@
             <button class="btn-hud-modal" onclick="fecharModalAddPlaylist()">FECHAR</button>
           </div>
         </div>
+
+        <!-- Modal de Confirmação HUD (Substitui confirm do browser) -->
+        <div id="modal-confirmacao" class="modal-overlay">
+          <div class="caixa-modal-confirm" style="max-width: 420px; text-align: center;">
+            <h3 id="confirm-titulo" style="color: #ff0033; letter-spacing: 2px; margin-bottom: 15px;">CONFIRMAÇÃO</h3>
+            <p id="confirm-mensagem" style="margin: 20px 0; font-size: 0.95rem; color: #e0e0e0; line-height: 1.5;"></p>
+            <div class="acoes-modal-confirm" style="justify-content: center; gap: 15px; margin-top: 25px;">
+              <button type="button" class="btn-hud-modal" id="confirm-btn-cancelar">CANCELAR</button>
+              <button type="button" class="btn-hud-modal btn-perigo" id="confirm-btn-ok">CONFIRMAR</button>
+            </div>
+          </div>
+        </div>
       </main>
 
       <footer>
