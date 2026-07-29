@@ -816,18 +816,24 @@ function filtrarCategoria(categoria, btn) {
 
   const seccaoMusica = document.getElementById("musica");
   const seccaoAlbuns = document.getElementById("albuns");
-
-  if (!seccaoMusica || !seccaoAlbuns) return;
+  const seccaoPlaylists = document.getElementById("playlists");
 
   if (categoria === "tudo") {
-    seccaoMusica.style.display = "block";
-    seccaoAlbuns.style.display = "block";
+    if (seccaoMusica) seccaoMusica.style.display = "block";
+    if (seccaoAlbuns) seccaoAlbuns.style.display = "block";
+    if (seccaoPlaylists) seccaoPlaylists.style.display = "block";
   } else if (categoria === "musica") {
-    seccaoMusica.style.display = "block";
-    seccaoAlbuns.style.display = "none";
+    if (seccaoMusica) seccaoMusica.style.display = "block";
+    if (seccaoAlbuns) seccaoAlbuns.style.display = "none";
+    if (seccaoPlaylists) seccaoPlaylists.style.display = "none";
   } else if (categoria === "albuns") {
-    seccaoMusica.style.display = "none";
-    seccaoAlbuns.style.display = "block";
+    if (seccaoMusica) seccaoMusica.style.display = "none";
+    if (seccaoAlbuns) seccaoAlbuns.style.display = "block";
+    if (seccaoPlaylists) seccaoPlaylists.style.display = "none";
+  } else if (categoria === "playlists") {
+    if (seccaoMusica) seccaoMusica.style.display = "none";
+    if (seccaoAlbuns) seccaoAlbuns.style.display = "none";
+    if (seccaoPlaylists) seccaoPlaylists.style.display = "block";
   }
 }
 
@@ -1637,6 +1643,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof carregarRatingsBD === "function") {
     carregarRatingsBD();
   }
+  if (typeof carregarPlaylists === "function") {
+    carregarPlaylists();
+  }
 });
 
 // ==========================================
@@ -1681,6 +1690,7 @@ async function guardarNovaPlaylist(event) {
       mostrarToast("PLAYLIST CRIADA COM SUCESSO!");
       fecharModalCriarPlaylist();
       document.getElementById("form-criar-playlist").reset();
+      carregarPlaylists();
     } else {
       mostrarToast(dados.erro || "ERRO AO CRIAR PLAYLIST");
     }
@@ -1755,8 +1765,82 @@ async function adicionarItemAPlaylist(playlistId, itemId) {
     if (res.ok) {
       mostrarToast("FAIXA ADICIONADA COM SUCESSO!");
       fecharModalAddPlaylist();
+      carregarPlaylists();
     } else {
       mostrarToast(dados.erro || "ERRO AO ADICIONAR");
+    }
+  } catch (err) {
+    mostrarToast("ERRO DE CONEXÃO");
+  }
+}
+
+async function carregarPlaylists() {
+  const container = document.getElementById("grelha-playlists");
+  if (!container) return;
+
+  const token = localStorage.getItem("token_jwt");
+  const userStr = localStorage.getItem("utilizador_ativo");
+  const utilizadorAtivo = userStr ? JSON.parse(userStr) : null;
+  const meuUsername = utilizadorAtivo ? utilizadorAtivo.username : "";
+  const ehAdmin =
+    utilizadorAtivo &&
+    (utilizadorAtivo.is_admin === 1 || utilizadorAtivo.is_admin === 2);
+
+  try {
+    const res = await fetch(`${API_URL}/playlists`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const dados = await res.json();
+
+    if (res.ok && dados.playlists && dados.playlists.length > 0) {
+      container.innerHTML = dados.playlists
+        .map((p) => {
+          const podeEliminar = p.criado_por === meuUsername || ehAdmin;
+          return `
+            <div class="cartao">
+              <div class="top-cartao">
+                <div class="status-indicator"><span class="ponto-pisca"></span> PLAYLIST</div>
+                <div class="acoes-cartao">
+                  ${podeEliminar ? `<button class="btn-share" onclick="eliminarPlaylist(${p.id})">🗑 ELIMINAR</button>` : ""}
+                </div>
+              </div>
+              <img class="imagem-cartao" src="${p.capa || "imagens/pfp.png"}" alt="${escapeHTML(p.nome)}" />
+              <h3>${escapeHTML(p.nome)}</h3>
+              <p style="font-size: 0.8rem; color: #aaa;">Por: ${escapeHTML(p.criado_por)} • ${p.privada ? "🔒 Privada" : "🌐 Pública"}</p>
+              ${p.descricao ? `<p style="font-size: 0.85rem; margin-top: 5px;">${escapeHTML(p.descricao)}</p>` : ""}
+              <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.8rem; color: #ff0033; font-weight: bold;">${p.total_faixas || 0} FAIXAS</span>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    } else {
+      container.innerHTML =
+        "<p style='grid-column: 1/-1; text-align: center; color: #888;'>Nenhuma playlist encontrada. Cria a primeira no botão acima!</p>";
+    }
+  } catch (err) {
+    container.innerHTML =
+      "<p style='grid-column: 1/-1; text-align: center; color: #ff0033;'>Erro ao carregar playlists.</p>";
+  }
+}
+
+async function eliminarPlaylist(playlistId) {
+  if (!confirm("Tens a certeza que queres eliminar esta playlist?")) return;
+  const token = localStorage.getItem("token_jwt");
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API_URL}/playlists/${playlistId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const dados = await res.json();
+    if (res.ok) {
+      mostrarToast("PLAYLIST ELIMINADA COM SUCESSO!");
+      carregarPlaylists();
+    } else {
+      mostrarToast(dados.erro || "ERRO AO ELIMINAR");
     }
   } catch (err) {
     mostrarToast("ERRO DE CONEXÃO");
