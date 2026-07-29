@@ -792,6 +792,68 @@ async function carregarLogsAdmin() {
   }
 }
 
+let resolverConfirmacaoHUD = null;
+
+function fecharConfirmacaoHUD(resultado) {
+  const modal = document.getElementById("modal-confirmacao");
+  if (modal) modal.style.display = "none";
+  if (resolverConfirmacaoHUD) {
+    const resolve = resolverConfirmacaoHUD;
+    resolverConfirmacaoHUD = null;
+    resolve(resultado);
+  }
+}
+
+function mostrarConfirmacaoHUD(mensagem, titulo = "CONFIRMAÇÃO") {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("modal-confirmacao");
+    const elTitulo = document.getElementById("confirm-titulo");
+    const elMensagem = document.getElementById("confirm-mensagem");
+    const btnOk = document.getElementById("confirm-btn-ok");
+    const btnCancelar = document.getElementById("confirm-btn-cancelar");
+
+    if (!modal) {
+      resolve(confirm(mensagem));
+      return;
+    }
+
+    if (resolverConfirmacaoHUD) {
+      fecharConfirmacaoHUD(false);
+    }
+
+    resolverConfirmacaoHUD = resolve;
+
+    if (elTitulo) elTitulo.innerText = titulo;
+    if (elMensagem) elMensagem.innerText = mensagem;
+    modal.style.display = "flex";
+
+    if (btnOk) {
+      btnOk.onclick = () => fecharConfirmacaoHUD(true);
+    }
+    if (btnCancelar) {
+      btnCancelar.onclick = () => fecharConfirmacaoHUD(false);
+    }
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        fecharConfirmacaoHUD(false);
+      }
+    };
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  const modal = document.getElementById("modal-confirmacao");
+  if (modal && modal.style.display === "flex") {
+    if (e.key === "Escape") {
+      fecharConfirmacaoHUD(false);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      fecharConfirmacaoHUD(true);
+    }
+  }
+});
+
 async function eliminarLogIndividual(logId) {
   const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
   const t = typeof traducoes !== "undefined" ? traducoes[idiomaAtual] : null;
