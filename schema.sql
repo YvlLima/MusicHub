@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS seguidores (
     UNIQUE(follower_username, following_username)
 );
 
+CREATE TABLE IF NOT EXISTS ratings (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    item_id VARCHAR(255) NOT NULL,
+    estrelas INT CHECK (estrelas >= 1 AND estrelas <= 5),
+    UNIQUE(username, item_id)
+);
+
 CREATE TABLE IF NOT EXISTS candidaturas (
     id SERIAL PRIMARY KEY,
     tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('artista', 'album')),
@@ -49,6 +57,28 @@ CREATE TABLE IF NOT EXISTS candidaturas (
     description TEXT,
     profile_links TEXT,
     album_link TEXT,
+    status VARCHAR(50) DEFAULT 'pendente',
+    submitted_by VARCHAR(255) NOT NULL,
+    submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by VARCHAR(255),
+    reviewed_date TIMESTAMP,
+    rejection_reason TEXT
+);
+
+CREATE TABLE IF NOT EXISTS historico_candidaturas (
+    id SERIAL PRIMARY KEY,
+    candidatura_id INT NOT NULL REFERENCES candidaturas(id) ON DELETE CASCADE,
+    acao VARCHAR(50) NOT NULL,
+    realizado_por VARCHAR(255) NOT NULL,
+    motivo TEXT,
+    data_acao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS quotes (
+    id SERIAL PRIMARY KEY,
+    texto TEXT NOT NULL,
+    autor VARCHAR(255) NOT NULL,
+    artista VARCHAR(255) NOT NULL,
     status VARCHAR(50) DEFAULT 'pendente',
     submitted_by VARCHAR(255) NOT NULL,
     submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

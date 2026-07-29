@@ -32,7 +32,7 @@ const utilizadoresNovos = [
 async function popularBaseDados() {
   console.log("⚡ A popular a base de dados com os utilizadores...");
 
-  // Garante que a estrutura das tabelas existe (igual ao initDB() do server.js)
+  // Garante a tabela de utilizadores para registo inicial
   await pool.query(`
     CREATE TABLE IF NOT EXISTS utilizadores (
       id SERIAL PRIMARY KEY,
@@ -47,34 +47,6 @@ async function popularBaseDados() {
     );
   `);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS likes (
-      id SERIAL PRIMARY KEY,
-      username VARCHAR(255) NOT NULL,
-      item_id VARCHAR(255) NOT NULL,
-      UNIQUE(username, item_id)
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS logs (
-      id SERIAL PRIMARY KEY,
-      autor VARCHAR(255) NOT NULL,
-      acao VARCHAR(255) NOT NULL,
-      alvo VARCHAR(255) NOT NULL,
-      data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS seguidores (
-      id SERIAL PRIMARY KEY,
-      follower_username VARCHAR(255) NOT NULL,
-      following_username VARCHAR(255) NOT NULL,
-      data_seguido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(follower_username, following_username)
-    );
-  `);
 
   // Insere/atualiza os utilizadores
   for (const u of utilizadoresNovos) {
