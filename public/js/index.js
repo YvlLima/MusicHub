@@ -1417,7 +1417,6 @@ function construirCartaoArtista(item) {
           <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
             ♥ <span id="count-like-${idUnico}" class="contador">0</span>
           </button>
-          <button class="btn-share" onclick="abrirModalAddPlaylist('${idUnico}')">+ PLAYLIST</button>
           ${item.profile_links ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.profile_links)}')">SHARE</button>` : ""}
         </div>
       </div>
@@ -1475,7 +1474,6 @@ function construirCartaoAlbum(item) {
           <button id="btn-like-${idUnico}" class="btn-like" onclick="darLike(this, '${idUnico}')">
             ♥ <span id="count-like-${idUnico}" class="contador">0</span>
           </button>
-          <button class="btn-share" onclick="abrirModalAddPlaylist('${idUnico}')">+ PLAYLIST</button>
           ${item.album_link ? `<button class="btn-share" onclick="copiarLink('${escapeHTML(item.album_link)}')">SHARE</button>` : ""}
         </div>
       </div>
@@ -1643,136 +1641,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof carregarRatingsBD === "function") {
     carregarRatingsBD();
   }
-  if (typeof carregarPlaylists === "function") {
-    carregarPlaylists();
-  }
 });
-
-// ==========================================
-// 8. GESTÃO DE PLAYLISTS (FRONTEND)
-// ==========================================
-let itemIdParaPlaylist = null;
-
-function abrirModalCriarPlaylist() {
-  const modal = document.getElementById("modal-criar-playlist");
-  if (modal) modal.style.display = "flex";
-}
-
-function fecharModalCriarPlaylist() {
-  const modal = document.getElementById("modal-criar-playlist");
-  if (modal) modal.style.display = "none";
-}
-
-async function guardarNovaPlaylist(event) {
-  event.preventDefault();
-  const nome = document.getElementById("playlist-nome").value;
-  const descricao = document.getElementById("playlist-descricao").value;
-  const privada = document.getElementById("playlist-privada").checked;
-  const token = localStorage.getItem("token_jwt");
-
-  if (!token) {
-    mostrarToast("DEVES ESTAR AUTENTICADO!");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/playlists`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ nome, descricao, privada }),
-    });
-
-    const dados = await res.json();
-    if (res.ok) {
-      mostrarToast("PLAYLIST CRIADA COM SUCESSO!");
-      fecharModalCriarPlaylist();
-      document.getElementById("form-criar-playlist").reset();
-      carregarPlaylists();
-    } else {
-      mostrarToast(dados.erro || "ERRO AO CRIAR PLAYLIST");
-    }
-  } catch (err) {
-    mostrarToast("ERRO AO COMUNICAR COM O SERVIDOR");
-  }
-}
-
-async function abrirModalAddPlaylist(itemId) {
-  itemIdParaPlaylist = itemId;
-  const modal = document.getElementById("modal-add-playlist");
-  const container = document.getElementById("lista-playlists-disponiveis");
-  if (!modal || !container) return;
-
-  container.innerHTML = "<p>A carregar playlists...</p>";
-  modal.style.display = "flex";
-
-  const token = localStorage.getItem("token_jwt");
-  try {
-    const res = await fetch(`${API_URL}/playlists`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    const dados = await res.json();
-
-    if (res.ok && dados.playlists && dados.playlists.length > 0) {
-      container.innerHTML = dados.playlists
-        .map(
-          (p) => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,0,51,0.2);">
-            <div>
-              <strong>${escapeHTML(p.nome)}</strong>
-              <div style="font-size: 0.75rem; color: #888;">${p.total_faixas} faixas • ${p.privada ? "Privada" : "Pública"}</div>
-            </div>
-            <button class="btn-hud" style="padding: 4px 10px; font-size: 0.75rem;" onclick="adicionarItemAPlaylist(${p.id}, '${itemId}')">+ ADICIONAR</button>
-          </div>
-        `,
-        )
-        .join("");
-    } else {
-      container.innerHTML =
-        "<p>Nenhuma playlist encontrada. Cria uma primeiro!</p>";
-    }
-  } catch (err) {
-    container.innerHTML = "<p>Erro ao carregar playlists.</p>";
-  }
-}
-
-function fecharModalAddPlaylist() {
-  const modal = document.getElementById("modal-add-playlist");
-  if (modal) modal.style.display = "none";
-  itemIdParaPlaylist = null;
-}
-
-async function adicionarItemAPlaylist(playlistId, itemId) {
-  const token = localStorage.getItem("token_jwt");
-  if (!token) {
-    mostrarToast("FAZ LOGIN PARA ADICIONAR À PLAYLIST!");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/playlists/${playlistId}/tracks`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ item_id: itemId }),
-    });
-
-    const dados = await res.json();
-    if (res.ok) {
-      mostrarToast("FAIXA ADICIONADA COM SUCESSO!");
-      fecharModalAddPlaylist();
-      carregarPlaylists();
-    } else {
-      mostrarToast(dados.erro || "ERRO AO ADICIONAR");
-    }
-  } catch (err) {
-    mostrarToast("ERRO DE CONEXÃO");
-  }
-}
 
 function mostrarConfirmacaoHUD(mensagem, titulo = "CONFIRMAÇÃO HUD") {
   return new Promise((resolve) => {
@@ -1801,86 +1670,4 @@ function mostrarConfirmacaoHUD(mensagem, titulo = "CONFIRMAÇÃO HUD") {
     btnOk.onclick = () => fechar(true);
     btnCancelar.onclick = () => fechar(false);
   });
-}
-
-async function carregarPlaylists() {
-  const container = document.getElementById("grelha-playlists");
-  if (!container) return;
-
-  const token = localStorage.getItem("token_jwt");
-  const userStr = localStorage.getItem("utilizador_ativo");
-  const utilizadorAtivo = userStr ? JSON.parse(userStr) : null;
-  const meuUsername = utilizadorAtivo ? utilizadorAtivo.username : "";
-  const ehAdmin =
-    utilizadorAtivo &&
-    (utilizadorAtivo.is_admin === 1 || utilizadorAtivo.is_admin === 2);
-
-  try {
-    const res = await fetch(`${API_URL}/playlists`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    const dados = await res.json();
-
-    if (res.ok && dados.playlists && dados.playlists.length > 0) {
-      container.innerHTML = dados.playlists
-        .map((p) => {
-          const podeEliminar = p.criado_por === meuUsername || ehAdmin;
-          return `
-            <div class="cartao">
-              <div class="top-cartao">
-                <div class="status-indicator"><span class="ponto-pisca"></span> PLAYLIST</div>
-                <div class="acoes-cartao">
-                  ${podeEliminar ? `<button class="btn-share" style="color: #ff0033; border-color: #ff0033;" onclick="eliminarPlaylist(${p.id})">🗑 ELIMINAR</button>` : ""}
-                </div>
-              </div>
-              <img class="imagem-cartao" src="${p.capa || "imagens/pfp.png"}" alt="${escapeHTML(p.nome)}" style="object-fit: cover;" />
-              <h3>${escapeHTML(p.nome)}</h3>
-              <p style="font-size: 0.8rem; color: #aaa; margin: 4px 0;">Por: <strong style="color: #ffffff;">${escapeHTML(p.criado_por)}</strong> • ${p.privada ? "🔒 Privada" : "🌐 Pública"}</p>
-              ${p.descricao ? `<p style="font-size: 0.85rem; color: #cccccc; margin-top: 6px;">${escapeHTML(p.descricao)}</p>` : ""}
-              <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,0,51,0.2); padding-top: 10px;">
-                <span style="font-size: 0.85rem; color: #ff0033; font-weight: bold; letter-spacing: 1px;">${p.total_faixas || 0} FAIXAS</span>
-              </div>
-            </div>
-          `;
-        })
-        .join("");
-    } else {
-      container.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 35px 20px; background: rgba(255,0,51,0.04); border: 1px dashed rgba(255,0,51,0.3); border-radius: 8px; margin: 10px 0;">
-          <p style="font-size: 1.1rem; color: #ff0033; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px;">NENHUMA PLAYLIST ENCONTRADA</p>
-          <p style="font-size: 0.85rem; color: #cccccc;">Cria a tua primeira playlist no botão <strong style="color: #ffffff;">+ CRIAR PLAYLIST</strong> acima!</p>
-        </div>
-      `;
-    }
-  } catch (err) {
-    container.innerHTML =
-      "<p style='grid-column: 1/-1; text-align: center; color: #ff0033;'>Erro ao carregar playlists.</p>";
-  }
-}
-
-async function eliminarPlaylist(playlistId) {
-  const confirmado = await mostrarConfirmacaoHUD(
-    "Tens a certeza que queres eliminar esta playlist?",
-    "ELIMINAR PLAYLIST",
-  );
-  if (!confirmado) return;
-
-  const token = localStorage.getItem("token_jwt");
-  if (!token) return;
-
-  try {
-    const res = await fetch(`${API_URL}/playlists/${playlistId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const dados = await res.json();
-    if (res.ok) {
-      mostrarToast("PLAYLIST ELIMINADA COM SUCESSO!");
-      carregarPlaylists();
-    } else {
-      mostrarToast(dados.erro || "ERRO AO ELIMINAR");
-    }
-  } catch (err) {
-    mostrarToast("ERRO DE CONEXÃO");
-  }
 }

@@ -141,12 +141,6 @@
           >
             APROVAR QUOTES
           </button>
-          <button
-            class="btn-hud"
-            onclick="abrirModalCriarPlaylist()"
-          >
-            + CRIAR PLAYLIST
-          </button>
           <button class="btn-hud" data-i18n="btnPerfil" onclick="abrirPerfil()">
             PERFIL
           </button>
@@ -208,13 +202,6 @@
             onclick="filtrarCategoria('albuns', this)"
           >
             ÁLBUNS
-          </button>
-          <button
-            type="button"
-            class="btn-filtro"
-            onclick="filtrarCategoria('playlists', this)"
-          >
-            PLAYLISTS
           </button>
         </div>
 
@@ -454,17 +441,6 @@
               margin-top: 15px;
             "
           ></div>
-        </section>
-
-        <!-- SECÇÃO: PLAYLISTS -->
-        <section id="playlists" class="seccao">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-            <h2>Playlists</h2>
-            <button class="btn-hud" onclick="abrirModalCriarPlaylist()">+ CRIAR PLAYLIST</button>
-          </div>
-          <div id="grelha-playlists" class="grelha">
-            <!-- Playlists injetadas dinamicamente via JS -->
-          </div>
         </section>
 
         <!-- SECÇÃO: PAINEL DE ADMINISTRAÇÃO -->
@@ -886,44 +862,6 @@
             <button class="btn-hud-modal" onclick="fecharModalInfoItem()">
               FECHAR
             </button>
-          </div>
-        </div>
-
-        <!-- Modal Criar Playlist -->
-        <div id="modal-criar-playlist" class="modal-overlay">
-          <div class="caixa-modal-confirm" style="max-width: 480px;">
-            <h3>CRIAR NOVA PLAYLIST</h3>
-            <form id="form-criar-playlist" onsubmit="guardarNovaPlaylist(event)">
-              <div class="campo-modal">
-                <label>NOME DA PLAYLIST *</label>
-                <input type="text" id="playlist-nome" placeholder="Ex: Cyberpunk Vibes 2026" required />
-              </div>
-              <div class="campo-modal">
-                <label>DESCRIÇÃO</label>
-                <textarea id="playlist-descricao" placeholder="Descreve o mood da playlist..." rows="3"></textarea>
-              </div>
-              <div class="campo-modal">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="playlist-privada" />
-                  <span>Playlist Privada (Visível apenas para mim)</span>
-                </label>
-              </div>
-              <div class="acoes-modal-confirm">
-                <button type="button" class="btn-hud-modal" onclick="fecharModalCriarPlaylist()">CANCELAR</button>
-                <button type="submit" class="btn-hud-modal btn-perigo">CRIAR PLAYLIST</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Modal Adicionar a Playlist -->
-        <div id="modal-add-playlist" class="modal-overlay">
-          <div class="caixa-modal-confirm" style="max-width: 480px;">
-            <h3>ADICIONAR À PLAYLIST</h3>
-            <div id="lista-playlists-disponiveis" style="max-height: 250px; overflow-y: auto; margin: 15px 0; text-align: left;">
-              <!-- Preenchido via JS -->
-            </div>
-            <button class="btn-hud-modal" onclick="fecharModalAddPlaylist()">FECHAR</button>
           </div>
         </div>
 
