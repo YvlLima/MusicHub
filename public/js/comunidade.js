@@ -195,7 +195,9 @@ async function carregarPaginaComunidade() {
       return;
     }
 
-    if (!dados.utilizadores || dados.utilizadores.length === 0) {
+    const listaMembros = Array.isArray(dados) ? dados : (dados.utilizadores || []);
+
+    if (listaMembros.length === 0) {
       container.innerHTML =
         "<p style='color: #888;'>Nenhum utilizador encontrado.</p>";
       return;
@@ -204,7 +206,7 @@ async function carregarPaginaComunidade() {
     const idiomaAtual = localStorage.getItem("idioma_preferido") || "pt";
     const t = traducoes[idiomaAtual] || traducoes["pt"];
 
-    container.innerHTML = dados.utilizadores
+    container.innerHTML = listaMembros
       .map((u) => {
         const numSeguidores = Number(u.followers) || 0;
         const numSeguindo = Number(u.following) || 0;
