@@ -33,15 +33,25 @@ async function carregarCatalogoAprovados() {
   }
 }
 
+const deparaLegado = {
+  lon3r: "cand_1",
+  carti: "cand_2",
+  ken: "cand_3",
+  album_94: "cand_4",
+  album_wlr: "cand_5",
+  album_agc: "cand_6",
+};
+
 function obterInfoMidia(id) {
+  const idChave = deparaLegado[id] || id;
+  if (cacheItensAprovados[idChave]) {
+    return cacheItensAprovados[idChave];
+  }
   if (catalogoMidia[id]) {
     return {
       ...catalogoMidia[id],
       tipo: String(id).startsWith("album_") ? "album" : "artista",
     };
-  }
-  if (cacheItensAprovados[id]) {
-    return cacheItensAprovados[id];
   }
   return {
     nome: id,
