@@ -2,13 +2,13 @@
 // 0. CATÁLOGO GLOBAL DE MÍDIA E AUXILIAR
 // ==========================================
 const catalogoMidia = {
-  lon3r: { nome: "Lon3r Johny", imagem: "imagens/lon3r.png" },
-  carti: { nome: "Playboi Carti", imagem: "imagens/carti.png" },
-  ken: { nome: "Ken Carson", imagem: "imagens/ken.png" },
-  zara_g: { nome: "Zara G", imagem: "imagens/zara_g.png" },
-  album_94: { nome: "94", imagem: "imagens/94.png" },
-  album_wlr: { nome: "Whole Lotta Red", imagem: "imagens/wlr.png" },
-  album_agc: { nome: "A Great Chaos (Deluxe)", imagem: "imagens/agc.png" },
+  lon3r: { nome: "Lon3r Johny", imagem: "imagens/pfp.png" },
+  carti: { nome: "Playboi Carti", imagem: "imagens/pfp.png" },
+  ken: { nome: "Ken Carson", imagem: "imagens/pfp.png" },
+  zara_g: { nome: "Zara G", imagem: "imagens/pfp.png" },
+  album_94: { nome: "94", imagem: "imagens/pfp.png" },
+  album_wlr: { nome: "Whole Lotta Red", imagem: "imagens/pfp.png" },
+  album_agc: { nome: "A Great Chaos (Deluxe)", imagem: "imagens/pfp.png" },
 };
 
 let cacheItensAprovados = {};
