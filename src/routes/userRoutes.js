@@ -275,6 +275,10 @@ router.get("/users/:username/full-profile", async (req, res) => {
       user,
       seguidores: seguidoresRes.rows[0].total,
       aSeguir: aSeguirRes.rows[0].total,
+      stats: {
+        followers: seguidoresRes.rows[0].total,
+        following: aSeguirRes.rows[0].total,
+      },
       likes: likesRes.rows.map((r) => r.item_id),
     });
   } catch (err) {

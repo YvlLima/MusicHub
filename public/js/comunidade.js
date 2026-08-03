@@ -327,11 +327,14 @@ async function abrirPerfilMembro(username) {
     limiteArtistasExibidos = 5;
     limiteAlbunsExibidos = 5;
 
+    const totalSeguidores = (dados.stats && dados.stats.followers) ?? dados.seguidores ?? 0;
+    const totalSeguindo = (dados.stats && dados.stats.following) ?? dados.aSeguir ?? 0;
+
     document.getElementById("out-pfp").src =
       dados.user.pfp || "imagens/pfp.png";
     document.getElementById("out-username").innerText = dados.user.username;
-    document.getElementById("out-seguidores").innerText = dados.stats.followers;
-    document.getElementById("out-seguindo").innerText = dados.stats.following;
+    document.getElementById("out-seguidores").innerText = totalSeguidores;
+    document.getElementById("out-seguindo").innerText = totalSeguindo;
 
     const btnSeguir = document.getElementById("out-btn-seguir");
     btnSeguir.onclick = async () => {
