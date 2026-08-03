@@ -59,6 +59,11 @@ app.use(express.static(path.join(__dirname, "public")));
 // Inicializar tabelas da base de dados PostgreSQL
 initDB();
 
+// Rota Health Check para Monitorização de Estado no Frontend
+app.get("/api/health", (req, res) => {
+  res.json({ status: "online", ok: true, timestamp: new Date() });
+});
+
 // Registar Rotas da API
 app.use("/api", authRoutes);
 app.use("/api", userRoutes);

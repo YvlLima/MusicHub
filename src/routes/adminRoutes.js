@@ -30,7 +30,9 @@ router.get("/admin/stats", autenticarToken, verificarAdmin, async (req, res) => 
     const totalLikes = await pool.query("SELECT COUNT(*)::int AS count FROM likes");
 
     res.json({
+      totalUsers: totalUsers.rows[0].count,
       totalUtilizadores: totalUsers.rows[0].count,
+      totalMods: totalMods.rows[0].count,
       totalModeradores: totalMods.rows[0].count,
       totalLikes: totalLikes.rows[0].count,
     });

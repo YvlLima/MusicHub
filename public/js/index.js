@@ -554,7 +554,8 @@ async function carregarUtilizadoresAdmin() {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    dados.utilizadores.forEach((user) => {
+    const listaUtilizadores = Array.isArray(dados) ? dados : (dados.utilizadores || []);
+    listaUtilizadores.forEach((user) => {
       const tr = document.createElement("tr");
 
       const eAdmin = user.username === "YvlLima";
@@ -710,13 +711,15 @@ async function carregarStatsEGlags() {
     const dados = await resposta.json();
     if (!resposta.ok) return;
 
+    const statsObj = dados.stats || dados || {};
+
     const elTotalUsers = document.getElementById("stat-total-users");
     const elTotalMods = document.getElementById("stat-total-mods");
     const elTotalLikes = document.getElementById("stat-total-likes");
 
-    if (elTotalUsers) elTotalUsers.innerText = dados.stats.totalUsers;
-    if (elTotalMods) elTotalMods.innerText = dados.stats.totalMods;
-    if (elTotalLikes) elTotalLikes.innerText = dados.stats.totalLikes;
+    if (elTotalUsers) elTotalUsers.innerText = statsObj.totalUsers || statsObj.totalUtilizadores || 0;
+    if (elTotalMods) elTotalMods.innerText = statsObj.totalMods || statsObj.totalModeradores || 0;
+    if (elTotalLikes) elTotalLikes.innerText = statsObj.totalLikes || 0;
 
     await carregarLogsAdmin();
   } catch (err) {
@@ -980,16 +983,16 @@ async function carregarRatingsBD() {
       `${API_URL}/ratings?username=${encodeURIComponent(username)}`,
     );
     const dados = await res.json();
-    if (!res.ok) return;
-
-    for (const [itemId, info] of Object.entries(dados.estatisticas)) {
+    const estatisticasObj = (dados && (dados.estatisticas || dados)) || {};
+    for (const [itemId, info] of Object.entries(estatisticasObj)) {
+      if (!info || typeof info !== "object") continue;
       const elInfo = document.getElementById(`info-rating-${itemId}`);
       if (elInfo) {
-        elInfo.innerText = `${info.media} ★ (${info.total})`;
+        elInfo.innerText = `${info.media || 0} ★ (${info.total || 0})`;
       }
     }
 
-    if (dados.minhasNotas) {
+    if (dados && dados.minhasNotas) {
       for (const [itemId, nota] of Object.entries(dados.minhasNotas)) {
         const box = document.querySelector(
           `.rating-box[data-item='${itemId}']`,
