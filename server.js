@@ -13,8 +13,21 @@ const adminRoutes = require("./src/routes/adminRoutes");
 const ratingsRoutes = require("./src/routes/ratingsRoutes");
 const likesRoutes = require("./src/routes/likesRoutes");
 
+const rateLimit = require("express-rate-limit");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configuração de Limitação de Taxa (Rate Limiting)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 500, // Limite de 500 requisições por IP a cada 15m
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: "Demasiadas requisições. Tenta novamente mais tarde." },
+});
+
+app.use("/api", apiLimiter);
 
 // Configuração de Segurança de Origens (CORS)
 const allowedOrigins = [
