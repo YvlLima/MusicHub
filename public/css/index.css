@@ -2132,3 +2132,37 @@ footer p {
   box-shadow: 0 0 12px rgba(255, 0, 51, 0.4);
 }
 
+@media (max-width: 480px) {
+  .container-abas-moderacao {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+    margin: 15px 0 25px 0;
+  }
+
+  .btn-aba-moderacao {
+    width: 100%;
+    padding: 11px 16px;
+    font-size: 0.8rem;
+  }
+
+  .caixa-player-fundo {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+
+  .player-info {
+    max-width: 130px;
+  }
+
+  #slider-volume-fundo {
+    width: 50px;
+  }
+}
+
+
