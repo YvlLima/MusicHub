@@ -168,7 +168,6 @@ async function carregarDadosSociaisPerfil() {
 // 3. PÁGINA E PERFIS DA COMUNIDADE
 // ==========================================
 async function carregarPaginaComunidade() {
-  await carregarCatalogoAprovados();
   const container = document.getElementById("lista-comunidade");
   if (!container) return;
 

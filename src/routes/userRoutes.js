@@ -202,11 +202,34 @@ router.delete("/delete-profile", autenticarToken, async (req, res) => {
   }
 });
 
-// OBTER LISTA DE MEMBROS DA COMUNIDADE
+// OBTER LISTA DE MEMBROS DA COMUNIDADE (OTIMIZADO COM ESTATÍSTICAS E FOLLOW STATUS)
 router.get("/users", async (req, res) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  let currentUser = "";
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      currentUser = decoded.username || "";
+    } catch (e) {
+      currentUser = "";
+    }
+  }
+
   try {
     const result = await pool.query(
-      "SELECT id, username, pfp, is_admin FROM utilizadores ORDER BY username ASC",
+      `SELECT 
+        u.id, 
+        u.username, 
+        u.pfp, 
+        u.is_admin,
+        (SELECT COUNT(*)::int FROM seguidores WHERE following_username = u.username) AS followers,
+        (SELECT COUNT(*)::int FROM seguidores WHERE follower_username = u.username) AS following,
+        EXISTS(SELECT 1 FROM seguidores WHERE follower_username = $1 AND following_username = u.username) AS ja_segue
+      FROM utilizadores u
+      ORDER BY u.username ASC`,
+      [currentUser],
     );
     res.json(result.rows);
   } catch (err) {
