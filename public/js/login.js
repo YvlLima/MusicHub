@@ -173,16 +173,6 @@ function alternarModoRecuperar(e) {
   document.getElementById("form-auth").reset();
 }
 
-function enviarEmailResetCodigo(destinoEmail, nomeUtilizador, codigo) {
-  if (!destinoEmail || typeof emailjs === "undefined") return Promise.resolve();
-  return emailjs.send("service_wwb9l28", "template_b05m25i", {
-    to_name: nomeUtilizador,
-    email: destinoEmail,
-    codigo,
-    message: `O teu código de recuperação de password é: ${codigo}. Válido por 15 minutos.`,
-  });
-}
-
 function carregarPFPRegisto(e) {
   const file = e.target.files[0];
   if (!file) {
@@ -250,7 +240,7 @@ async function processarAuth(e) {
     localStorage.setItem("token_jwt", tokenJWT);
     localStorage.setItem("utilizador_ativo", JSON.stringify(utilizadorDados));
 
-    if (isRegister && emailInput) {
+    if (isRegister && emailInput && typeof enviarEmailFeedback === "function") {
       enviarEmailFeedback(emailInput, user);
     }
 
@@ -291,14 +281,6 @@ async function pedirCodigoRecuperacao() {
 
     const dados = await resposta.json();
     if (!resposta.ok) return mostrarToast(dados.erro || "ERRO!");
-
-    if (!dados.emailEnviado && dados.codigo) {
-      try {
-        await enviarEmailResetCodigo(dados.email, dados.username, dados.codigo);
-      } catch (err) {
-        console.error("Erro ao enviar email de reset:", err);
-      }
-    }
 
     resetDados = { username: dados.username, email: dados.email };
     document.getElementById("auth-username").value = dados.username;

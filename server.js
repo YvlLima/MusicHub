@@ -81,10 +81,6 @@ async function initDB() {
       );
     `);
 
-    await pool.query(`
-      ALTER TABLE utilizadores 
-      ADD COLUMN IF NOT EXISTS tentativas_falhadas INT DEFAULT 0;
-    `);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS likes (
@@ -258,6 +254,7 @@ function verificarModOuAdmin(req, res, next) {
 
 function validarImagemBase64(str) {
   if (!str || str === "imagens/pfp.png") return true;
+  if (typeof str !== "string" || str.length > 7000000) return false;
   return /^data:image\/(png|jpeg|jpg|webp|gif);base64,/.test(str);
 }
 
@@ -351,26 +348,31 @@ app.post("/api/login", loginLimiter, async (req, res) => {
       return res.status(400).json({ erro: "ERRO NOS DADOS DO UTILIZADOR!" });
     }
 
-    const tentativas = user.tentativas_falhadas || 0;
+    let tentativas = user.tentativas_falhadas || 0;
+    const ultimoAcesso = user.ultimo_login ? new Date(user.ultimo_login).getTime() : 0;
+    const minutosDecorridos = (Date.now() - ultimoAcesso) / (1000 * 60);
 
     if (tentativas >= 5) {
-      return res
-        .status(403)
-        .json({ erro: "CONTA BLOQUEADA POR EXCESSO DE TENTATIVAS!" });
+      if (minutosDecorridos < 15) {
+        return res
+          .status(403)
+          .json({ erro: "CONTA TEMPORARIAMENTE BLOQUEADA. TENTA APÓS 15 MINUTOS!" });
+      }
+      tentativas = 0;
     }
 
     const passCorreta = await bcrypt.compare(password, user.password_hash);
 
     if (!passCorreta) {
       await pool.query(
-        "UPDATE utilizadores SET tentativas_falhadas = $1 WHERE id = $2",
+        "UPDATE utilizadores SET tentativas_falhadas = $1, ultimo_login = CURRENT_TIMESTAMP WHERE id = $2",
         [tentativas + 1, user.id],
       );
       return res.status(400).json({ erro: "UTILIZADOR OU PASS INCORRETA!" });
     }
 
     await pool.query(
-      "UPDATE utilizadores SET tentativas_falhadas = 0 WHERE id = $1",
+      "UPDATE utilizadores SET tentativas_falhadas = 0, ultimo_login = CURRENT_TIMESTAMP WHERE id = $1",
       [user.id],
     );
 
@@ -421,15 +423,16 @@ app.post("/api/register", registerLimiter, async (req, res) => {
 
   try {
     const hash = await bcrypt.hash(password, 10);
-    const isAdminVal = username === SUPER_ADMIN ? 1 : 0;
 
-    await pool.query(
-      "INSERT INTO utilizadores (username, email, password_hash, pfp, is_admin, tentativas_falhadas) VALUES ($1, $2, $3, $4, $5, 0)",
-      [username, email, hash, foto, isAdminVal],
+    const insertRes = await pool.query(
+      "INSERT INTO utilizadores (username, email, password_hash, pfp, is_admin, tentativas_falhadas) VALUES ($1, $2, $3, $4, 0, 0) RETURNING id",
+      [username, email, hash, foto],
     );
 
+    const newUserId = insertRes.rows[0].id;
+
     const token = jwt.sign(
-      { username, email, is_admin: isAdminVal },
+      { id: newUserId, username, email, is_admin: 0 },
       JWT_SECRET,
       { expiresIn: "7d" },
     );
@@ -437,7 +440,7 @@ app.post("/api/register", registerLimiter, async (req, res) => {
     res.json({
       mensagem: "Registo efetuado com sucesso!",
       token,
-      user: { username, email, pfp: foto, is_admin: isAdminVal },
+      user: { username, email, pfp: foto, is_admin: 0 },
     });
   } catch (err) {
     if (err.code === "23505") {
@@ -511,11 +514,10 @@ app.post("/api/forgot-password", resetLimiter, async (req, res) => {
     res.json({
       mensagem: emailEnviado
         ? "CÓDIGO ENVIADO PARA O TEU E-MAIL!"
-        : "PEDIDO VALIDADO! VERIFICA O TEU E-MAIL.",
+        : "PEDIDO VALIDADO. VERIFICA O TEU E-MAIL.",
       emailEnviado,
       email: user.email,
       username: user.username,
-      ...(emailEnviado ? {} : { codigo }),
     });
   } catch (err) {
     console.error("Erro no pedido de reset:", err);
@@ -686,59 +688,97 @@ app.put("/api/update-profile", autenticarToken, async (req, res) => {
       .json({ erro: "Formato de imagem de perfil inválido." });
   }
 
+  const client = await pool.connect();
+
   try {
+    await client.query("BEGIN");
+
     if (newUsername !== currentUsername) {
-      const existe = await pool.query(
+      const existe = await client.query(
         "SELECT id FROM utilizadores WHERE username = $1",
         [newUsername],
       );
       if (existe.rows.length > 0) {
+        await client.query("ROLLBACK");
         return res.status(400).json({ erro: "Nome de utilizador já existe!" });
       }
     }
 
     if (newPassword) {
       const hash = await bcrypt.hash(newPassword, 10);
-      await pool.query(
+      await client.query(
         "UPDATE utilizadores SET username = $1, email = $2, password_hash = $3, pfp = $4 WHERE username = $5",
         [newUsername, email, hash, pfp || "imagens/pfp.png", currentUsername],
       );
     } else {
-      await pool.query(
+      await client.query(
         "UPDATE utilizadores SET username = $1, email = $2, pfp = $3 WHERE username = $4",
         [newUsername, email, pfp || "imagens/pfp.png", currentUsername],
       );
     }
 
     if (newUsername !== currentUsername) {
-      await pool.query("UPDATE likes SET username = $1 WHERE username = $2", [
+      await client.query("UPDATE likes SET username = $1 WHERE username = $2", [
         newUsername,
         currentUsername,
       ]);
-      await pool.query(
+      await client.query(
         "UPDATE seguidores SET follower_username = $1 WHERE follower_username = $2",
         [newUsername, currentUsername],
       );
-      await pool.query(
+      await client.query(
         "UPDATE seguidores SET following_username = $1 WHERE following_username = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE ratings SET username = $1 WHERE username = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE candidaturas SET submitted_by = $1 WHERE submitted_by = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE candidaturas SET reviewed_by = $1 WHERE reviewed_by = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE quotes SET submitted_by = $1 WHERE submitted_by = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE quotes SET reviewed_by = $1 WHERE reviewed_by = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE logs SET autor = $1 WHERE autor = $2",
+        [newUsername, currentUsername],
+      );
+      await client.query(
+        "UPDATE logs SET alvo = $1 WHERE alvo = $2",
         [newUsername, currentUsername],
       );
     }
 
+    await client.query("COMMIT");
+
     const novoToken = jwt.sign(
-      { username: newUsername, email, is_admin: req.user.is_admin },
+      { id: req.user.id, username: newUsername, email, is_admin: req.user.is_admin },
       JWT_SECRET,
       { expiresIn: "7d" },
     );
 
     res.json({ mensagem: "Perfil atualizado com sucesso!", token: novoToken });
   } catch (err) {
+    await client.query("ROLLBACK");
     if (err.code === "23505") {
       return res
         .status(400)
         .json({ erro: "Nome de utilizador ou e-mail já existe." });
     }
     res.status(500).json({ erro: "Erro interno no servidor." });
+  } finally {
+    client.release();
   }
 });
 

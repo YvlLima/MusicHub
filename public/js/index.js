@@ -1776,31 +1776,4 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-function mostrarConfirmacaoHUD(mensagem, titulo = "CONFIRMAÇÃO HUD") {
-  return new Promise((resolve) => {
-    const modal = document.getElementById("modal-confirmacao");
-    const elTitulo = document.getElementById("confirm-titulo");
-    const elMensagem = document.getElementById("confirm-mensagem");
-    const btnOk = document.getElementById("confirm-btn-ok");
-    const btnCancelar = document.getElementById("confirm-btn-cancelar");
 
-    if (!modal || !btnOk || !btnCancelar) {
-      resolve(confirm(mensagem));
-      return;
-    }
-
-    if (elTitulo) elTitulo.innerText = titulo;
-    if (elMensagem) elMensagem.innerText = mensagem;
-    modal.style.display = "flex";
-
-    const fechar = (resultado) => {
-      modal.style.display = "none";
-      btnOk.onclick = null;
-      btnCancelar.onclick = null;
-      resolve(resultado);
-    };
-
-    btnOk.onclick = () => fechar(true);
-    btnCancelar.onclick = () => fechar(false);
-  });
-}
