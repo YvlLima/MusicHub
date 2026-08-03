@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Painel de Moderação - Music Hub</title>
+    <title>Painel de Moderação — Music Hub</title>
 
     <link rel="icon" type="image/png" href="imagens/favicon.png" />
     <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/admin-quotes.css" />
   </head>
   <body>
     <!-- Proteção de Acesso ao Painel de Admin -->
@@ -74,7 +75,7 @@
           </svg>
         </div>
 
-        <h1 data-text="MODERAÇÃO" data-i18n="modPainelTitulo">
+        <h1 data-text="PAINEL DE MODERAÇÃO" data-i18n="modPainelTitulo">
           PAINEL DE MODERAÇÃO
         </h1>
 
@@ -86,7 +87,7 @@
           <button
             class="btn-hud"
             data-i18n="adminBtnAtualizar"
-            onclick="carregarCandidaturas()"
+            onclick="atualizarAbaAtiva()"
           >
             🔄 ATUALIZAR
           </button>
@@ -100,8 +101,31 @@
         </div>
       </header>
 
+      <!-- Separadores de Moderação (Tabs) -->
+      <div class="container-abas-moderacao">
+        <button
+          type="button"
+          id="aba-btn-candidaturas"
+          class="btn-aba-moderacao ativo"
+          data-i18n="tabAprovacaoCandidaturas"
+          onclick="alternarAbaModeracao('candidaturas')"
+        >
+          💿 CANDIDATURAS
+        </button>
+        <button
+          type="button"
+          id="aba-btn-quotes"
+          class="btn-aba-moderacao"
+          data-i18n="tabAprovacaoQuotes"
+          onclick="alternarAbaModeracao('quotes')"
+        >
+          💬 QUOTES
+        </button>
+      </div>
+
       <main>
-        <section class="seccao">
+        <!-- Aba 1: Candidaturas de Artistas e Álbuns -->
+        <section id="seccao-candidaturas" class="seccao">
           <h2 data-i18n="modSubmissoesTitulo">
             Candidaturas de Artistas/Álbuns
           </h2>
@@ -138,9 +162,38 @@
             </p>
           </div>
         </section>
+
+        <!-- Aba 2: Quotes Sugeridas -->
+        <section id="seccao-quotes" class="seccao" style="display: none">
+          <h2 data-i18n="quotesSecaoTitulo">QUOTES SUGERIDAS PENDENTES</h2>
+
+          <div class="stats-admin-container">
+            <div class="card-stat">
+              <span class="stat-num" id="stat-total-pendentes">0</span>
+              <span class="stat-label" data-i18n="quotesStatPendentes">
+                PENDENTES
+              </span>
+            </div>
+          </div>
+
+          <table class="tabela-admin tabela-quotes">
+            <thead>
+              <tr>
+                <th data-i18n="quotesTabelaQuote">QUOTE</th>
+                <th data-i18n="quotesTabelaArtista">ARTISTA</th>
+                <th data-i18n="quotesTabelaCom">SUGERIDA POR</th>
+                <th data-i18n="quotesTabelaData">DATA</th>
+                <th data-i18n="quotesTabelaAcoes">AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody id="lista-quotes-pendentes-body">
+              <!-- Injetado via JS -->
+            </tbody>
+          </table>
+        </section>
       </main>
 
-      <!-- Modal para Rejeitar com Motivo -->
+      <!-- Modal para Rejeitar Candidatura com Motivo -->
       <div id="modal-rejeicao" class="modal-overlay">
         <div class="caixa-modal-confirm">
           <h3 data-i18n="modModalRejeicaoTitulo">MOTIVO DA REJEIÇÃO</h3>
@@ -175,7 +228,7 @@
         </div>
       </div>
 
-      <!-- Modal para Visualizar Histórico -->
+      <!-- Modal para Visualizar Histórico de Candidatura -->
       <div id="modal-historico" class="modal-overlay">
         <div
           class="caixa-modal-confirm"
@@ -197,6 +250,37 @@
               onclick="fecharModalHistorico()"
             >
               FECHAR
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Confirmação para Quotes -->
+      <div id="modal-confirmacao" class="modal-overlay">
+        <div class="caixa-modal-confirm">
+          <h3 id="modal-confirm-titulo" data-i18n="modalConfirmacaoTitulo">
+            CONFIRMAÇÃO
+          </h3>
+          <p id="modal-confirm-texto" data-i18n="modalConfirmacaoTexto">
+            Tens a certeza que queres prosseguir?
+          </p>
+
+          <div class="acoes-modal-confirm">
+            <button
+              type="button"
+              id="btn-modal-cancelar"
+              class="btn-hud-modal"
+              data-i18n="subBtnCancelar"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              id="btn-modal-confirmar"
+              class="btn-hud-modal btn-perigo"
+              data-i18n="btnConfirmar"
+            >
+              CONFIRMAR
             </button>
           </div>
         </div>
@@ -225,11 +309,45 @@
     </div>
 
     <!-- Scripts JS -->
+    <script src="js/config.js"></script>
     <script src="js/translations.js"></script>
     <script src="js/index.js"></script>
     <script src="js/login.js"></script>
     <script src="js/admin-submissions.js"></script>
+    <script src="js/admin-quotes.js"></script>
     <script>
+      let abaAtiva = "candidaturas";
+
+      function alternarAbaModeracao(aba) {
+        abaAtiva = aba;
+        const seccaoCand = document.getElementById("seccao-candidaturas");
+        const seccaoQuotes = document.getElementById("seccao-quotes");
+        const btnCand = document.getElementById("aba-btn-candidaturas");
+        const btnQuotes = document.getElementById("aba-btn-quotes");
+
+        if (aba === "candidaturas") {
+          if (seccaoCand) seccaoCand.style.display = "block";
+          if (seccaoQuotes) seccaoQuotes.style.display = "none";
+          if (btnCand) btnCand.classList.add("ativo");
+          if (btnQuotes) btnQuotes.classList.remove("ativo");
+          if (typeof carregarCandidaturas === "function") carregarCandidaturas();
+        } else {
+          if (seccaoCand) seccaoCand.style.display = "none";
+          if (seccaoQuotes) seccaoQuotes.style.display = "block";
+          if (btnCand) btnCand.classList.remove("ativo");
+          if (btnQuotes) btnQuotes.classList.add("ativo");
+          if (typeof carregarQuotesPendentes === "function") carregarQuotesPendentes();
+        }
+      }
+
+      function atualizarAbaAtiva() {
+        if (abaAtiva === "candidaturas") {
+          if (typeof carregarCandidaturas === "function") carregarCandidaturas();
+        } else {
+          if (typeof carregarQuotesPendentes === "function") carregarQuotesPendentes();
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const idiomaSalvo = localStorage.getItem("idioma_preferido") || "pt";
         const select = document.getElementById("idioma-select");

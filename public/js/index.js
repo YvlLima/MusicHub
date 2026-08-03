@@ -523,7 +523,7 @@ function verificarEstatutoAdmin() {
     if (seccaoAdmin) seccaoAdmin.style.display = "block";
     if (btnAdminCandidaturas)
       btnAdminCandidaturas.style.display = "inline-block";
-    if (btnAdminQuotes) btnAdminQuotes.style.display = "inline-block";
+    if (btnAdminQuotes) btnAdminQuotes.style.display = "none";
     carregarUtilizadoresAdmin();
   } else {
     if (seccaoAdmin) seccaoAdmin.style.display = "none";

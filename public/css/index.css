@@ -2096,3 +2096,39 @@ footer p {
   accent-color: #ff0033;
   cursor: pointer;
 }
+
+/* ==========================================
+   SEPARADORES / TABS DE MODERAÇÃO
+   ========================================== */
+.container-abas-moderacao {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 25px 0 35px 0;
+}
+
+.btn-aba-moderacao {
+  background: #0d0d0d;
+  color: #888888;
+  border: 1px solid #333333;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.btn-aba-moderacao:hover {
+  border-color: #ff0033;
+  color: #ffffff;
+}
+
+.btn-aba-moderacao.ativo {
+  background: rgba(255, 0, 51, 0.15);
+  color: #ff0033;
+  border-color: #ff0033;
+  box-shadow: 0 0 12px rgba(255, 0, 51, 0.4);
+}
+
