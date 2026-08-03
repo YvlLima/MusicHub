@@ -1,7 +1,13 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const { pool } = require("../config/db");
+
+let nodemailer;
+try {
+  nodemailer = require("nodemailer");
+} catch (e) {
+  nodemailer = null;
+}
 
 const JWT_SECRET =
   process.env.JWT_SECRET ||
@@ -15,14 +21,17 @@ const JWT_SECRET =
 
 const SUPER_ADMIN = "YvlLima";
 
-// Configurar o Nodemailer para envio de e-mails de recuperação
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Configurar o Nodemailer para envio de e-mails de recuperação se disponível
+const transporter =
+  nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASS
+    ? nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      })
+    : null;
 
 function validarImagemBase64(str) {
   if (!str) return true;

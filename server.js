@@ -56,7 +56,7 @@ app.use("/api", ratingsRoutes);
 app.use("/api", likesRoutes);
 
 // Rota Fallback para Servir o Frontend
-app.get("*", (req, res) => {
+app.use((req, res) => {
   if (req.path.startsWith("/api")) {
     return res.status(404).json({ erro: "Endpoint da API não encontrado." });
   }
@@ -70,6 +70,11 @@ app.use((err, req, res, next) => {
 });
 
 // Inicialização do Servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor Music Hub a rodar na porta ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor Music Hub a rodar na porta ${PORT}`);
+  });
+}
+
+module.exports = app;
+
