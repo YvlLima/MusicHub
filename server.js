@@ -83,11 +83,9 @@ app.use((err, req, res, next) => {
 });
 
 // Inicialização do Servidor
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor Music Hub a rodar na porta ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor Music Hub a rodar na porta ${PORT}`);
+});
 
 module.exports = app;
 
