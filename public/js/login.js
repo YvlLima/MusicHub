@@ -217,7 +217,7 @@ async function processarAuth(e) {
         password: pass,
         pfp: registoPfpBase64 || "imagens/pfp.png",
       }
-    : { username: user, password: pass };
+    : { loginInput: user, username: user, password: pass };
 
   if (isRegister && !validarRequisitosPassword(pass)) {
     mostrarToast("PASS FRACA! MIN 8 CHARS, 1 MAIÚS, 1 MINÚS, 1 NUM, 1 ESP.");

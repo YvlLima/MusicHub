@@ -84,7 +84,12 @@ router.post("/register", async (req, res) => {
 
 // LOGIN DE UTILIZADOR
 router.post("/login", async (req, res) => {
-  const { loginInput, password } = req.body;
+  const loginInput =
+    req.body.loginInput ||
+    req.body.username ||
+    req.body.usernameOrEmail ||
+    req.body.email;
+  const { password } = req.body;
 
   if (!loginInput || !password) {
     return res.status(400).json({ erro: "Preencha todos os campos!" });
@@ -162,7 +167,8 @@ router.post("/login", async (req, res) => {
 
 // PEDIDO DE RECUPERAÇÃO DE PASSWORD
 router.post("/forgot-password", async (req, res) => {
-  const { email, newPassword } = req.body;
+  const email = req.body.email || req.body.username || req.body.usernameOrEmail;
+  const { newPassword } = req.body;
 
   if (!email || !newPassword) {
     return res.status(400).json({ erro: "Preencha todos os campos!" });
@@ -176,7 +182,7 @@ router.post("/forgot-password", async (req, res) => {
 
   try {
     const userResult = await pool.query(
-      "SELECT * FROM utilizadores WHERE email = $1",
+      "SELECT * FROM utilizadores WHERE email = $1 OR username = $1",
       [email],
     );
 
@@ -193,21 +199,23 @@ router.post("/forgot-password", async (req, res) => {
 
     await pool.query(
       "DELETE FROM password_resets WHERE username = $1 OR email = $2",
-      [user.username, email],
+      [user.username, user.email],
     );
 
     await pool.query(
       "INSERT INTO password_resets (username, email, code_hash, new_password_hash, expires_at) VALUES ($1, $2, $3, $4, $5)",
-      [user.username, email, codeHash, newPasswordHash, expiresAt],
+      [user.username, user.email, codeHash, newPasswordHash, expiresAt],
     );
 
-    const emailEnviado = await enviarEmailReset(email, user.username, codigo);
+    const emailEnviado = await enviarEmailReset(user.email, user.username, codigo);
 
     res.json({
       mensagem: emailEnviado
         ? "Código de verificação enviado para o teu e-mail!"
         : "Pedido registado. Caso o e-mail não chegue, contacta o administrador.",
       emailEnviado,
+      username: user.username,
+      email: user.email,
     });
   } catch (err) {
     console.error("❌ Erro no pedido de recuperação:", err.message);
@@ -217,7 +225,8 @@ router.post("/forgot-password", async (req, res) => {
 
 // VERIFICAÇÃO E REINICIALIZAÇÃO DA PASSWORD COM CÓDIGO
 router.post("/verify-reset-code", async (req, res) => {
-  const { email, codigo } = req.body;
+  const email = req.body.email || req.body.username || req.body.usernameOrEmail;
+  const codigo = req.body.codigo || req.body.code;
 
   if (!email || !codigo) {
     return res
@@ -227,7 +236,7 @@ router.post("/verify-reset-code", async (req, res) => {
 
   try {
     const resetResult = await pool.query(
-      "SELECT * FROM password_resets WHERE email = $1 AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+      "SELECT * FROM password_resets WHERE (email = $1 OR username = $1) AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
       [email],
     );
 
