@@ -91,7 +91,7 @@ describe("🛡️ Suíte de Testes de Segurança da API - Music Hub", () => {
     });
   });
 
-  describe("3. Proteção contra SQL Injection", () => {
+  describe("3. Proteção contra SQL Injection & Sanitização", () => {
     it("deve tratar tentativas de SQL Injection no login com segurança sem quebrar a consulta", async () => {
       const payloadSqlInjection = {
         usernameOrEmail: "' OR '1'='1",
@@ -102,7 +102,6 @@ describe("🛡️ Suíte de Testes de Segurança da API - Music Hub", () => {
         .post("/api/login")
         .send(payloadSqlInjection);
 
-      // Deve responder com rejeição de credenciais sem revelar erros internos de sintaxe SQL
       expect([400, 401]).toContain(response.status);
       expect(response.body).not.toHaveProperty("stack");
       expect(response.body).toHaveProperty("erro");
@@ -123,7 +122,7 @@ describe("🛡️ Suíte de Testes de Segurança da API - Music Hub", () => {
       const response = await request(app).post("/api/register").send({
         username: "novo_user_seguranca",
         email: "teste_seguranca@musichub.com",
-        password: "123", // Palavra-passe fraca
+        password: "123",
       });
 
       expect(response.status).toBe(400);
@@ -137,11 +136,40 @@ describe("🛡️ Suíte de Testes de Segurança da API - Music Hub", () => {
         .put("/api/update-profile")
         .set("Authorization", `Bearer ${tokenUser}`)
         .send({
-          pfp: "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", // Script HTML injetado
+          pfp: "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==",
         });
 
       expect(response.status).toBe(400);
       expect(response.body.erro).toContain("Formato de imagem inválido");
+    });
+  });
+
+  describe("5. Proteção DoS, Limitação de Taxa & Resiliência a Payloads Malformados", () => {
+    it("deve aplicar cabeçalhos de Rate Limiting nos endpoints /api", async () => {
+      const response = await request(app).get("/api/health");
+      expect(response.headers).toHaveProperty("ratelimit-limit");
+      expect(response.headers).toHaveProperty("ratelimit-remaining");
+    });
+
+    it("deve tratar requisições com JSON malformado sem quebrar o servidor (HTTP 400/500 gracioso)", async () => {
+      const response = await request(app)
+        .post("/api/login")
+        .set("Content-Type", "application/json")
+        .send("{ json_malformado: invalido, ");
+
+      expect([400, 500]).toContain(response.status);
+      expect(response.body).toHaveProperty("erro");
+    });
+
+    it("deve tratar identificadores não numéricos em parâmetros de URL sem expor exceções SQL", async () => {
+      const tokenMod = jwt.sign({ id: 5, username: "mod", is_admin: 1 }, JWT_SECRET);
+      const response = await request(app)
+        .get("/api/candidaturas/parametro_invalido_texto/historico")
+        .set("Authorization", `Bearer ${tokenMod}`);
+
+      expect([400, 500]).toContain(response.status);
+      expect(response.body).toHaveProperty("erro");
+      expect(response.body).not.toHaveProperty("stack");
     });
   });
 });
