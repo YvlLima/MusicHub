@@ -50,6 +50,15 @@ describe("🧪 Suíte Completa de Testes da API - Music Hub", () => {
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty("erro");
     });
+
+    it("POST /api/verify-reset-code - deve rejeitar código de recuperação inválido (HTTP 400)", async () => {
+      const response = await request(app).post("/api/verify-reset-code").send({
+        usernameOrEmail: "invalido",
+        code: "000000",
+      });
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty("erro");
+    });
   });
 
   describe("3. Módulo de Utilizadores & Comunidade (/api/users)", () => {
@@ -66,8 +75,19 @@ describe("🧪 Suíte Completa de Testes da API - Music Hub", () => {
       expect(response.body).toHaveProperty("seguidores");
     });
 
+    it("GET /api/users/:username/full-profile - deve retornar 404 para utilizador inexistente", async () => {
+      const response = await request(app).get("/api/users/utilizador_inexistente_9999/full-profile");
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty("erro", "Utilizador não encontrado.");
+    });
+
     it("PUT /api/update-profile - deve negar atualização sem token JWT", async () => {
       const response = await request(app).put("/api/update-profile").send({ newUsername: "novo_nome" });
+      expect([401, 403]).toContain(response.status);
+    });
+
+    it("DELETE /api/delete-profile - deve negar eliminação de conta sem token JWT", async () => {
+      const response = await request(app).delete("/api/delete-profile").send({ password: "123" });
       expect([401, 403]).toContain(response.status);
     });
 
@@ -105,6 +125,16 @@ describe("🧪 Suíte Completa de Testes da API - Music Hub", () => {
       const response = await request(app).get("/api/candidaturas");
       expect([401, 403]).toContain(response.status);
     });
+
+    it("PUT /api/candidaturas/1/approve - deve negar aprovação de candidatura sem token JWT", async () => {
+      const response = await request(app).put("/api/candidaturas/1/approve");
+      expect([401, 403]).toContain(response.status);
+    });
+
+    it("PUT /api/candidaturas/1/reject - deve negar rejeição de candidatura sem token JWT", async () => {
+      const response = await request(app).put("/api/candidaturas/1/reject").send({ reason: "Motivo" });
+      expect([401, 403]).toContain(response.status);
+    });
   });
 
   describe("5. Módulo de Citações / Quotes (/api/quotes)", () => {
@@ -121,6 +151,16 @@ describe("🧪 Suíte Completa de Testes da API - Music Hub", () => {
 
     it("GET /api/quotes - deve negar acesso a citações pendentes sem autorização mod/admin", async () => {
       const response = await request(app).get("/api/quotes");
+      expect([401, 403]).toContain(response.status);
+    });
+
+    it("PUT /api/quotes/1/approve - deve negar aprovação de quote sem token JWT", async () => {
+      const response = await request(app).put("/api/quotes/1/approve");
+      expect([401, 403]).toContain(response.status);
+    });
+
+    it("PUT /api/quotes/1/reject - deve negar rejeição de quote sem token JWT", async () => {
+      const response = await request(app).put("/api/quotes/1/reject").send({ reason: "Motivo" });
       expect([401, 403]).toContain(response.status);
     });
   });
@@ -166,13 +206,33 @@ describe("🧪 Suíte Completa de Testes da API - Music Hub", () => {
       expect([401, 403]).toContain(response.status);
     });
 
+    it("DELETE /api/admin/logs/1 - deve negar eliminação de log sem token admin", async () => {
+      const response = await request(app).delete("/api/admin/logs/1");
+      expect([401, 403]).toContain(response.status);
+    });
+
     it("GET /api/admin/export - deve negar exportação de dados sem token admin", async () => {
       const response = await request(app).get("/api/admin/export");
       expect([401, 403]).toContain(response.status);
     });
 
+    it("GET /api/admin/export?format=csv - deve negar exportação CSV sem token admin", async () => {
+      const response = await request(app).get("/api/admin/export?format=csv");
+      expect([401, 403]).toContain(response.status);
+    });
+
     it("PUT /api/admin/promote-mod - deve negar promoção sem privilégios de admin", async () => {
       const response = await request(app).put("/api/admin/promote-mod").send({ targetUserId: 2 });
+      expect([401, 403]).toContain(response.status);
+    });
+
+    it("PUT /api/admin/demote - deve negar despromoção sem privilégios de admin", async () => {
+      const response = await request(app).put("/api/admin/demote").send({ targetUserId: 2 });
+      expect([401, 403]).toContain(response.status);
+    });
+
+    it("DELETE /api/admin/users/1 - deve negar apagar conta de utilizador sem token admin", async () => {
+      const response = await request(app).delete("/api/admin/users/1");
       expect([401, 403]).toContain(response.status);
     });
 

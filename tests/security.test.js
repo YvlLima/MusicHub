@@ -172,4 +172,21 @@ describe("🛡️ Suíte de Testes de Segurança da API - Music Hub", () => {
       expect(response.body).not.toHaveProperty("stack");
     });
   });
+
+  describe("6. Proteção Path Traversal & XSS Refletido", () => {
+    it("deve bloquear tentativas de Path Traversal prevenindo a exposição de ficheiros do sistema", async () => {
+      const response = await request(app).get("/../../package.json");
+      expect(response.status).toBe(200); // Servidor redireciona para a página principal (index.html) por ser rota estática
+      expect(response.text).not.toContain("musichub-backend");
+    });
+
+    it("deve responder de forma segura a XSS refletido em parâmetros de utilizador", async () => {
+      const response = await request(app).get(
+        "/api/users/%3Cscript%3Ealert(1)%3C%2Fscript%3E/social"
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ aSeguir: 0, seguidores: 0, totalLikes: 0 });
+    });
+  });
 });
