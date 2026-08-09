@@ -13,10 +13,14 @@ const adminRoutes = require("./src/routes/adminRoutes");
 const ratingsRoutes = require("./src/routes/ratingsRoutes");
 const likesRoutes = require("./src/routes/likesRoutes");
 
+const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Ativar Compressão HTTP (Gzip/Brotli) para aceleração de respostas
+app.use(compression());
 
 // Configuração de Limitação de Taxa (Rate Limiting)
 const apiLimiter = rateLimit({
@@ -53,8 +57,13 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// Servir Ficheiros Estáticos do Frontend
-app.use(express.static(path.join(__dirname, "public")));
+// Servir Ficheiros Estáticos do Frontend com Cache Otimizada
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "1d",
+    etag: true,
+  }),
+);
 
 // Inicializar tabelas da base de dados PostgreSQL
 initDB();

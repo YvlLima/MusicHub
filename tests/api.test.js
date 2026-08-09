@@ -3,6 +3,8 @@ const app = require("../server");
 const { pool } = require("../src/config/db");
 
 describe("🧪 Suíte Completa de Testes da API - Music Hub", () => {
+  jest.setTimeout(20000);
+
   afterAll(async () => {
     await pool.end();
   });

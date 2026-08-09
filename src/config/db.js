@@ -1,8 +1,17 @@
 const { Pool } = require("pg");
 
+const isSSL =
+  process.env.DATABASE_URL &&
+  !process.env.DATABASE_URL.includes("localhost") &&
+  !process.env.DATABASE_URL.includes("127.0.0.1") &&
+  !process.env.DATABASE_URL.includes("@db:");
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: isSSL ? { rejectUnauthorized: false } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 async function initDB() {
@@ -122,7 +131,19 @@ async function initDB() {
       );
     `);
 
-    console.log("✅ Tabelas e colunas verificadas com sucesso.");
+    // Criar Índices de Alta Performance para Acelerar Queries Recorrentes
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_likes_username ON likes(username);
+      CREATE INDEX IF NOT EXISTS idx_likes_item_id ON likes(item_id);
+      CREATE INDEX IF NOT EXISTS idx_seguidores_follower ON seguidores(follower_username);
+      CREATE INDEX IF NOT EXISTS idx_seguidores_following ON seguidores(following_username);
+      CREATE INDEX IF NOT EXISTS idx_ratings_item_id ON ratings(item_id);
+      CREATE INDEX IF NOT EXISTS idx_candidaturas_status ON candidaturas(status);
+      CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
+      CREATE INDEX IF NOT EXISTS idx_logs_data ON logs(data DESC);
+    `);
+
+    console.log("✅ Tabelas, índices e colunas verificadas com sucesso.");
   } catch (err) {
     console.error("❌ Erro ao inicializar PostgreSQL:", err.message);
   }
